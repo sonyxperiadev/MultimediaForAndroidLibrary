@@ -401,6 +401,9 @@ public final class Player {
                 mSeekPositionMs = -1;
                 mExecutingSeekMessage = null;
             }
+            if (mSource.supportsPreview() && mSubtitleThread != null) {
+                mSubtitleThread.seek();
+            }
         } else {
             if (LOGS_ENABLED) Log.d(TAG, "Seek in progress, queue next seek to: " + msec);
         }
