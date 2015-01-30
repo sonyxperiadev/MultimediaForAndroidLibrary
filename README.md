@@ -13,7 +13,7 @@ Multimedia for Android Library support:
   
 # Developer Guide
 The included Demo Application show the Library in full use. However the Library is very easy to use and should be very familiar to anyone that has worked with Android MediaPlayer. Below is a very short example.
-'''
+```
 import com.sonymobile.android.media.MediaPlayer;
 ...
 MediaPlayer mMediaPlayer = new MediaPlayer();
@@ -21,7 +21,7 @@ mMediaPlayer.setDataSource(<Path to source>);
 mMediaPlayer.setDisplay(<SurfaceHolder to render on>);
 mMediaPlayer.prepare();
 mMediaPlayer.play();
-'''
+```
 
 ## Android Studio
 The project contain a Android Studio project for both the library and the demo application.
@@ -32,7 +32,7 @@ The project contain a Android Studio project for both the library and the demo a
 The project can be built using Gradle, you can import it as a project dependency.
 
 If you want Multimedia for Android Library as a jar run
-'''
+```
 ./gradlew jarRelease
-'''
+```
 Include the built jar in your project.
