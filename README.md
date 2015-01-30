@@ -25,8 +25,8 @@ mMediaPlayer.play();
 
 ## Android Studio
 The project contain a Android Studio project for both the library and the demo application.
-1. Istall Android Studio and setup the SDK
-2. Select to import the project into Android Studio
+* Install Android Studio and setup the SDK 
+* Select to import the project into Android Studio 
 
 ## Gradle
 The project can be built using Gradle, you can import it as a project dependency.
