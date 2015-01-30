@@ -1,0 +1,37 @@
+DASH IF Single Resolution;Test 1;http://dash.edgesuite.net/dash264/TestCases/1a/netflix/exMPD_BIP_TC1.mpd
+DASH IF Single Resolution;Test 2;http://dash.edgesuite.net/dash264/TestCases/1a/sony/SNE_DASH_SD_CASE1A_REVISED.mpd
+DASH IF Single Resolution;Test 3;http://dash.edgesuite.net/dash264/TestCases/1a/qualcomm/1/MultiRate.mpd
+DASH IF Single Resolution;Test 4;http://dash.edgesuite.net/dash264/TestCases/1a/qualcomm/2/MultiRate.mpd
+DASH IF Single Resolution;Test 5;http://dash.edgesuite.net/dash264/TestCases/1b/envivio/manifest.mpd
+DASH IF Single Resolution;Test 6;http://dash.edgesuite.net/dash264/TestCases/1b/thomson-networks/1/manifest.mpd
+DASH IF Single Resolution;Test 7;http://dash.edgesuite.net/dash264/TestCases/1b/thomson-networks/2/manifest.mpd
+DASH IF Single Resolution;Test 8;http://dash.edgesuite.net/dash264/TestCases/1b/qualcomm/1/MultiRate.mpd
+DASH IF Single Resolution;Test 9;http://dash.edgesuite.net/dash264/TestCases/1b/qualcomm/2/MultiRate.mpd
+DASH IF Single Resolution;Test 10;http://dash.edgesuite.net/dash264/TestCases/1c/envivio/manifest.mpd
+DASH IF Single Resolution;Test 11;http://dash.edgesuite.net/dash264/TestCases/1c/qualcomm/1/MultiRate.mpd
+DASH IF Single Resolution;Test 12;http://dash.edgesuite.net/dash264/TestCases/1c/qualcomm/2/MultiRate.mpd
+DASH IF Multi Resolution;Test 1;http://dash.edgesuite.net/dash264/TestCases/2a/qualcomm/1/MultiResMPEG2.mpd
+DASH IF Multi Resolution;Test 2;http://dash.edgesuite.net/dash264/TestCases/2a/qualcomm/2/MultiRes.mpd
+DASH IF Multi Resolution;Test 3;http://dash.edgesuite.net/dash264/TestCases/2b/thomson-networks/1/manifest.mpd
+DASH IF Multi Resolution;Test 4;http://dash.edgesuite.net/dash264/TestCases/2b/thomson-networks/2/manifest.mpd
+DASH IF Multi Resolution;Test 5;http://dash.edgesuite.net/dash264/TestCases/2b/qualcomm/1/MultiResMPEG2.mpd
+DASH IF Multi Resolution;Test 6;http://dash.edgesuite.net/dash264/TestCases/2b/qualcomm/2/MultiRes.mpd
+DASH IF Multi Resolution;Test 7;http://dash.edgesuite.net/dash264/TestCases/2c/qualcomm/1/MultiResMPEG2.mpd
+DASH IF Multi Resolution;Test 8;http://dash.edgesuite.net/dash264/TestCases/2c/qualcomm/2/MultiRes.mpd
+DASH IF Multiple Periods;Test 1;http://dash.edgesuite.net/dash264/TestCases/5a/1/manifest.mpd
+DASH IF Multiple Periods;Test 2;http://dash.edgesuite.net/dash264/TestCases/5b/1/manifest.mpd
+DASH IF High Definition;Test 1;http://dash.edgesuite.net/dash264/TestCasesHD/2a/DTV/1/ondemand.mpd
+DASH IF High Definition;Test 2;http://dash.edgesuite.net/dash264/TestCasesHD/2a/qualcomm/1/MultiResMPEG2.mpd
+DASH IF High Definition;Test 3;http://dash.edgesuite.net/dash264/TestCasesHD/2a/qualcomm/2/MultiRes.mpd
+DASH IF High Definition;Test 4;http://dash.edgesuite.net/dash264/TestCasesHD/2b/DTV/1/live.mpd
+DASH IF High Definition;Test 5;http://dash.edgesuite.net/dash264/TestCasesHD/2b/qualcomm/1/MultiResMPEG2.mpd
+DASH IF High Definition;Test 6;http://dash.edgesuite.net/dash264/TestCasesHD/2b/qualcomm/2/MultiRes.mpd
+DASH IF High Definition;Test 7;http://dash.edgesuite.net/dash264/TestCasesHD/2c/qualcomm/1/MultiResMPEG2.mpd
+Smoothstreaming / PIFF;Test 17;http://playready.directtaps.net/smoothstreaming/SSWSS720H264/SuperSpeedway_720_230.ismv
+Smoothstreaming / PIFF;Test 18;http://playready.directtaps.net/smoothstreaming/SSWSS720H264/SuperSpeedway_720_331.ismv
+Smoothstreaming / PIFF;Test 19;http://playready.directtaps.net/smoothstreaming/SSWSS720H264/SuperSpeedway_720_477.ismv
+Smoothstreaming / PIFF;Test 20;http://playready.directtaps.net/smoothstreaming/SSWSS720H264/SuperSpeedway_720_688.ismv
+Smoothstreaming / PIFF;Test 21;http://playready.directtaps.net/smoothstreaming/SSWSS720H264/SuperSpeedway_720_991.ismv
+Smoothstreaming / PIFF;Test 22;http://playready.directtaps.net/smoothstreaming/SSWSS720H264/SuperSpeedway_720_1427.ismv
+Smoothstreaming / PIFF;Test 23;http://playready.directtaps.net/smoothstreaming/SSWSS720H264/SuperSpeedway_720_2056.ismv
+Smoothstreaming / PIFF;Test 24;http://playready.directtaps.net/smoothstreaming/SSWSS720H264/SuperSpeedway_720_2962.ismv

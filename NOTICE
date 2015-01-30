@@ -1,0 +1,73 @@
+   =========================================================================
+   ==  NOTICE file corresponding to the section 4 d of                    ==
+   ==  the Apache License, Version 2.0,                                   ==
+   ==  in this case for the Multimedia for Android Library-specific code. ==
+   =========================================================================
+
+Multimedia for Android Library Code
+Copyright (C) 2014 Sony Mobile Communications Inc.
+
+Original code licensed under the Apache License, Version 2.0 (the "License");
+you may not use this software except in compliance with the License.
+You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+
+   =========================================================================
+   ==  NOTICE file corresponding to the section 4 d of                    ==
+   ==  the Apache License, Version 2.0,                                   ==
+   ==  in this case for the Android-specific code.                        ==
+   =========================================================================
+
+Android Code
+Copyright 2005-2008 The Android Open Source Project
+
+This product includes software developed as part of
+The Android Open Source Project (http://source.android.com).
+
+
+   =========================================================================
+   ==  NOTICE file corresponding to the section 4 d of                    ==
+   ==  the Apache License, Version 2.0,                                   ==
+   ==  in this case for the ExoPlayer-specific code.                      ==
+   =========================================================================
+
+ExoPlayer Code
+Copyright (C) 2014 The Android Open Source Project
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+
+   =========================================================================
+   ==  NOTICE file corresponding to the section 4 d of                    ==
+   ==  the Apache License, Version 2.0,                                   ==
+   ==  in this case for the Apache Harmony distribution.                  ==
+   =========================================================================
+
+Apache Harmony
+Copyright 2006 The Apache Software Foundation
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+
+Portions of Harmony were originally developed by
+Intel Corporation and are licensed to the Apache Software
+Foundation under the "Software Grant and Corporate Contribution
+License Agreement", informally known as the "Intel Harmony CLA".
+

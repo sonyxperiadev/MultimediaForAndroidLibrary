@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Copyright (C) 2015 Sony Mobile Communications Inc.
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+         http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+-->
+<!-- This is an example file of how a testcontent.xml could look.
+     Use your own file for your test content. Please note that tags are case sensitive.
+     This file should be placed under your Environment.getExternalStorageDirectory() -->
+
+<TestContent> <!-- Tag holding one test content -->
+    <Id>LOCAL</Id> <!-- Used to identify content when testing -->
+    <ContentURI>/sdcard/video_file.mp4</ContentURI> <!-- Path / URL to content -->
+    <Width>1920</Width> <!-- Width of video, pixels -->
+    <Height>1080</Height> <!-- Height of video, pixels -->
+    <Duration>000520</Duration> <!-- Duration in format HHMMSS -->
+    <Framerate>29.9997</Framerate> <!-- Framerate for the content -->
+    <BitRate>8968</BitRate> <!-- Bitrate for the content -->
+    <maxIFrameInterval>2000</maxIFrameInterval> <!-- Maximum interval between I-frames in media -->
+    <TrackCount>2</TrackCount> <!-- Number of tracks in the container -->
+    <MimeType>video/avi</MimeType> <!-- MimeType for the container -->
+    <TrackMimeTypeVideo>video/avc</TrackMimeTypeVideo> <!-- MimeType for the VideoTrack -->
+    <TrackMimeTypeAudio>audio/mp4a-latm</TrackMimeTypeAudio> <!-- MimeType for the AudioTrack -->
+    <Title>TestTitle</Title> <!-- MetaData Title -->
+    <Album>TestAlbum</Album> <!-- MetaData Album -->
+    <Artist>TestArtist</Artist> <!-- MetaData Artist -->
+    <AlbumArtist>TestAlbumArtist</AlbumArtist> <!-- MetaData AlbumArtist -->
+    <Genre>TestGenre</Genre> <!-- MetaData Genre -->
+    <TrackNumber>1/1</TrackNumber> <!-- MetaData TrackNumber -->
+    <Compilation>0</Compilation> <!-- MetaData Compilation -->
+    <Author>TestLyricist</Author> <!-- MetaData Author -->
+    <Writer>TestComposer</Writer> <!-- MetaData Writer -->
+    <DiscNumber>1</DiscNumber> <!-- MetaData Disc number -->
+    <Year>2014</Year> <!-- MetaData Year -->
+</TestContent>

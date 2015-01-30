@@ -1,0 +1,352 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Copyright (C) 2014 Sony Mobile Communications Inc.
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+         http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+-->
+
+<android.support.v4.widget.DrawerLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/drawer_layout"
+    android:background="#000000"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"   
+    >
+    
+    <RelativeLayout
+    android:id="@+id/activity_main_loading_panel"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:gravity="center"
+    android:visibility="gone"
+     >
+     
+  
+    <ProgressBar
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:indeterminate="true" />
+</RelativeLayout>
+
+    
+         
+    <RelativeLayout
+        android:id="@+id/activity_main_mainlayout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" 
+        >
+
+
+    <SurfaceView 
+        android:id="@+id/mSurfaceView"
+        android:layout_height="fill_parent"
+        android:layout_width="fill_parent"
+        android:layout_centerHorizontal="true"
+        android:layout_centerVertical="true"
+        android:fitsSystemWindows="false"
+        />
+    
+    <TextView
+        android:id="@+id/activity_main_subtitleView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:fitsSystemWindows="false"
+        android:layout_above="@+id/activity_main_timelayout"
+        android:paddingBottom="15dip"
+        android:textColor="#FFFFFF"
+        android:textSize="20sp"
+        android:shadowColor="#000000"
+        android:shadowRadius="3"
+        />
+
+    <TextView
+        android:id="@+id/activity_main_subtitleView_params"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:fitsSystemWindows="false"
+        android:layout_alignParentBottom="true"
+        android:paddingBottom="15dip"
+        />
+
+    
+
+   <RelativeLayout
+        android:id="@+id/UpperButtonLayout"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_alignParentTop="true"
+        android:fitsSystemWindows="true"
+        android:visibility="invisible"
+        >
+        <ImageView 
+            android:id="@+id/activity_main_rotate_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentRight="true"
+            android:src="@drawable/media_player_rotate_button"
+            android:onClick="onScreenRotateClicked"
+            android:visibility="gone"
+            />
+        
+    </RelativeLayout>
+    
+   
+    
+   <SeekBar 
+       android:id="@+id/activity_main_seekbar"
+       android:layout_height="wrap_content"
+       android:layout_width="fill_parent"
+       android:layout_alignParentBottom="true"
+       android:layout_alignParentLeft="true"
+       android:layout_marginLeft="20dip"
+       android:layout_toLeftOf="@+id/ButtonLayout"
+       android:visibility="gone"
+       android:paddingTop="5dip"
+       android:paddingBottom="5dip"
+       android:progressDrawable="@drawable/seekbar_progress_drawable"
+       />
+   
+
+    
+    
+   
+    <RelativeLayout
+        android:id="@+id/ButtonLayout"
+        android:layout_width="150dip"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:visibility="invisible"
+        android:paddingBottom="10dip"
+        android:layout_alignParentRight="true"
+        android:layout_marginRight="10dip"
+        >
+        
+        <ImageView 
+            android:id="@+id/activity_main_subtitle_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:onClick="onSubtitleClicked"
+            android:src="@drawable/media_player_subtitles_button"
+            android:layout_toLeftOf="@+id/activity_main_audio_button"
+            android:layout_above="@+id/activity_main_playpause_button"
+            android:padding="5dip"
+            />
+        <ImageView 
+            android:id="@+id/activity_main_audio_button"
+            android:layout_height="wrap_content"
+            android:layout_width="wrap_content"
+            android:onClick="onAudioClicked"
+            android:src="@drawable/media_player_audio_button"
+            android:layout_alignParentRight="true"
+            android:layout_above="@+id/activity_main_playpause_button"
+            android:layout_marginBottom="10dip"
+
+            />
+        
+        <ImageView 
+            android:id="@+id/activity_main_seekrewind_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/media_player_rewind_button"
+            android:onClick="onSlowDownClicked"
+            android:layout_toLeftOf="@+id/activity_main_playpause_button"
+            android:layout_alignParentBottom="true"
+            android:paddingRight="15dip"
+            />
+        <ImageView 
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/activity_main_playpause_button"
+            android:onClick="onPlayPauseClicked"
+            android:src="@drawable/media_player_play_button"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentBottom="true"
+            android:layout_marginRight="10dip"
+            />
+        <ImageView
+            android:id="@+id/activity_main_seekforward_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/media_player_speedup_button"
+            android:onClick="onSpeedUpClicked"
+            android:layout_above="@+id/activity_main_seekrewind_button"
+            android:layout_toLeftOf="@+id/activity_main_playpause_button"
+            android:padding="5dip"
+            />
+
+        
+        
+    </RelativeLayout>
+    
+    <LinearLayout 
+         android:layout_width="wrap_content"
+         android:layout_height="wrap_content"
+         android:id="@+id/activity_main_timelayout"
+         android:layout_above="@+id/activity_main_seekbar"
+         android:layout_centerHorizontal="true"
+         android:visibility="invisible"
+        >
+        <TextView 
+            android:id="@+id/activity_main_time"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="#FFFFFF"
+            android:textSize="20sp"
+            android:text="00:00:00" 
+            android:shadowColor="#000000"  
+            android:shadowRadius="3"  
+            />
+        
+        <TextView 
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="#FFFFFF"
+            android:textSize="20sp"
+            android:text="/" 
+            android:shadowColor="#000000"  
+            android:shadowRadius="3"  
+            />
+        
+          <TextView 
+            android:id="@+id/activity_main_duration"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="#FFFFFF"
+            android:textSize="20sp"
+            android:text="00:00:00" 
+            android:shadowColor="#000000"  
+            android:shadowRadius="3"  
+            />
+    </LinearLayout>
+    
+    <TextView
+            android:id="@+id/activity_main_time_seek"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:layout_centerVertical="true"
+            android:textColor="#FFFFFF"
+            android:textSize="30sp"
+            android:shadowColor="#000000"
+            android:shadowRadius="3"
+            android:visibility="gone"
+            />
+
+        </RelativeLayout>
+        
+    <RelativeLayout 
+        android:id="@+id/activity_main_debug_view"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        >
+        <LinearLayout 
+            android:id="@+id/activity_main_debug_linear"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="50dip"
+            >
+            <TextView 
+                android:id="@+id/activity_main_debug_media_title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:shadowColor="#000000"  
+                android:shadowRadius="3"
+                android:textColor="#FFFFFF"
+                android:textSize="20sp"
+                />
+            
+        </LinearLayout>
+    </RelativeLayout>
+
+         <RelativeLayout 
+            android:id="@+id/activity_main_browsing_layout"
+            android:layout_width="320dp"
+            android:layout_height="match_parent"
+            android:orientation="vertical" 
+            android:layout_gravity="start"
+            android:background="@drawable/browsing_rounded_corners"
+            android:divider="@android:color/transparent"
+            android:dividerHeight="0dp"
+            android:fitsSystemWindows="false"
+             >
+             
+             
+             <LinearLayout 
+                 android:id="@+id/activity_main_browsing_alignbutton"
+                 android:layout_width="fill_parent"
+                 android:layout_height="wrap_content"
+                 android:layout_alignParentBottom="true"
+                 android:orientation="horizontal"
+                 
+                 >
+                  <Button 
+                     android:id="@+id/file_browsing_back"
+                     android:layout_width="fill_parent"
+                     android:layout_height="wrap_content"
+                     android:text="Back"
+                     android:background="@drawable/custom_btn_browsing"
+                     android:textAlignment="center"
+                     android:textColor="#000000"
+                     android:onClick="onBackPathClicked"
+                     android:layout_weight="1"
+                     android:layout_margin="2dp"
+                     android:visibility="gone"
+                     />
+                 <Button 
+                     android:id="@+id/file_browsing_swap_source"
+                     android:layout_width="fill_parent"
+                     android:layout_height="wrap_content"
+                     android:text="Swap source"
+                     android:background="@drawable/custom_btn_browsing"
+                     android:textAlignment="center"
+                     android:textColor="#000000"
+                     android:onClick="onSwapSourceClicked"
+                     android:layout_weight="1"
+                     android:layout_margin="2dp"
+                     />
+                
+                 
+             </LinearLayout>
+             
+    
+    <ListView 
+        android:id="@+id/file_browsing_listview"
+        android:layout_height="fill_parent"
+        android:layout_width="fill_parent"
+        android:layout_marginRight="1dip"
+        android:layout_above="@id/activity_main_browsing_alignbutton"
+        android:visibility="gone"
+        android:fitsSystemWindows="true"
+        ></ListView>
+    
+    <ExpandableListView 
+        android:id="@+id/file_browsing_exp_list_view"
+        android:layout_height="fill_parent"
+        android:layout_width="fill_parent"
+        android:layout_above="@id/activity_main_browsing_alignbutton"
+        android:fitsSystemWindows="true"
+        
+        android:layout_marginRight="1dip"
+        ></ExpandableListView>
+    
+         </RelativeLayout>       
+         
+        
+</android.support.v4.widget.DrawerLayout>

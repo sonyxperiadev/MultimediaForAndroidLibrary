@@ -1,0 +1,50 @@
+apply plugin: 'com.android.library'
+
+def getVersionName = { ->
+    def stdout = new ByteArrayOutputStream()
+    exec {
+        commandLine 'git', 'describe', '--abbrev=0', '--tags'
+        standardOutput = stdout
+    }
+    return stdout.toString().trim()
+}
+
+android {
+    compileSdkVersion 21
+    buildToolsVersion "21.1.2"
+
+    defaultConfig {
+        minSdkVersion 19
+        targetSdkVersion 21
+        testApplicationId "com.sonymobile.anroid.media.test"
+        testInstrumentationRunner "android.test.InstrumentationTestRunner"
+        testHandleProfiling true
+        testFunctionalTest true
+    }
+
+    buildTypes {
+        debug {
+            buildConfigField "String", "LIBRARY_VERSION", "\""+"DEBUG"+"\""
+        }
+
+        release {
+            buildConfigField "String", "LIBRARY_VERSION", "\""+getVersionName()+"\""
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
+        }
+
+    }
+}
+
+
+
+android.libraryVariants.all { variant ->
+    def name = variant.buildType.name
+    if (name.equals(com.android.builder.core.BuilderConstants.DEBUG)) {
+        return; // Skip debug builds.
+    }
+    def task = project.tasks.create "jar${variant.name.capitalize()}", Jar
+    task.dependsOn variant.javaCompile
+    task.from variant.javaCompile.destinationDir
+    task.archiveName = 'MAL-v'+getVersionName()+'.jar'
+}
