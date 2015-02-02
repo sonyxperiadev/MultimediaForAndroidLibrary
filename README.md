@@ -1,9 +1,9 @@
 # Multimedia for Android Library Readme
 
 # Description
-Multimedia for Android Library contains a application level media player. It provides a familiar and easy to use way to playback MPEG-DASH streaming content, HTTP and local playback.
+Multimedia for Android Library contains an application level media player. It provides a familiar and easy to use way to playback MPEG-DASH streaming content, HTTP and local playback.
 
-# Content support
+# Contents supported
   * Containers: MPEG4 (not fully supported), PIFF 1.1 and PIFF 1.3.
   * Codecs: H264, H265 (if supported by device) and AAC.
   * Subtitles: SMPTE-TT
@@ -12,7 +12,7 @@ Multimedia for Android Library contains a application level media player. It pro
   
 # Developer Guide
 The library requires API level 19 (KitKat) or above.
-The included Demo Application show the Library in full use. However the Library is very easy to use and should be very familiar to anyone that has worked with Android MediaPlayer. Below is a very short example.
+The included Demo Application shows the Library in full use. However the Library is very easy to use and should be very familiar to anyone that has worked with Android MediaPlayer. Below is a very short example.
 ```
 import com.sonymobile.android.media.MediaPlayer;
 ...
@@ -24,9 +24,9 @@ mMediaPlayer.play();
 ```
 
 ## Android Studio
-The project contain a Android Studio project for both the library and the demo application.
+The project contains an Android Studio project for both the library and the demo application.
 * Install Android Studio and setup the SDK 
-* Select to import the project into Android Studio 
+* Select it to import the project into Android Studio 
 
 ## Gradle
 The project can be built using Gradle, you can import it as a project dependency.
