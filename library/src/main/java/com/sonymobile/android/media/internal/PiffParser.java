@@ -28,6 +28,7 @@ import android.media.MediaFormat;
 import android.util.Log;
 
 import com.sonymobile.android.media.MetaData;
+import com.sonymobile.android.media.TrackInfo.TrackType;
 
 public class PiffParser extends ISOBMFFParser {
 
@@ -157,7 +158,6 @@ public class PiffParser extends ISOBMFFParser {
                                     byte[] iv = new byte[8];
                                     mDataSource.read(iv);
                                     System.arraycopy(iv, 0, info.iv, 0, 8);
-                                    info.iv[15] = (byte)mNALLengthSize;
                                 }
                                 if ((versionFlags & 0x00000002) > 0) {
                                     short subSampleCount = mDataSource.readShort();
@@ -174,6 +174,11 @@ public class PiffParser extends ISOBMFFParser {
                                     info.numBytesOfClearData[0] = 0;
                                     info.numBytesOfEncryptedData = new int[1];
                                     info.numBytesOfEncryptedData[0] = -1;
+                                }
+
+                                if (info.numBytesOfClearData[0] == 0 &&
+                                        mCurrentTrack.getTrackType() == TrackType.VIDEO) {
+                                    info.iv[15] = (byte)mNALLengthSize;
                                 }
 
                                 cryptoInfos.add(info);
@@ -207,6 +212,71 @@ public class PiffParser extends ISOBMFFParser {
             } catch (IOException e) {
                 if (LOGS_ENABLED) Log.e(TAG, "Error parsing 'uuid' box", e);
                 parseOK = false;
+            }
+        } else if (header.boxType == BOX_ID_SENC) {
+            if (mCurrentMoofTrackId == mCurrentTrackId && !mSkipInsertSamples &&
+                    !mParsedSencData) {
+                mParsedSencData = true;
+                try {
+                    int versionFlags = mDataSource.readInt();
+
+                    int sampleCount = mDataSource.readInt();
+
+                    ArrayList<CryptoInfo> cryptoInfos = new ArrayList<CryptoInfo>(sampleCount);
+
+                    for (int i = 0; i < sampleCount; i++) {
+                        CryptoInfo info = new CryptoInfo();
+                        info.mode = MediaCodec.CRYPTO_MODE_AES_CTR;
+                        info.iv = new byte[16];
+                        if (mCurrentTrack.mDefaultIVSize == 16) {
+                            mDataSource.read(info.iv);
+                        } else {
+                            // pad IV data to 128 bits
+                            byte[] iv = new byte[8];
+                            mDataSource.read(iv);
+                            System.arraycopy(iv, 0, info.iv, 0, 8);
+                        }
+                        if ((versionFlags & 0x00000002) > 0) {
+                            short subSampleCount = mDataSource.readShort();
+                            info.numSubSamples = subSampleCount;
+                            info.numBytesOfClearData = new int[subSampleCount];
+                            info.numBytesOfEncryptedData = new int[subSampleCount];
+                            for (int j = 0; j < subSampleCount; j++) {
+                                info.numBytesOfClearData[j] = mDataSource.readShort();
+                                info.numBytesOfEncryptedData[j] = mDataSource.readInt();
+                            }
+                        } else {
+                            info.numSubSamples = 1;
+                            info.numBytesOfClearData = new int[1];
+                            info.numBytesOfClearData[0] = 0;
+                            info.numBytesOfEncryptedData = new int[1];
+                            info.numBytesOfEncryptedData[0] = -1;
+                        }
+
+                        if (info.numBytesOfClearData[0] == 0 && mCurrentTrack
+                                .getTrackType() == TrackType.VIDEO) {
+                            info.iv[15] = (byte)mNALLengthSize;
+                        }
+
+                        cryptoInfos.add(info);
+                    }
+
+                    mCurrentTrack.addCryptoInfos(cryptoInfos);
+                } catch (EOFException e) {
+                    if (LOGS_ENABLED) {
+                        Log.e(TAG, "Error parsing 'senc' box", e);
+                    }
+
+                    mCurrentBoxSequence.removeLast();
+                    parseOK = false;
+                } catch (IOException e) {
+                    if (LOGS_ENABLED) {
+                        Log.e(TAG, "Error parsing 'senc' box", e);
+                    }
+
+                    mCurrentBoxSequence.removeLast();
+                    parseOK = false;
+                }
             }
         } else if (header.boxType == BOX_ID_AVCN) {
             return parseAvcn(header);
