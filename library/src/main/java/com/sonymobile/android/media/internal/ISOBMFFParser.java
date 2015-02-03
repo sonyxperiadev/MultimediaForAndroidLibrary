@@ -631,7 +631,7 @@ public class ISOBMFFParser extends MediaParser {
                     float frameRate = (sampleCount * 1000000.0f / trackDurationUs);
                     mCurrentTrack.getMetaData().addValue(KEY_FRAME_RATE, frameRate);
                 } else {
-                    mCurrentTrack.getMetaData().addValue(KEY_FRAME_RATE, 0);
+                    mCurrentTrack.getMetaData().addValue(KEY_FRAME_RATE, 0f);
                 }
             }
         } else if (header.boxType == BOX_ID_STSD) {
