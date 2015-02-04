@@ -39,8 +39,6 @@ class SampleTable {
 
     ByteBuffer mStssData;
 
-    ArrayList<Sample> mSamples;
-
     private int mSampleCount;
 
     private int mTimeScale;
@@ -48,6 +46,18 @@ class SampleTable {
     private boolean mUseLongChunkOffsets;
 
     private long mDurationUs = 0;
+
+    private int[] mSampleSize;
+
+    private int[] mSampleDescriptionIndex;
+
+    private long[] mSampleOffset;
+
+    private boolean[] mSampleIsSyncSample;
+
+    private long[] mSampleTimestampUs;
+
+    private long[] mSampleDurationUs;
 
     public SampleTable() {
 
@@ -83,6 +93,30 @@ class SampleTable {
         mStszData = ByteBuffer.wrap(data);
     }
 
+    public long getTimestampUs(int i) {
+        return mSampleTimestampUs[i];
+    }
+
+    public long getDurationUs(int i) {
+        return mSampleDurationUs[i];
+    }
+
+    public long getOffset(int i) {
+        return mSampleOffset[i];
+    }
+
+    public int getSize(int i) {
+        return mSampleSize[i];
+    }
+
+    public int getSampleDescriptionIndex(int i) {
+        return mSampleDescriptionIndex[i];
+    }
+
+    public boolean isSyncSample(int i) {
+        return mSampleIsSyncSample[i];
+    }
+
     @SuppressWarnings("unused")
     public boolean buildSampleTable() {
         if (mStszData == null || mStszData.capacity() == 0 || mSttsData == null
@@ -105,8 +139,6 @@ class SampleTable {
             return false;
         }
 
-        mSamples = new ArrayList<Sample>();
-
         // stsz data
         mStszData.getInt(); // version and flags
         int sampleSize = mStszData.getInt(); // sample_size
@@ -114,6 +146,12 @@ class SampleTable {
         if (mSampleCount == 0) {
             return false;
         }
+        mSampleSize = new int[mSampleCount];
+        mSampleDescriptionIndex = new int[mSampleCount];
+        mSampleOffset = new long[mSampleCount];
+        mSampleIsSyncSample = new boolean[mSampleCount];
+        mSampleTimestampUs = new long[mSampleCount];
+        mSampleDurationUs = new long[mSampleCount];
 
         // stts data
         mSttsData.getInt(); // version and flags
@@ -167,8 +205,7 @@ class SampleTable {
             stssSampleNumber = mStssData.getInt(); // sample_number;
         }
 
-        for (int i = 1; i <= mSampleCount; i++) {
-
+        for (int i = 0; i < mSampleCount; i++) {
             // Chunk data for sample
             if (stscSamplePerChunkCount > stscSamplesPerChunk) {
                 chunkCount++;
@@ -197,14 +234,12 @@ class SampleTable {
                 }
             }
 
-            Sample sample = new Sample();
-
             // Stsz data for sample
             int entrySize = sampleSize;
             if (sampleSize == 0) {
                 entrySize = mStszData.getInt(); // entry_size
             }
-            sample.setSampleSize(entrySize);
+            mSampleSize[i] = entrySize;
 
             // stts data for sample
             if (sttsSampleCounter > sttsCurrentSampleCount) {
@@ -217,37 +252,35 @@ class SampleTable {
                     return false;
                 }
             }
-            sample.setSampleTimeToSampleUs(sttsCurrentSampleTimeToSample);
-            sample.setSampleDurationUs((long)sttsCurrentSampleDelta * 1000000 / mTimeScale);
+            mSampleTimestampUs[i] = sttsCurrentSampleTimeToSample;
+            mSampleDurationUs[i] = (long)sttsCurrentSampleDelta * 1000000 / mTimeScale;
             sttsCurrentSampleTimeToSample += (long)sttsCurrentSampleDelta * 1000000 / mTimeScale;
             sttsSampleCounter++;
 
             // ctts data for sample
             if (mCttsData != null) {
                 cttsCurrentEntrySampleCount++;
-                sample.setSampleCttsUs((int)((long)cttsSampleOffset * 1000000 / mTimeScale));
+                mSampleTimestampUs[i] += (int)((long)cttsSampleOffset * 1000000 / mTimeScale);
             }
 
-            sample.setSampleDescriptionIndex(stscSampleDescriptionIndex);
-            sample.setSampleOffset(currentSampleOffset);
+            mSampleDescriptionIndex[i] = stscSampleDescriptionIndex;
+            mSampleOffset[i] = currentSampleOffset;
 
             currentSampleOffset += entrySize;
             stscSamplePerChunkCount++;
 
             // stss data
             if (mStssData != null) {
-                if (i == stssSampleNumber) {
+                if (i+1 == stssSampleNumber) {
                     stssTableCount++;
-                    sample.setIsSyncSample();
+                    mSampleIsSyncSample[i] = true;
                     if (stssTableCount < stssEntryCount) {
                         stssSampleNumber = mStssData.getInt();
                     }
                 }
             } else {
-                sample.setIsSyncSample();
+                mSampleIsSyncSample[i] = true;
             }
-
-            mSamples.add(sample);
         }
         mDurationUs = sttsCurrentSampleTimeToSample;
 
@@ -265,12 +298,6 @@ class SampleTable {
         return mSampleCount;
     }
 
-    public Sample getSample(int index) {
-        if (index > mSampleCount) {
-            return null;
-        }
-        return mSamples.get(index);
-    }
 
     public void setTimescale(int timeScale) {
         mTimeScale = timeScale;
@@ -281,9 +308,8 @@ class SampleTable {
         int sampleCount = 0;
         int latestSyncSampleIndex = 0;
         for (int i = 0; i < mSampleCount; i++) {
-            Sample sample = mSamples.get(i);
-            if (sample.isSyncSample()) {
-                sampleTimeUs = sample.getTimestampUs();
+            if (mSampleIsSyncSample[i]) {
+                sampleTimeUs = mSampleTimestampUs[i];
                 if (sampleTimeUs >= seekTimeUs) {
                     break;
                 }
@@ -296,85 +322,13 @@ class SampleTable {
 
     public long getTimeOfSample(int sampleIndex) {
         if (sampleIndex < mSampleCount) {
-            return mSamples.get(sampleIndex).getTimestampUs();
+            return mSampleTimestampUs[sampleIndex];
         }
         return -1;
     }
 
     public long getDurationUs() {
         return mDurationUs;
-    }
-
-}
-
-class Sample {
-
-    private int mSampleSize;
-
-    private int mSampleDescriptionIndex;
-
-    private long mSampleOffset;
-
-    private boolean mSampleIsSyncSample;
-
-    private long mSampleTimestampUs;
-
-    private long mSampleDurationUs;
-
-    public Sample() {
-
-    }
-
-    public void setSampleCttsUs(int cttsUs) {
-        mSampleTimestampUs += cttsUs;
-    }
-
-    public void setSampleSize(int entrySize) {
-        mSampleSize = entrySize;
-    }
-
-    public void setIsSyncSample() {
-        mSampleIsSyncSample = true;
-    }
-
-    public void setSampleOffset(long offset) {
-        mSampleOffset = offset;
-    }
-
-    public void setSampleDescriptionIndex(int sampleDescriptionIndex) {
-        mSampleDescriptionIndex = sampleDescriptionIndex;
-    }
-
-    public void setSampleTimeToSampleUs(long sttsUs) {
-        mSampleTimestampUs = sttsUs;
-    }
-
-    public long getTimestampUs() {
-        return mSampleTimestampUs;
-    }
-
-    public void setSampleDurationUs(long sttsDeltaUs) {
-        mSampleDurationUs = sttsDeltaUs;
-    }
-
-    public long getDurationUs() {
-        return mSampleDurationUs;
-    }
-
-    public long getOffset() {
-        return mSampleOffset;
-    }
-
-    public int getSize() {
-        return mSampleSize;
-    }
-
-    public int getSampleDescriptionIndex() {
-        return mSampleDescriptionIndex;
-    }
-
-    public boolean isSyncSample() {
-        return mSampleIsSyncSample;
     }
 
 }

@@ -278,11 +278,10 @@ public class VUParser extends ISOBMFFParser {
             return false;
         }
         mSinfList = new ArrayList<SinfData>(2);
-        Sample sample = sampleTable.getSample(0);
-        int dataSize = sample.getSize();
+        int dataSize = sampleTable.getSize(0);
         byte[] data = new byte[dataSize];
         try {
-            mDataSource.readAt(sample.getOffset(), data, dataSize);
+            mDataSource.readAt(sampleTable.getOffset(0), data, dataSize);
             ByteBuffer dataBuffer = ByteBuffer.wrap(data);
             byte updateTag = dataBuffer.get();
             if (updateTag != 1) {
@@ -724,12 +723,12 @@ public class VUParser extends ISOBMFFParser {
                 accessUnit.status = AccessUnit.END_OF_STREAM;
                 return accessUnit;
             }
-            Sample sample = mSampleTable.getSample(mCurrentSampleIndex);
-            if (sample == null) {
+            if (mCurrentSampleIndex >= mSampleTable.getSampleCount()) {
                 accessUnit.status = AccessUnit.ERROR;
                 return accessUnit;
             }
-            int sampleDescriptionIndex = sample.getSampleDescriptionIndex();
+            int sampleDescriptionIndex =
+                    mSampleTable.getSampleDescriptionIndex(mCurrentSampleIndex);
             if (mCurrentSampleDescriptionIndex == -1) {
                 mCurrentSampleDescriptionIndex = sampleDescriptionIndex;
             } else if (sampleDescriptionIndex != mCurrentSampleDescriptionIndex) {
@@ -739,10 +738,11 @@ public class VUParser extends ISOBMFFParser {
                 // TODO Send new format to codec
             }
             accessUnit.status = AccessUnit.OK;
-            accessUnit.timeUs = sample.getTimestampUs() + mEditMediaTimeTicks;
-            accessUnit.durationUs = sample.getDurationUs();
-            long dataOffset = sample.getOffset();
-            int dataSize = sample.getSize();
+            accessUnit.timeUs =
+                    mSampleTable.getTimestampUs(mCurrentSampleIndex) + mEditMediaTimeTicks;
+            accessUnit.durationUs = mSampleTable.getDurationUs(mCurrentSampleIndex);
+            long dataOffset = mSampleTable.getOffset(mCurrentSampleIndex);
+            int dataSize = mSampleTable.getSize(mCurrentSampleIndex);
             if (accessUnit.data == null || accessUnit.data.length < dataSize) {
                 accessUnit.data = null;
                 accessUnit.data = new byte[dataSize];
@@ -786,7 +786,7 @@ public class VUParser extends ISOBMFFParser {
                     dstOffset += nalLength;
                 }
             }
-            accessUnit.isSyncSample = sample.isSyncSample();
+            accessUnit.isSyncSample = mSampleTable.isSyncSample(mCurrentSampleIndex);
 
             /*
              * final char[] hexArray = "0123456789ABCDEF".toCharArray(); char[]

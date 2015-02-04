@@ -2494,12 +2494,12 @@ public class ISOBMFFParser extends MediaParser {
                 accessUnit.status = AccessUnit.END_OF_STREAM;
                 return accessUnit;
             }
-            Sample sample = mSampleTable.getSample(mCurrentSampleIndex);
-            if (sample == null) {
+            if (mCurrentSampleIndex >= mSampleTable.getSampleCount()) {
                 accessUnit.status = AccessUnit.ERROR;
                 return accessUnit;
             }
-            int sampleDescriptionIndex = sample.getSampleDescriptionIndex();
+            int sampleDescriptionIndex =
+                    mSampleTable.getSampleDescriptionIndex(mCurrentSampleIndex);
             if (mCurrentSampleDescriptionIndex == -1) {
                 mCurrentSampleDescriptionIndex = sampleDescriptionIndex;
             } else if (sampleDescriptionIndex != mCurrentSampleDescriptionIndex) {
@@ -2510,11 +2510,11 @@ public class ISOBMFFParser extends MediaParser {
             }
             accessUnit.status = AccessUnit.OK;
             accessUnit.trackIndex = mTrackIndex;
-            accessUnit.timeUs = sample.getTimestampUs()
+            accessUnit.timeUs = mSampleTable.getTimestampUs(mCurrentSampleIndex)
                     - mEditMediaTimeTicks * 1000000 / mTimeScale;
-            accessUnit.durationUs = sample.getDurationUs();
-            long dataOffset = sample.getOffset();
-            int dataSize = sample.getSize();
+            accessUnit.durationUs = mSampleTable.getDurationUs(mCurrentSampleIndex);
+            long dataOffset = mSampleTable.getOffset(mCurrentSampleIndex);
+            int dataSize = mSampleTable.getSize(mCurrentSampleIndex);
             if (accessUnit.data == null || accessUnit.data.length < dataSize) {
                 accessUnit.data = null;
                 accessUnit.data = new byte[dataSize];
@@ -2558,7 +2558,7 @@ public class ISOBMFFParser extends MediaParser {
                     dstOffset += nalLength;
                 }
             }
-            accessUnit.isSyncSample = sample.isSyncSample();
+            accessUnit.isSyncSample = mSampleTable.isSyncSample(mCurrentSampleIndex);
 
             mLastTimestampUs = accessUnit.timeUs;
 
@@ -2967,11 +2967,11 @@ public class ISOBMFFParser extends MediaParser {
                     // completion
                     return true;
                 }
-                Sample sample = mSampleTable.getSample(mCurrentSampleIndex);
                 boolean hasData = mDataSource
-                        .hasDataAvailable(sample.getOffset(), sample.getSize());
+                        .hasDataAvailable(mSampleTable.getOffset(mCurrentSampleIndex),
+                                mSampleTable.getSize(mCurrentSampleIndex));
                 if (!hasData) {
-                    mDataSource.requestReadPosition(sample.getOffset());
+                    mDataSource.requestReadPosition(mSampleTable.getOffset(mCurrentSampleIndex));
                 }
                 return hasData;
             }
