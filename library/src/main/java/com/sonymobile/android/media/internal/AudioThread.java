@@ -380,7 +380,7 @@ public final class AudioThread extends CodecThread implements Clock {
 
                 if (inputBufferIndex < 0) {
                     try {
-                        inputBufferIndex = mCodec.dequeueInputBuffer(1000);
+                        inputBufferIndex = mCodec.dequeueInputBuffer(0);
                     } catch (RuntimeException e) {
                         if (LOGS_ENABLED) Log.e(TAG, "Exception in dequeueInputBuffer", e);
                         mCallbacks.obtainMessage(Player.MSG_CODEC_NOTIFY, CODEC_ERROR,
@@ -469,7 +469,7 @@ public final class AudioThread extends CodecThread implements Clock {
             Frame frame = removeFrameFromPool();
             int outputBufferIndex;
             try {
-                outputBufferIndex = mCodec.dequeueOutputBuffer(frame.info, 1000);
+                outputBufferIndex = mCodec.dequeueOutputBuffer(frame.info, 0);
             } catch (RuntimeException e) {
                 if (LOGS_ENABLED)
                     Log.e(TAG, "Exception in dequeueOutputBuffer", e);
