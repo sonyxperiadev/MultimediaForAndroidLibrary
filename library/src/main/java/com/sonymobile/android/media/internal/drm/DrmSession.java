@@ -102,8 +102,17 @@ public abstract class DrmSession {
      * @throws MediaCryptoException
      * @throws IllegalStateException
      */
-    public abstract MediaCrypto getMediaCrypto() throws IllegalStateException,
+    public abstract MediaCrypto getMediaCrypto(String key) throws IllegalStateException,
             MediaCryptoException;
+
+    /**
+     * Release a MediaCrypto for the current DRM session.
+     *
+     * @return MediaCrypto
+     * @throws MediaCryptoException
+     * @throws IllegalStateException
+     */
+    public abstract void releaseMediaCrypto(String key) throws MediaCryptoException;
 
     /**
      * Get the MediaDrm used for the current DRM session.

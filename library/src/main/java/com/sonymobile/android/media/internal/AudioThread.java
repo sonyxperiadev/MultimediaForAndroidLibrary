@@ -61,6 +61,8 @@ public final class AudioThread extends CodecThread implements Clock {
 
     private static final String TAG = "AudioThread";
 
+    private static final String MEDIA_CRYPTO_KEY = "AudioMediaCrypto";
+
     private static final long MICROS_PER_SECOND = 1000000L;
 
     private static final long INVALID_TIMESTAMP_LIMIT = 4293000000L;
@@ -559,7 +561,7 @@ public final class AudioThread extends CodecThread implements Clock {
 
         if (mDrmSession != null) {
             try {
-                mMediaCrypto = mDrmSession.getMediaCrypto();
+                mMediaCrypto = mDrmSession.getMediaCrypto(MEDIA_CRYPTO_KEY);
             } catch (IllegalStateException e) {
                 if (LOGS_ENABLED) Log.e(TAG, "Exception when obtaining MediaCrypto", e);
                 mCallbacks.obtainMessage(Player.MSG_CODEC_NOTIFY, CODEC_ERROR,
@@ -689,7 +691,8 @@ public final class AudioThread extends CodecThread implements Clock {
                 mAudioTrack = null;
             }
             mCodec.release();
-            if (mMediaCrypto != null) {
+            if (mMediaCrypto != null && mDrmSession == null) {
+                // Only release the MediaCrypto object if not handled by a DRMSession.
                 mMediaCrypto.release();
             }
 

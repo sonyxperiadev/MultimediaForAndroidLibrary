@@ -52,6 +52,8 @@ public final class VideoThread extends VideoCodecThread {
 
     private static final String TAG = "VideoThread";
 
+    private static final String MEDIA_CRYPTO_KEY = "VideoMediaCrypto";
+
     private static final int LATE_FRAME_TIME_MS = -40;
 
     private HandlerThread mEventThread;
@@ -250,7 +252,7 @@ public final class VideoThread extends VideoCodecThread {
 
         if (mDrmSession != null) {
             try {
-                mMediaCrypto = mDrmSession.getMediaCrypto();
+                mMediaCrypto = mDrmSession.getMediaCrypto(MEDIA_CRYPTO_KEY);
             } catch (IllegalStateException e) {
                 if (LOGS_ENABLED)
                     Log.e(TAG, "Exception when obtaining MediaCrypto", e);
@@ -380,7 +382,8 @@ public final class VideoThread extends VideoCodecThread {
             if (mCodec != null) {
                 mCodec.release();
             }
-            if (mMediaCrypto != null) {
+            if (mMediaCrypto != null && mDrmSession == null) {
+                // Only release the MediaCrypto object if not handled by a DRMSession.
                 mMediaCrypto.release();
             }
 

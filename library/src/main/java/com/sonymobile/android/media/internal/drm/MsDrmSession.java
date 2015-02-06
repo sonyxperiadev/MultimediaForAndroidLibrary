@@ -15,7 +15,9 @@
  */
 package com.sonymobile.android.media.internal.drm;
 
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import android.media.MediaCrypto;
@@ -35,6 +37,8 @@ public class MsDrmSession extends DrmSession {
 
     private static final String TAG = "MsDrmSession";
 
+    private HashMap<String, MediaCrypto> mMediaCryptoMap;
+
     public MsDrmSession(Map<UUID, byte[]> psshInfo) throws UnsupportedSchemeException,
             IllegalArgumentException {
 
@@ -45,6 +49,7 @@ public class MsDrmSession extends DrmSession {
         mPsshInfo = psshInfo;
         mMediaDrm = new MediaDrm(DrmUUID.PLAY_READY);
         mOutputController = null;
+        mMediaCryptoMap = new HashMap<String, MediaCrypto>();
     }
 
     @Override
@@ -80,13 +85,27 @@ public class MsDrmSession extends DrmSession {
         }
     }
 
-    public synchronized MediaCrypto getMediaCrypto() throws IllegalStateException,
+    public synchronized MediaCrypto getMediaCrypto(String key) throws IllegalStateException,
             MediaCryptoException {
         if (mState != STATE_OPENED && mState != STATE_OPENED_WITH_KEYS) {
             throw new IllegalStateException("Illegal state. Was a DRM session opened?");
         }
 
-        return new MediaCrypto(DrmUUID.PLAY_READY, mSessionId);
+        MediaCrypto mediaCrypto = mMediaCryptoMap.get(key);
+        if (mediaCrypto == null) {
+            mediaCrypto = new MediaCrypto(DrmUUID.PLAY_READY, mSessionId);
+            mMediaCryptoMap.put(key, mediaCrypto);
+        }
+
+        return mediaCrypto;
+    }
+
+    public synchronized void releaseMediaCrypto(String key) throws MediaCryptoException {
+        MediaCrypto mediaCrypto = mMediaCryptoMap.get(key);
+        if (mediaCrypto != null) {
+            mMediaCryptoMap.remove(key);
+            mediaCrypto.release();
+        }
     }
 
     @Override
@@ -96,6 +115,9 @@ public class MsDrmSession extends DrmSession {
         if (DEBUG_ENABLED) Log.d(TAG, "Close count = " + mOpenCount + " state = " + mState);
 
         if (mOpenCount == 0) {
+            if(mMediaCryptoMap.size() != 0) {
+                releaseAllMediaCryptos();
+            }
             if (mSessionId != null) {
                 mMediaDrm.closeSession(mSessionId);
             }
@@ -105,5 +127,16 @@ public class MsDrmSession extends DrmSession {
                 mOutputController.release();
             }
         }
+    }
+
+    private synchronized void releaseAllMediaCryptos() {
+        if (DEBUG_ENABLED) Log.d(TAG, "Open MediaCryptos: " + mMediaCryptoMap.size());
+
+        Set<String> keys = mMediaCryptoMap.keySet();
+        for (String key : keys) {
+            MediaCrypto mediaCrypto = mMediaCryptoMap.get(key);
+            mediaCrypto.release();
+        }
+        mMediaCryptoMap.clear();
     }
 }

@@ -89,11 +89,18 @@ public class MarlinDrmSession extends DrmSession {
         }
     }
 
-    public synchronized MediaCrypto getMediaCrypto() throws IllegalStateException{
+    public synchronized MediaCrypto getMediaCrypto(String key) throws IllegalStateException{
         if (mState != STATE_OPENED && mState != STATE_OPENED_WITH_KEYS) {
             throw new IllegalStateException("Illegal state. Was a DRM session opened?");
         }
         return mMediaCrypto;
+    }
+
+    public synchronized void releaseMediaCrypto(String key) throws IllegalStateException{
+        if (mState != STATE_OPENED && mState != STATE_OPENED_WITH_KEYS) {
+            throw new IllegalStateException("Illegal state. Was a DRM session opened?");
+        }
+        mMediaCrypto.release();
     }
 
     public synchronized MediaDrm getMediaDrm() throws IllegalStateException{
