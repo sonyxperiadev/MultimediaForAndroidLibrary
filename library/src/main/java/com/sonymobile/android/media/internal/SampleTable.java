@@ -63,6 +63,10 @@ class SampleTable {
 
     }
 
+    public boolean isUsingLongChunkOffsets() {
+        return mUseLongChunkOffsets;
+    }
+
     public void setStcoData(byte[] data) {
         mStcoData = ByteBuffer.wrap(data);
         mUseLongChunkOffsets = false;
@@ -117,6 +121,57 @@ class SampleTable {
         return mSampleIsSyncSample[i];
     }
 
+    ByteBuffer getStszData() {
+        return mStszData;
+    }
+
+    ByteBuffer getStcoData() {
+        return mStcoData;
+    }
+
+    public boolean calculateSampleCountAndDuration() {
+        if (mStszData == null || mStszData.capacity() == 0 || mSttsData == null
+                || mSttsData.capacity() == 0 ) {
+            if (LOGS_ENABLED) Log.e(TAG, "unable to calculate sample count and duration");
+
+            if (LOGS_ENABLED && mStszData == null) {
+                Log.e(TAG, "missing mStszData");
+            }
+            if (LOGS_ENABLED && mSttsData == null) {
+                Log.e(TAG, "missing mSttsData");
+            }
+            return false;
+        }
+
+        mStszData.rewind();
+        mSttsData.rewind();
+
+        // stsz data
+        mStszData.getInt(); // version and flags
+        mStszData.getInt(); // sample_size
+        mSampleCount = mStszData.getInt(); // sample_count
+        if (mSampleCount == 0) {
+            return false;
+        }
+
+        // stts data
+        mSttsData.getInt(); // version and flags
+        int sttsEntryCount = mSttsData.getInt(); // entry_count
+
+        long sttsCurrentSampleTimeToSample = 0;
+        int sttsCurrentSampleCount = 0;
+        int sttsCurrentSampleDelta = 0;
+        for (int i = 0; i < sttsEntryCount; ++i) {
+            sttsCurrentSampleCount = mSttsData.getInt();
+            sttsCurrentSampleDelta = mSttsData.getInt();
+            sttsCurrentSampleTimeToSample += sttsCurrentSampleCount *
+                    ((long)sttsCurrentSampleDelta * 1000000 / mTimeScale);
+        }
+
+        mDurationUs = sttsCurrentSampleTimeToSample;
+        return true;
+    }
+
     @SuppressWarnings("unused")
     public boolean buildSampleTable() {
         if (mStszData == null || mStszData.capacity() == 0 || mSttsData == null
@@ -138,6 +193,11 @@ class SampleTable {
             }
             return false;
         }
+
+        mStszData.rewind();
+        mSttsData.rewind();
+        mStscData.rewind();
+        mStcoData.rewind();
 
         // stsz data
         mStszData.getInt(); // version and flags
@@ -283,15 +343,16 @@ class SampleTable {
             }
         }
         mDurationUs = sttsCurrentSampleTimeToSample;
-
-        mSttsData = null;
-        mCttsData = null;
-        mStscData = null;
-        mStszData = null;
-        mStcoData = null;
-        mStssData = null;
-
         return true;
+    }
+
+    public void releaseSampleTable() {
+        mSampleSize = null;
+        mSampleDescriptionIndex = null;
+        mSampleOffset = null;
+        mSampleIsSyncSample = null;
+        mSampleTimestampUs = null;
+        mSampleDurationUs = null;
     }
 
     public int getSampleCount() {

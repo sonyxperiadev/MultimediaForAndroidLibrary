@@ -392,6 +392,18 @@ public class ISOBMFFParser extends MediaParser {
 
         updateAspectRatio();
 
+        if (mCurrentAudioTrack != null) {
+            mCurrentAudioTrack.buildSampleTable();
+        }
+
+        if (mCurrentVideoTrack != null) {
+            mCurrentVideoTrack.buildSampleTable();
+        }
+
+        if (mCurrentSubtitleTrack != null) {
+            mCurrentSubtitleTrack.buildSampleTable();
+        }
+
         return parseOK;
     }
 
@@ -619,8 +631,10 @@ public class ISOBMFFParser extends MediaParser {
                 IsoTrack currentTrack = (IsoTrack)mTracks.get(mTracks.size() - 1);
                 SampleTable sampleTable = currentTrack.getSampleTable();
                 sampleTable.setTimescale(currentTrack.getTimeScale());
-                if (sampleTable.buildSampleTable() == false) {
-                    if (LOGS_ENABLED) Log.w(TAG, "Error during sample table construction");
+
+                if (sampleTable.calculateSampleCountAndDuration() == false) {
+                    if (LOGS_ENABLED) Log.w(TAG,
+                            "Error while calculating sample count and duration");
                 }
                 int sampleCount = sampleTable.getSampleCount();
                 if (sampleCount > 0) {
@@ -2444,6 +2458,14 @@ public class ISOBMFFParser extends MediaParser {
             mSampleDescriptionList = new ArrayList<MediaFormat>(1);
         }
 
+        public boolean buildSampleTable() {
+            return mSampleTable.buildSampleTable();
+        }
+
+        public void releaseSampleTable() {
+            mSampleTable.releaseSampleTable();
+        }
+
         public void addSampleDescriptionEntry(MediaFormat mediaFormat) {
             if (mMediaFormat == null) {
                 mMediaFormat = mediaFormat;
@@ -3172,6 +3194,7 @@ public class ISOBMFFParser extends MediaParser {
                 long timeUs = 0;
 
                 if (mCurrentAudioTrack != null) {
+                    mCurrentAudioTrack.releaseSampleTable();
                     timeUs = mCurrentAudioTrack.getLastTimestampUs();
                 } else if (mCurrentVideoTrack != null) {
                     timeUs = mCurrentVideoTrack.getLastTimestampUs();
@@ -3180,6 +3203,7 @@ public class ISOBMFFParser extends MediaParser {
                 }
 
                 mCurrentAudioTrack = track;
+                mCurrentAudioTrack.buildSampleTable();
 
                 mCurrentAudioTrack.seekTo(timeUs, mIsFragmented);
 
@@ -3198,6 +3222,7 @@ public class ISOBMFFParser extends MediaParser {
                 long timeUs = 0;
 
                 if (mCurrentSubtitleTrack != null) {
+                    mCurrentSubtitleTrack.releaseSampleTable();
                     timeUs = mCurrentSubtitleTrack.getLastTimestampUs();
                 } else if (mCurrentAudioTrack != null) {
                     timeUs = mCurrentAudioTrack.getLastTimestampUs();
@@ -3206,6 +3231,7 @@ public class ISOBMFFParser extends MediaParser {
                 }
 
                 mCurrentSubtitleTrack = track;
+                mCurrentSubtitleTrack.buildSampleTable();
 
                 mCurrentSubtitleTrack.seekTo(timeUs, mIsFragmented);
 
@@ -3216,6 +3242,7 @@ public class ISOBMFFParser extends MediaParser {
                     return TrackType.UNKNOWN;
                 }
 
+                mCurrentSubtitleTrack.releaseSampleTable();
                 mCurrentSubtitleTrack = null;
 
                 return TrackType.SUBTITLE;

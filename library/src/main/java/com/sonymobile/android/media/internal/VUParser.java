@@ -278,10 +278,33 @@ public class VUParser extends ISOBMFFParser {
             return false;
         }
         mSinfList = new ArrayList<SinfData>(2);
-        int dataSize = sampleTable.getSize(0);
+
+        ByteBuffer stszData = sampleTable.getStszData();
+        stszData.rewind();
+        stszData.getInt(); // version and flags
+
+        int dataSize  = stszData.getInt();
+        if (dataSize == 0) {
+            stszData.getInt(); // sample_count
+            dataSize  = stszData.getInt();
+        }
+
         byte[] data = new byte[dataSize];
         try {
-            mDataSource.readAt(sampleTable.getOffset(0), data, dataSize);
+            ByteBuffer stcoData = sampleTable.getStcoData();
+            stcoData.rewind();
+
+            stcoData.getInt(); // version and flags
+            stcoData.getInt(); // entry_count
+
+            long sampleOffset = 0;
+            if (sampleTable.isUsingLongChunkOffsets()) {
+                sampleOffset = stcoData.getLong();
+            } else {
+                sampleOffset = 0xFFFFFFFFL & stcoData.getInt();
+            }
+
+            mDataSource.readAt(sampleOffset, data, dataSize);
             ByteBuffer dataBuffer = ByteBuffer.wrap(data);
             byte updateTag = dataBuffer.get();
             if (updateTag != 1) {
