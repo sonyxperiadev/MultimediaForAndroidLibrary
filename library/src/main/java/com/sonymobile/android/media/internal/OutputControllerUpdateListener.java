@@ -43,14 +43,14 @@ public class OutputControllerUpdateListener implements OnOutputControllerUpdateL
     @Override
     public void onExternalWifiRestricted(OutputControlEvent outputControlEvent) {
         OutputBlockedInfo info = new OutputBlockedInfo();
-        info.what = OutputBlockedInfo.AUDIO_MUTED & OutputBlockedInfo.EXTERNAL_DISPLAY_BLOCKED;
+        info.what = OutputBlockedInfo.AUDIO_MUTED | OutputBlockedInfo.EXTERNAL_DISPLAY_BLOCKED;
         mPlayer.onOutputControlEvent(OUTPUT_BLOCKED, info);
     }
 
     @Override
     public void onExternalHDMIRestricted(OutputControlEvent outputControlEvent) {
         OutputBlockedInfo info = new OutputBlockedInfo();
-        info.what = OutputBlockedInfo.AUDIO_MUTED & OutputBlockedInfo.EXTERNAL_DISPLAY_BLOCKED;
+        info.what = OutputBlockedInfo.AUDIO_MUTED | OutputBlockedInfo.EXTERNAL_DISPLAY_BLOCKED;
         mPlayer.onOutputControlEvent(OUTPUT_BLOCKED, info);
     }
 
