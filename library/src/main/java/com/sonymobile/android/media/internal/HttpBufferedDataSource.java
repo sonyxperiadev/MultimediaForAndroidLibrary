@@ -52,7 +52,7 @@ public class HttpBufferedDataSource extends BufferedDataSource implements Thresh
     }
 
     @Override
-    public int readAt(long offset, byte[] buffer, int size) throws IOException {
+    public synchronized int readAt(long offset, byte[] buffer, int size) throws IOException {
         if (LOGS_ENABLED) Log.d(TAG, "readAt " + offset + ", " + size + " bytes"
                 + " mCurrentOffset: " + mCurrentOffset);
 
@@ -151,7 +151,8 @@ public class HttpBufferedDataSource extends BufferedDataSource implements Thresh
         return totalRead;
     }
 
-    protected void openConnectionsAndStreams() throws FileNotFoundException, IOException {
+    protected synchronized void openConnectionsAndStreams()
+            throws FileNotFoundException, IOException {
         super.openConnectionsAndStreams();
 
         if (mBis != null) {
@@ -195,7 +196,7 @@ public class HttpBufferedDataSource extends BufferedDataSource implements Thresh
     }
 
     @Override
-    public boolean hasDataAvailable(long offset, int size) {
+    public synchronized boolean hasDataAvailable(long offset, int size) {
         if (mCurrentOffset > offset && mMarkedOffset <= offset && mMarkedOffset != -1) {
             // can back to offset in current buffer
             return true;
@@ -208,7 +209,7 @@ public class HttpBufferedDataSource extends BufferedDataSource implements Thresh
     }
 
     @Override
-    public void requestReadPosition(long offset) throws IOException {
+    public synchronized void requestReadPosition(long offset) throws IOException {
         if (offset < mMarkedOffset
                 || (offset > mCurrentOffset && offset > (mMarkedOffset + (mReadLimit * 2)))) {
             if (LOGS_ENABLED)

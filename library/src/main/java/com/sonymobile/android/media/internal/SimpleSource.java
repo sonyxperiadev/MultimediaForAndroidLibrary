@@ -20,6 +20,7 @@ import java.io.FileDescriptor;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.Vector;
+import java.util.concurrent.locks.ReentrantLock;
 
 import android.media.MediaFormat;
 import android.os.Handler;
@@ -66,6 +67,8 @@ public final class SimpleSource extends MediaSource {
 
     private boolean mIsHttp = false;
 
+    private ReentrantLock mReentrantLock;
+
     public SimpleSource(String path, long offset, long length, Handler notify, int maxBufferSize) {
         super(notify);
         if (maxBufferSize == -1) {
@@ -90,6 +93,8 @@ public final class SimpleSource extends MediaSource {
             mBuffering = true;
             notify(SOURCE_BUFFERING_START);
         }
+
+        mReentrantLock = new ReentrantLock();
     }
 
     public SimpleSource(FileDescriptor fd, long offset, long length, Handler notify) {
@@ -133,7 +138,7 @@ public final class SimpleSource extends MediaSource {
         if (mIsHttp) {
             AccessUnit accessUnit;
             try {
-                if (mMediaParser.hasDataAvailable()) {
+                if (mMediaParser.hasDataAvailable(type)) {
                     accessUnit = mMediaParser.dequeueAccessUnit(type);
                     if (mBuffering) {
                         mBuffering = false;
@@ -223,6 +228,22 @@ public final class SimpleSource extends MediaSource {
     public Statistics getStatistics() {
         // Not supported
         return null;
+    }
+
+    public boolean tryLock() {
+        if (mIsHttp) {
+            mReentrantLock.lock();
+            return true;
+        }
+        return false;
+    }
+
+    public boolean tryUnLock() {
+        if (mIsHttp) {
+            mReentrantLock.unlock();
+            return true;
+        }
+        return false;
     }
 
     private void onPrepareAsync() {

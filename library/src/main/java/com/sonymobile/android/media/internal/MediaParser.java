@@ -283,6 +283,6 @@ abstract public class MediaParser implements MetaDataParser, MetaData {
      * @return true if it is, false if it isn't.
      * @throws IOException if something went wrong in the check.
      */
-    public abstract boolean hasDataAvailable() throws IOException;
+    public abstract boolean hasDataAvailable(TrackType type) throws IOException;
 
 }

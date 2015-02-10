@@ -107,4 +107,16 @@ public abstract class MediaSource {
     public boolean supportsPreview() {
         return mSupportsPreview;
     }
+
+    /**
+     * Try to take the lock.
+     * @return true if lock is held, false if it is not.
+     */
+    public boolean tryLock() { return false; }
+
+    /**
+     * Try to release the lock if taken.
+     * @return true if lock was held and released, false if it was not released or never held.
+     */
+    public boolean tryUnLock() { return false; }
 }

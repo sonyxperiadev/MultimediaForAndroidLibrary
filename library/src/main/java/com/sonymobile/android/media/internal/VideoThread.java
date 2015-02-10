@@ -410,6 +410,7 @@ public final class VideoThread extends VideoCodecThread {
 
     private void doDequeueInputBuffer() {
         try {
+            mSource.tryLock();
             while ((mStarted || mSeeking) && !mEOS) {
 
                 int inputBufferIndex = mInputBuffer;
@@ -541,6 +542,8 @@ public final class VideoThread extends VideoCodecThread {
             int error = getMediaDrmErrorCode(e.getErrorCode());
             mCallback.obtainMessage(MSG_CODEC_NOTIFY, CODEC_ERROR, error)
                     .sendToTarget();
+        } finally {
+            mSource.tryUnLock();
         }
     }
 

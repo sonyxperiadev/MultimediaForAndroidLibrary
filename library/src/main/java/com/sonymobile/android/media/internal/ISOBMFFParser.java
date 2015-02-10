@@ -2987,7 +2987,7 @@ public class ISOBMFFParser extends MediaParser {
                 if (!hasData) {
                     mDataSource.requestReadPosition(sample.dataOffset);
                 }
-                return hasData;
+                return true;
             } else {
                 if (mCurrentSampleIndex >= mSampleTable.getSampleCount()) {
                     // End of stream, return true so other tracks can run to
@@ -3000,7 +3000,7 @@ public class ISOBMFFParser extends MediaParser {
                 if (!hasData) {
                     mDataSource.requestReadPosition(mSampleTable.getOffset(mCurrentSampleIndex));
                 }
-                return hasData;
+                return true;
             }
         }
 
@@ -3541,17 +3541,15 @@ public class ISOBMFFParser extends MediaParser {
     }
 
     @Override
-    public synchronized boolean hasDataAvailable() throws IOException {
+    public synchronized boolean hasDataAvailable(TrackType type) throws IOException {
         boolean hasData = true;
 
-        if (mCurrentAudioTrack != null) {
-            hasData &= mCurrentAudioTrack.hasDataAvailable(mIsFragmented);
-        }
-        if (hasData && mCurrentVideoTrack != null) {
-            hasData &= mCurrentVideoTrack.hasDataAvailable(mIsFragmented);
-        }
-        if (hasData && mCurrentSubtitleTrack != null) {
-            hasData &= mCurrentSubtitleTrack.hasDataAvailable(mIsFragmented);
+        if (type == TrackType.AUDIO && mCurrentAudioTrack != null) {
+            hasData = mCurrentAudioTrack.hasDataAvailable(mIsFragmented);
+        } else if (type == TrackType.VIDEO && mCurrentVideoTrack != null) {
+            hasData = mCurrentVideoTrack.hasDataAvailable(mIsFragmented);
+        } else if (type == TrackType.SUBTITLE && mCurrentSubtitleTrack != null) {
+            hasData = mCurrentSubtitleTrack.hasDataAvailable(mIsFragmented);
         }
 
         return hasData;

@@ -376,6 +376,7 @@ public final class AudioThread extends CodecThread implements Clock {
     @SuppressWarnings("deprecation")
     private void doDequeueInputBuffer() {
         try {
+            mSource.tryLock();
             while (mStarted && !mEOS) {
 
                 int inputBufferIndex = mInputBuffer;
@@ -462,6 +463,8 @@ public final class AudioThread extends CodecThread implements Clock {
             int error = getMediaDrmErrorCode(e.getErrorCode());
             mCallbacks.obtainMessage(Player.MSG_CODEC_NOTIFY, CODEC_ERROR,
                     error).sendToTarget();
+        } finally {
+            mSource.tryUnLock();
         }
     }
 
