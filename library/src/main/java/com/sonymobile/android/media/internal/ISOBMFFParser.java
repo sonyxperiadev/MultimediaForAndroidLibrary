@@ -1123,7 +1123,7 @@ public class ISOBMFFParser extends MediaParser {
                             // pad IV data to 128 bits
                             byte[] iv = new byte[8];
                             mDataSource.read(iv);
-                            System.arraycopy(iv, 0, info.iv, 8, 8);
+                            System.arraycopy(iv, 0, info.iv, 0, 8);
                         }
                         if ((versionFlags & 0x00000002) > 0) {
                             short subSampleCount = mDataSource.readShort();
@@ -1140,6 +1140,11 @@ public class ISOBMFFParser extends MediaParser {
                             info.numBytesOfClearData[0] = 0;
                             info.numBytesOfEncryptedData = new int[1];
                             info.numBytesOfEncryptedData[0] = -1;
+                        }
+
+                        if (info.numBytesOfClearData[0] == 0 && mCurrentTrack
+                                .getTrackType() == TrackType.VIDEO) {
+                            info.iv[15] = (byte)mNALLengthSize;
                         }
 
                         cryptoInfos.add(info);
