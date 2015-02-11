@@ -203,6 +203,8 @@ public final class Player {
 
     private boolean mVideoSeekPending = false;
 
+    private boolean mErrorHasOccured = false;
+
     public Player(Handler callbackListener, Context context, int audioSessionId) {
         mContext = context;
 
@@ -1050,16 +1052,19 @@ public final class Player {
     }
 
     private void onError(int what) {
-        if (mVideoThread != null) {
-            mVideoThread.pause();
+        if(!mErrorHasOccured) {
+            mErrorHasOccured = true;
+            if (mVideoThread != null) {
+                mVideoThread.pause();
+            }
+            if (mAudioThread != null) {
+                mAudioThread.pause();
+            }
+            if (mSubtitleThread != null) {
+                mSubtitleThread.pause();
+            }
+            mCallbacks.obtainMessage(NOTIFY_ERROR, what, 0).sendToTarget();
         }
-        if (mAudioThread != null) {
-            mAudioThread.pause();
-        }
-        if (mSubtitleThread != null) {
-            mSubtitleThread.pause();
-        }
-        mCallbacks.obtainMessage(NOTIFY_ERROR, what, 0).sendToTarget();
     }
 
     private boolean doSetupDrm() {
