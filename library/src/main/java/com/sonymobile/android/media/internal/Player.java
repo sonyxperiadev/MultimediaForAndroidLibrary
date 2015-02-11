@@ -47,6 +47,7 @@ import com.sonymobile.android.media.internal.drm.DrmSession;
 import com.sonymobile.android.media.internal.drm.DrmSession.DrmLicenseException;
 import com.sonymobile.android.media.internal.drm.DrmSessionFactory;
 import com.sonymobile.android.media.internal.drm.DrmUUID;
+import com.sonymobile.android.media.internal.drm.OutputController;
 import com.sonymobile.android.media.internal.mpegdash.DASHSource;
 
 public final class Player {
@@ -692,6 +693,10 @@ public final class Player {
                     thiz.mEventHandler.obtainMessage(MSG_SCAN_SOURCES).sendToTarget();
                     thiz.mVideoCompleted = false;
                     thiz.mAudioCompleted = false;
+                    if (thiz.mDrmSession != null &&
+                            thiz.mDrmSession.getOutputController() != null) {
+                        thiz.mDrmSession.getOutputController().update();
+                    }
                     break;
                 case MSG_PAUSE:
                     if (thiz.mVideoThread != null) {
@@ -735,6 +740,10 @@ public final class Player {
 
                     thiz.mVideoCompleted = false;
                     thiz.mAudioCompleted = false;
+                    if (thiz.mDrmSession != null &&
+                            thiz.mDrmSession.getOutputController() != null) {
+                        thiz.mDrmSession.getOutputController().update();
+                    }
                     break;
                 case MSG_STOP:
                     // Remove any messages in queue. If sources are scanned when

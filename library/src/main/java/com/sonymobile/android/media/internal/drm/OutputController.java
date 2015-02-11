@@ -139,7 +139,6 @@ public class OutputController {
 
         initLicenseInfo(drmInfo); // Make sure the license is updated
         setRestrictions(mLicenseInfo);
-        update();
 
         OutputControlInfo outputControlInfo = new OutputControlInfo();
         outputControlInfo.info = new MetaDataImpl();
