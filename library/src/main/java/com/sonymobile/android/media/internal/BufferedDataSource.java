@@ -396,10 +396,16 @@ public abstract class BufferedDataSource extends DataSource {
 
     protected void checkConnectionAndStream() throws IOException {
         if (mHttpURLConnection == null) {
+            if(mNotify != null){
+                mNotify.sendEmptyMessage(SOURCE_ERROR);
+            }
             throw new IOException("No HTTP connection availble");
         }
 
         if (mBis == null) {
+            if(mNotify != null){
+                mNotify.sendEmptyMessage(SOURCE_ERROR);
+            }
             throw new IOException("No data stream availble");
         }
     }
@@ -485,6 +491,7 @@ public abstract class BufferedDataSource extends DataSource {
                             if (mBis.available() > 0) {
                                 doReconnect();
                             } else {
+                                mBis.close();
                                 mNotify.sendEmptyMessage(SOURCE_ERROR);
                             }
                         }

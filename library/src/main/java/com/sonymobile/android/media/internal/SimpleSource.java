@@ -282,6 +282,9 @@ public final class SimpleSource extends MediaSource {
                 case SOURCE_BUFFERING_UPDATE:
                     thiz.notify(SOURCE_BUFFERING_UPDATE, msg.arg1);
                     break;
+                case SOURCE_ERROR:
+                    thiz.notify(SOURCE_ERROR);
+                    break;
                 default:
                     if (LOGS_ENABLED) Log.w(TAG, "Unknown message");
                     break;
