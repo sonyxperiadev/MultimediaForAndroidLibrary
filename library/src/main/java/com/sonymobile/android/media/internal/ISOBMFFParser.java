@@ -336,7 +336,8 @@ public class ISOBMFFParser extends MediaParser {
             long sourceLength = mDataSource.length();
             BoxHeader nextHeader;
             mCurrentOffset = 0;
-            while (mInitDone == false && mCurrentOffset < sourceLength && parseOK) {
+            while (mInitDone == false && (mCurrentOffset < sourceLength || sourceLength == -1) &&
+                    parseOK) {
                 nextHeader = getNextBoxHeader();
                 if (nextHeader == null) {
                     if (LOGS_ENABLED) Log.e(TAG, "Could not read next box header");
@@ -352,7 +353,7 @@ public class ISOBMFFParser extends MediaParser {
 
             parseOK = mInitDone;
 
-            if (parseOK && mIsFragmented && !mFoundMfra) {
+            if (parseOK && mIsFragmented && !mFoundMfra && sourceLength != -1) {
                 long curOffset = mCurrentOffset;
                 // read mfra at end of file
                 mCurrentOffset = sourceLength - 16;
@@ -2882,7 +2883,8 @@ public class ISOBMFFParser extends MediaParser {
                     if (LOGS_ENABLED) Log.e(TAG, "IOException when retrieving content length", e);
                 }
 
-                if (tfra.moofOffset > 0 && tfra.moofOffset < contentLength) {
+                if (tfra.moofOffset > 0 && (tfra.moofOffset < contentLength ||
+                        contentLength == -1)) {
                     mCurrentOffset = tfra.moofOffset;
                     BoxHeader header = getNextBoxHeader();
                     mCurrentTrackId = mTrackId;
@@ -3013,8 +3015,8 @@ public class ISOBMFFParser extends MediaParser {
             }
 
             while (mCurrentFragmentSampleQueue == null
-                    || (mCurrentFragmentSampleQueue.isEmpty()
-                            && mNextMoofOffset > 0 && mNextMoofOffset < contentLength)) {
+                    || (mCurrentFragmentSampleQueue.isEmpty() && mNextMoofOffset > 0
+                    && (mNextMoofOffset < contentLength || contentLength == -1))) {
                 mCurrentTrackId = mTrackId;
 
                 if (mNextMoofOffset == 0) {
@@ -3411,8 +3413,9 @@ public class ISOBMFFParser extends MediaParser {
             if (header.boxType == BOX_ID_MOOF) {
                 moofOffset = header.startOffset;
             }
-        } while (!mDesiredTrackIdFound && parseOk && mCurrentOffset < sourceLength);
-        if (!parseOk || mCurrentOffset >= sourceLength) {
+        } while (!mDesiredTrackIdFound && parseOk && (mCurrentOffset < sourceLength ||
+                sourceLength == -1));
+        if (!parseOk || (mCurrentOffset >= sourceLength && sourceLength != -1)) {
             if (LOGS_ENABLED) Log.i(TAG, "Did not find any later moof for track " + trackId);
             moofOffset = Integer.MIN_VALUE;
         }
