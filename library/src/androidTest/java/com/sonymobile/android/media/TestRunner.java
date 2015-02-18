@@ -68,8 +68,8 @@ public class TestRunner extends
 
     public void testSetDisplay() throws IOException {
         TestContent tc = mTcp.getTestItemById(TestContent.ID_TYPE_LOCAL);
-        ApiTest.setDisplay(tc, mSurfaceView.getSurfaceView().getHolder(), mSurfaceView
-                .getSurfaceView2().getHolder());
+        ApiTest.setDisplay(tc, mSurfaceView.getSurfaceView().getHolder(),
+                mSurfaceView.getSurfaceView2().getHolder());
     }
 
     public void testSetVideoScalingMode() throws IOException {
@@ -272,7 +272,8 @@ public class TestRunner extends
 
     public void testGetAudioSessionId() throws IOException {
         TestContent tc = mTcp.getTestItemById(TestContent.ID_TYPE_LOCAL);
-        ApiTest.getAudioSessionId(tc, mSurfaceView.getSurfaceView().getHolder(), getActivity());
+        ApiTest.getAudioSessionId(tc, mSurfaceView.getSurfaceView().getHolder(),
+                mSurfaceView.getSurfaceView2().getHolder(), getActivity());
     }
 
     public void testSelectTrack() throws IOException {

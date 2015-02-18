@@ -1426,7 +1426,8 @@ public class ApiTest {
         }
     }
 
-    public static void getAudioSessionId(final TestContent tc, SurfaceHolder sh, Context context)
+    public static void getAudioSessionId(final TestContent tc, SurfaceHolder sh,
+            SurfaceHolder sh2, Context context)
             throws IOException {
         assertNotNull("No test content", tc);
         assertNotNull("No content uri", tc.getContentUri());
@@ -1464,7 +1465,7 @@ public class ApiTest {
                     sMediaPlayer.getAudioSessionId());
             shutDown();
             initMediaPlayer(context);
-            sMediaPlayer.setDisplay(sh);
+            sMediaPlayer.setDisplay(sh2);
             final int refVal2 = 4;
             sMediaPlayer.setAudioSessionId(refVal2);
             sMediaPlayer.setDataSource(tc.getContentUri());
