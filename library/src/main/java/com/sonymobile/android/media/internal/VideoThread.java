@@ -21,6 +21,8 @@ import static com.sonymobile.android.media.internal.Player.MSG_CODEC_NOTIFY;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.HashMap;
+import java.util.Set;
 
 import android.annotation.SuppressLint;
 import android.media.MediaCodec;
@@ -122,8 +124,11 @@ public final class VideoThread extends VideoCodecThread {
 
     private Object mRenderingLock = new Object();
 
+    private HashMap<String, Integer> mCustomMediaFormatParams;
+
     public VideoThread(MediaFormat format, MediaSource source, Surface surface, Clock clock,
-            Handler callback, DrmSession drmSession, int videoScalingMode) {
+            Handler callback, DrmSession drmSession, int videoScalingMode,
+            HashMap<String, Integer> customMediaFormatParams) {
         super();
         mEventThread = new HandlerThread("Video", Process.THREAD_PRIORITY_MORE_FAVORABLE);
         mEventThread.start();
@@ -146,6 +151,8 @@ public final class VideoThread extends VideoCodecThread {
 
         mDrmSession = drmSession;
         mVideoScalingMode = videoScalingMode;
+
+        mCustomMediaFormatParams = customMediaFormatParams;
     }
 
     @Override
@@ -243,11 +250,23 @@ public final class VideoThread extends VideoCodecThread {
         }
     }
 
+    private void addCustomMediaFormatParams(MediaFormat format) {
+        if (mCustomMediaFormatParams != null) {
+            Set<String> keys = mCustomMediaFormatParams.keySet();
+            for (String key : keys) {
+                int value = mCustomMediaFormatParams.get(key);
+                if (LOGS_ENABLED) Log.d(TAG, "Adding Custom Param " + key + " : " + value);
+                format.setInteger(key, value);
+            }
+        }
+    }
+
     private void doSetup(MediaFormat format) {
         mFormat = format;
 
         String mime = format.getString(MediaFormat.KEY_MIME);
 
+        addCustomMediaFormatParams(format);
         updateAspectRatio(mFormat);
 
         if (mDrmSession != null) {

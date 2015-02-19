@@ -206,6 +206,8 @@ public final class Player {
 
     private boolean mErrorHasOccured = false;
 
+    private HashMap<String, Integer> mCustomVideoMediaFormatParams;
+
     public Player(Handler callbackListener, Context context, int audioSessionId) {
         mContext = context;
 
@@ -214,6 +216,8 @@ public final class Player {
         } else {
             mAudioSessionId = AudioSessionManager.generateNewAudioSessionId(mContext);
         }
+
+        mCustomVideoMediaFormatParams = new HashMap<String, Integer>();
 
         mEventThread = new HandlerThread("Player");
         mEventThread.start();
@@ -458,6 +462,18 @@ public final class Player {
         mMaxBufferSize = size;
     }
 
+    public void setCustomVideoConfigurationParameter(String key, int value) {
+        mCustomVideoMediaFormatParams.put(key, value);
+    }
+
+    public int getCustomVideoConfigurationParameter(String key) {
+        if (mCustomVideoMediaFormatParams.containsKey(key)) {
+            return mCustomVideoMediaFormatParams.get(key);
+        }
+
+        return Integer.MIN_VALUE;
+    }
+
     private boolean isVideoSetupComplete() {
         boolean hasVideo = mSource.getSelectedTrackIndex(TrackType.VIDEO) != -1;
 
@@ -594,7 +610,8 @@ public final class Player {
                             if (thiz.mSurface != null) {
                                 thiz.mVideoThread = new VideoThread(videoFormat, thiz.mSource,
                                         thiz.mSurface, thiz.mClockSource, thiz.mEventHandler,
-                                        thiz.mDrmSession, thiz.mVideoScalingMode);
+                                        thiz.mDrmSession, thiz.mVideoScalingMode,
+                                        thiz.mCustomVideoMediaFormatParams);
 
                                 if (thiz.mVideoWidth != 0 || thiz.mVideoHeight != 0) {
                                     // We have already found a video size,

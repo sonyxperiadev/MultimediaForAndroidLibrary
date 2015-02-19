@@ -340,4 +340,8 @@ public class TestRunner extends
         TestContent tc = mTcp.getTestItemById(TestContent.ID_TYPE_HTTP);
         ApiTest.stopReleaseResources(tc, mSurfaceView.getSurfaceView().getHolder());
     }
+
+    public void testSetGetCustomVideoConfigurationParameter() throws IOException {
+        ApiTest.setGetCustomVideoConfigurationParameter();
+    }
 }

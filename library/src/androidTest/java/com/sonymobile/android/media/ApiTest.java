@@ -1857,6 +1857,27 @@ public class ApiTest {
         }
     }
 
+    public static void setGetCustomVideoConfigurationParameter() throws IOException {
+        try {
+            initMediaPlayer();
+
+            sMediaPlayer.setCustomVideoConfigurationParameter("key_one", 1);
+            int setValue = sMediaPlayer.getCustomVideoConfigurationParameter("key_one");
+            assertEquals("Fetched custom value was not same as set", 1, setValue);
+
+            sMediaPlayer.setCustomVideoConfigurationParameter("key_one", 2);
+            setValue = sMediaPlayer.getCustomVideoConfigurationParameter("key_one");
+            assertEquals("Fetched custom value was not same as set", 2, setValue);
+
+            sMediaPlayer.setCustomVideoConfigurationParameter("key_two", 3);
+            setValue = sMediaPlayer.getCustomVideoConfigurationParameter("key_two");
+            assertEquals("Fetched custom value was not same as set", 3, setValue);
+
+        } finally {
+            shutDown();
+        }
+    }
+
     protected static void shutDown() {
         final String testName = "shutDown";
         try {

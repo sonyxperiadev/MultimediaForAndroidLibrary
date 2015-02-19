@@ -332,6 +332,17 @@ import com.sonymobile.android.media.internal.Player;
  * <td>{PREPARING, PREPARED, PLAYING, PAUSED, ERROR, END, COMPLETED} </p></td>
  * <td></p></td>
  * </tr>
+ * <tr>
+ * <td>setCustomVideoConfigurationParameter </p></td>
+ * <td>{IDLE, INITIALIZED} </p></td>
+ * <td>{PREPARING, PREPARED, PLAYING, PAUSED, ERROR, END, COMPLETED} </p></td>
+ * <td></p></td>
+ * </tr>
+ * <td>getCustomVideoConfigurationParameter </p></td>
+ * <td>any </p></td>
+ * <td>{} </p></td>
+ * <td></p></td>
+ * </tr>
  * </table>
  */
 public final class MediaPlayer {
@@ -1992,6 +2003,37 @@ public final class MediaPlayer {
         } else {
             mPlayer.setMaxBufferSize(sizeMb * 1024 * 1024);
         }
+    }
+
+    /**
+     * Set a custom video configuration parameter that will be sent to
+     * MediaCodec via the injected MediaFormat in the configure function.
+     *
+     * @param key   The parameter key.
+     * @param value The parameter value.
+     * @throws IllegalStateException if it is called in an invalid state.
+     */
+    public void setCustomVideoConfigurationParameter(String key, int value) {
+        if (LOGS_ENABLED)
+            Log.d(TAG, "setCustomVideoConfigurationParameter(" + key + ":" + value + ")");
+
+        synchronized (mStateLock) {
+            if (mState != State.IDLE && mState != State.INITIALIZED) {
+                throw new IllegalStateException(
+                        "Custom MediaFormat Parameter must be set in IDLE or INITIALIZED state.");
+            }
+            mPlayer.setCustomVideoConfigurationParameter(key, value);
+        }
+    }
+
+    /**
+     * Get a custom video configuration parameter that was previously set.
+     *
+     * @param key The parameter key.
+     * @return The set value or Integer.MIN_VALUE if the parameter have not been set.
+     */
+    public int getCustomVideoConfigurationParameter(String key) {
+        return mPlayer.getCustomVideoConfigurationParameter(key);
     }
 
     private void updateKeepDeviceAlive() {
