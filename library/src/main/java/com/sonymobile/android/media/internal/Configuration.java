@@ -25,4 +25,6 @@ public class Configuration {
     public static final int SUBTITLE_PRETRIGGER_TIME_MS = 30;
 
     public static final boolean DO_COMPENSATE_AUDIO_TIMESTAMP_LATENCY = false;
+
+    public static final int DEFAULT_HTTP_BUFFER_SIZE = 30 * 1024 * 1024;
 }

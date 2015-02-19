@@ -43,8 +43,6 @@ public class MetaDataParserFactory {
 
     private static final boolean LOGS_ENABLED = Configuration.DEBUG || false;
 
-    private static final int TEN_MB = 1000 * 1000 * 10;
-
     private static final String TAG = "MetaDataParserFactory";
 
      /**
@@ -218,7 +216,7 @@ public class MetaDataParserFactory {
         };
         MediaParser parser = null;
         if (maxBufferSize == -1) {
-            maxBufferSize = TEN_MB;
+            maxBufferSize = Configuration.DEFAULT_HTTP_BUFFER_SIZE;
         }
 
         DataSource dataSource;

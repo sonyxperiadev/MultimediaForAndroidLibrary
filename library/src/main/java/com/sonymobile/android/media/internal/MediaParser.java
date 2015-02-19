@@ -33,8 +33,6 @@ import com.sonymobile.android.media.TrackInfo.TrackType;
  */
 abstract public class MediaParser implements MetaDataParser, MetaData {
 
-    private static final int TEN_MB = 1000 * 1000 * 10;
-
     protected DataSource mDataSource;
 
     protected long mCurrentOffset;
@@ -70,7 +68,7 @@ abstract public class MediaParser implements MetaDataParser, MetaData {
      */
     public MediaParser(String uri, int maxBufferSize) {
         if (maxBufferSize == -1) {
-            maxBufferSize = TEN_MB;
+            maxBufferSize = Configuration.DEFAULT_HTTP_BUFFER_SIZE;
         }
         mDataSource = DataSource.create(uri, maxBufferSize, false);
         mTracks = new ArrayList<MediaParser.Track>();
@@ -88,7 +86,7 @@ abstract public class MediaParser implements MetaDataParser, MetaData {
      */
     public MediaParser(String uri, long offset, long length, int maxBufferSize) {
         if (maxBufferSize == -1) {
-            maxBufferSize = TEN_MB;
+            maxBufferSize = Configuration.DEFAULT_HTTP_BUFFER_SIZE;
         }
         mDataSource = DataSource.create(uri, offset, (int)length, maxBufferSize, null, null, false);
         mTracks = new ArrayList<MediaParser.Track>();

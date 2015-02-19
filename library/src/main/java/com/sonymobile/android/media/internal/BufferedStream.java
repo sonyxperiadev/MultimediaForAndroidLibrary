@@ -136,20 +136,12 @@ public class BufferedStream extends InputStream {
 
     @Override
     public synchronized void mark(int readlimit) {
-        if (!mClosed) {
-            mDataBuffer.mark(readlimit);
-        }
-    }
 
-    public synchronized void mark(int readlimit, int keepBytes) {
-        if (!mClosed) {
-            mDataBuffer.mark(readlimit, keepBytes);
-        }
     }
 
     @Override
     public boolean markSupported() {
-        return true;
+        return false;
     }
 
     @Override
@@ -199,7 +191,6 @@ public class BufferedStream extends InputStream {
         if (mClosed) {
             throw streamIsClosed();
         }
-        mDataBuffer.reset();
     }
 
     @Override
@@ -220,15 +211,35 @@ public class BufferedStream extends InputStream {
         mThresholdListener = listener;
     }
 
-    protected boolean rewind(long rewindBytes) {
+    protected synchronized boolean rewind(int rewindBytes) {
         if (!mClosed) {
             return mDataBuffer.rewind(rewindBytes);
         }
         return false;
     }
 
-    protected void fastforward(int fastForwardBytes) {
+    protected synchronized void fastForward(int fastForwardBytes) {
         mDataBuffer.fastForward(fastForwardBytes);
+    }
+
+    protected synchronized int freeSpace() {
+        return mDataBuffer.freeSpace();
+    }
+
+    protected synchronized boolean canDataFit(int bytes) {
+        return mDataBuffer.canDataFit(bytes);
+    }
+
+    protected synchronized boolean canRewind(int bytesToRewind) {
+        return mDataBuffer.canRewind(bytesToRewind);
+    }
+
+    protected synchronized boolean canFastForward(int bytesToFastForward) {
+        return mDataBuffer.canFastForward(bytesToFastForward);
+    }
+
+    protected synchronized void compact(int bytesToDiscard) {
+        mDataBuffer.compact(bytesToDiscard);
     }
 
     public void reconnect(InputStream in) {

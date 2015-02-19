@@ -43,11 +43,9 @@ public final class SimpleSource extends MediaSource {
 
     private static final String TAG = "SimpleSource";
 
-    private static final int DEFAULT_BUFFER_SIZE = 10 * 1024 * 1024;
+    private static final int MSG_PREPARE = 11;
 
-    private static final int MSG_PREPARE = 1;
-
-    private static final int MSG_SEEKTO = 2;
+    private static final int MSG_SEEKTO = 12;
 
     MediaParser mMediaParser;
 
@@ -72,7 +70,7 @@ public final class SimpleSource extends MediaSource {
     public SimpleSource(String path, long offset, long length, Handler notify, int maxBufferSize) {
         super(notify);
         if (maxBufferSize == -1) {
-            maxBufferSize = DEFAULT_BUFFER_SIZE;
+            maxBufferSize = Configuration.DEFAULT_HTTP_BUFFER_SIZE;
         }
 
         mPath = path;
@@ -230,22 +228,6 @@ public final class SimpleSource extends MediaSource {
         return null;
     }
 
-    public boolean tryLock() {
-        if (mIsHttp) {
-            mReentrantLock.lock();
-            return true;
-        }
-        return false;
-    }
-
-    public boolean tryUnLock() {
-        if (mIsHttp) {
-            mReentrantLock.unlock();
-            return true;
-        }
-        return false;
-    }
-
     private void onPrepareAsync() {
         if (mMediaParser == null) {
             mMediaParser = (MediaParser)MetaDataParserFactory.create(mPath, mOffset, mLength,
@@ -281,6 +263,16 @@ public final class SimpleSource extends MediaSource {
                     break;
                 case SOURCE_BUFFERING_UPDATE:
                     thiz.notify(SOURCE_BUFFERING_UPDATE, msg.arg1);
+                    break;
+                case SOURCE_BUFFERING_START:
+                    if (!thiz.mBuffering) {
+                        thiz.mBuffering = true;
+                        thiz.notify(SOURCE_BUFFERING_START);
+                    }
+                    break;
+                case SOURCE_BUFFERING_END:
+                    thiz.mBuffering = false;
+                    thiz.notify(SOURCE_BUFFERING_END);
                     break;
                 case SOURCE_ERROR:
                     thiz.notify(SOURCE_ERROR);

@@ -210,4 +210,9 @@ public class DirectDataSource extends DataSource {
     public void reset() {
         mCurrentPosition = mStartOffset;
     }
+
+    public void seek(long offset) throws IOException {
+        mFileChannel = mFileChannel.position(offset);
+        mCurrentPosition = mFileChannel.position();
+    }
 }

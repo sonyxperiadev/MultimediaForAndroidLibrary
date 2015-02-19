@@ -32,10 +32,6 @@ public class Buffer {
 
     private int mCurrentWritePosition;
 
-    private int mMarkedPosition;
-
-    private int mMarkReadLimit = -1;
-
     private boolean mClosed = false;
 
     public Buffer(int size) {
@@ -45,52 +41,6 @@ public class Buffer {
     public synchronized void close() {
         mByteBuffer = null;
         mClosed = true;
-    }
-
-    public synchronized void mark(int readLimit) {
-        if (mClosed) {
-            if (LOGS_ENABLED) Log.e(TAG, "Can't mark, buffer is closed!");
-            return;
-        }
-
-        if (readLimit > mMarkReadLimit) {
-            // Need to grow the buffer.
-            // TODO: OutOfMemory possibility
-            growBuffer(mByteBuffer.length + (readLimit - mMarkReadLimit));
-        }
-
-        mMarkedPosition = mCurrentReadPosition;
-        mMarkReadLimit = readLimit;
-        reArrangeBuffer(0);
-    }
-
-    public void mark(int readLimit, int keepBytes) {
-        if (mClosed) {
-            if (LOGS_ENABLED) Log.e(TAG, "Can't mark, buffer is closed!");
-            return;
-        }
-
-        if (readLimit > mMarkReadLimit) {
-            // Need to grow the buffer.
-            // TODO: OutOfMemory possibility
-            growBuffer(mByteBuffer.length + (readLimit - mMarkReadLimit));
-        }
-
-        if (keepBytes > mCurrentReadPosition) {
-            keepBytes = mCurrentReadPosition;
-        }
-        mMarkedPosition = mCurrentReadPosition;
-        mMarkReadLimit = readLimit;
-        reArrangeBuffer(keepBytes);
-    }
-
-    public synchronized void reset() {
-        if (mClosed) {
-            if (LOGS_ENABLED) Log.e(TAG, "Can't reset, buffer is closed!");
-            return;
-        }
-
-        mCurrentReadPosition = mMarkedPosition;
     }
 
     public synchronized long skip(int byteCount) {
@@ -116,11 +66,6 @@ public class Buffer {
         } else {
             mCurrentReadPosition += bytesAvailble;
             bytesSkipped = bytesAvailble;
-        }
-
-        if (mCurrentReadPosition > mMarkReadLimit) {
-            // Passed the read limit
-            reArrangeBuffer(0);
         }
 
         return bytesSkipped;
@@ -189,11 +134,6 @@ public class Buffer {
 
         mCurrentReadPosition += bytesRead;
 
-        // Buffer is unmarked, make sure to rearrange the buffer our self.
-        if (mMarkReadLimit == -1 && mCurrentReadPosition > mByteBuffer.length / 4) {
-            reArrangeBuffer(0);
-        }
-
         return bytesRead;
     }
 
@@ -203,41 +143,58 @@ public class Buffer {
             return -1;
         }
 
-        int bytesAvailble = mByteBuffer.length - mCurrentWritePosition;
+        int bytesAvailable = mByteBuffer.length - mCurrentWritePosition;
 
-        if (bytesAvailble == 0) {
+        if (bytesAvailable == 0) {
             return 0;
         }
 
         int savedData = byteCount;
 
-        if (bytesAvailble > byteCount) {
+        if (bytesAvailable > byteCount) {
             // All data will fit.
             putData(buffer, offset, byteCount);
 
         } else {
             // Not all data will fit in one chunk.
-            // Rearrange the buffer
-            reArrangeBuffer(0);
-
-            // Check how much space we got after rearrange.
-            bytesAvailble = mByteBuffer.length - mCurrentWritePosition;
-            if (bytesAvailble > byteCount) {
-                // All data will fit.
-                putData(buffer, offset, byteCount);
-            } else {
-                // Put what ever will fit
-                putData(buffer, offset, bytesAvailble);
-                savedData = bytesAvailble;
-            }
-        }
-
-        // Buffer is unmarked, make sure to rearrange the buffer our self.
-        if (mMarkReadLimit == -1 && mCurrentWritePosition > ((mByteBuffer.length / 4) * 3)) {
-            reArrangeBuffer(0);
+            // Put what ever will fit
+            putData(buffer, offset, bytesAvailable);
+            savedData = bytesAvailable;
         }
 
         return savedData;
+    }
+
+    protected synchronized int freeSpace() {
+        return mByteBuffer.length - mCurrentWritePosition;
+    }
+
+    protected synchronized boolean canRewind(int bytesToRewind) {
+        return mCurrentReadPosition >= bytesToRewind;
+    }
+
+    protected synchronized boolean canFastForward(int bytesToFastForward) {
+        return mCurrentReadPosition + bytesToFastForward < mCurrentWritePosition;
+    }
+
+    protected synchronized boolean canDataFit(int bytes) {
+        return mByteBuffer.length >= bytes;
+    }
+
+    protected synchronized void compact(int bytesToDiscard) {
+        int discardPosition = 0;
+        if (bytesToDiscard == -1) {
+            discardPosition = mCurrentReadPosition;
+        } else {
+            discardPosition = bytesToDiscard <= mCurrentReadPosition ? bytesToDiscard :
+                    mCurrentReadPosition;
+        }
+
+        System.arraycopy(mByteBuffer, discardPosition, mByteBuffer, 0,
+                mCurrentWritePosition - discardPosition);
+
+        mCurrentReadPosition -= discardPosition;
+        mCurrentWritePosition -= discardPosition;
     }
 
     /**
@@ -247,7 +204,7 @@ public class Buffer {
      *
      * @param rewindBytes The number of bytes to move backwards in this buffer
      */
-    protected synchronized boolean rewind(long rewindBytes) {
+    protected synchronized boolean rewind(int rewindBytes) {
         if (mCurrentReadPosition >= rewindBytes) {
             mCurrentReadPosition -= rewindBytes;
             return true;
@@ -271,40 +228,5 @@ public class Buffer {
     private void putData(byte[] buffer, int offset, int byteCount) {
         System.arraycopy(buffer, offset, mByteBuffer, mCurrentWritePosition, byteCount);
         mCurrentWritePosition += byteCount;
-    }
-
-    private void reArrangeBuffer(int keepBytes) {
-
-        if (mCurrentReadPosition <= keepBytes || mCurrentReadPosition > mCurrentWritePosition) {
-            return;
-        } else if (mCurrentReadPosition > mMarkReadLimit) {
-            // Either a non marked buffer or the read limit has passed.
-            System.arraycopy(mByteBuffer, mCurrentReadPosition - keepBytes, mByteBuffer, 0,
-                    mCurrentWritePosition - mCurrentReadPosition + keepBytes);
-
-            mCurrentWritePosition -= (mCurrentReadPosition - keepBytes);
-            mCurrentReadPosition = keepBytes;
-            mMarkedPosition = 0;
-        } else if (mMarkedPosition > 0) {
-            System.arraycopy(mByteBuffer, mMarkedPosition - keepBytes, mByteBuffer, 0,
-                    mCurrentWritePosition - mMarkedPosition + keepBytes);
-            mCurrentWritePosition -= (mMarkedPosition - keepBytes);
-            mCurrentReadPosition -= (mMarkedPosition - keepBytes);
-            mMarkedPosition = 0;
-        } else {
-            // Can't move any data!
-        }
-    }
-
-    // TODO: OutOfMemory possibility
-    private void growBuffer(int newSize) {
-        try {
-            byte[] localBuffer = new byte[newSize];
-            // Copy all we got!
-            System.arraycopy(mByteBuffer, 0, localBuffer, 0, mByteBuffer.length);
-            mByteBuffer = localBuffer;
-        } catch (Throwable e) {
-            if (LOGS_ENABLED) Log.e(TAG, "Error when growing buffer");
-        }
     }
 }

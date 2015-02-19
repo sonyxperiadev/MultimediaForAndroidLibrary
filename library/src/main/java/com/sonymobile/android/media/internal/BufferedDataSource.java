@@ -59,20 +59,13 @@ public abstract class BufferedDataSource extends DataSource {
 
     protected static final int ONE_MB = 1000 * 1000;
 
-    // TODO: Is it possible to make this even smaller? Find optimum size.
-    protected static final int DEFAULT_BUFFER_SIZE = TEN_KB * 5;
-
     protected HttpURLConnection mHttpURLConnection;
 
     protected BufferedStream mBis;
 
-    protected int mReadLimit = -1;
-
     protected long mOffset = 0;
 
     protected long mCurrentOffset = 0;
-
-    protected long mMarkedOffset = -1;
 
     protected long mContentLength = 0;
 
@@ -172,7 +165,6 @@ public abstract class BufferedDataSource extends DataSource {
                 && mRangeExtended && mLength != -1 && mCurrentOffset < mOffset + mLength) {
             // EOS, but range was extended - so reconnect.
             if (LOGS_ENABLED) Log.d(TAG, "reconnect now because of read EOS at " + mCurrentOffset);
-            mMarkedOffset = -1;
             mOffset = mCurrentOffset;
 
             doCloseSync();
@@ -195,6 +187,11 @@ public abstract class BufferedDataSource extends DataSource {
         long totalSkipped = 0;
         do {
             long skipped = mBis.skip(count - totalSkipped);
+
+            if (skipped == 0) {
+                mBis.compact(-1);
+            }
+
             if (skipped > -1) {
                 mCurrentOffset += skipped;
                 totalSkipped += skipped;
@@ -203,7 +200,6 @@ public abstract class BufferedDataSource extends DataSource {
                 if (LOGS_ENABLED) Log.d(TAG, "EOS when skipping  reconnect now at "
                         + (mCurrentOffset + count - totalSkipped));
 
-                mMarkedOffset = -1;
                 mCurrentOffset += count - totalSkipped;
                 mOffset = mCurrentOffset;
 
@@ -254,12 +250,6 @@ public abstract class BufferedDataSource extends DataSource {
         return mCurrentOffset;
     }
 
-    public void reset() throws IOException {
-        checkConnectionAndStream();
-        mCurrentOffset = mStartOffset;
-        mMarkedOffset = -1;
-        mBis.reset();
-    }
 
     @Override
     public void close() throws IOException {
@@ -276,9 +266,23 @@ public abstract class BufferedDataSource extends DataSource {
     }
 
     @Override
-    public boolean hasDataAvailable(long offset, int size) {
+    public void reset() throws IOException {
         // Interested subclasses should override this.
-        return true;
+    }
+
+    @Override
+    public DataAvailability hasDataAvailable(long offset, int size) {
+        // Interested subclasses should override this.
+        return DataAvailability.AVAILABLE;
+    }
+
+    @Override
+    public void seek(long offset) throws IOException {
+        mCurrentOffset = offset;
+        mOffset = offset;
+
+        doCloseSync();
+        openConnectionsAndStreams();
     }
 
     protected void openConnectionsAndStreams() throws FileNotFoundException, IOException {
@@ -302,7 +306,7 @@ public abstract class BufferedDataSource extends DataSource {
         }
 
         // Set bufferSize to the default size.
-        int bufferSize = DEFAULT_BUFFER_SIZE;
+        int bufferSize = Configuration.DEFAULT_HTTP_BUFFER_SIZE;
 
         if (mBufferSize != -1) {
             // Size specified at create time.
@@ -314,8 +318,7 @@ public abstract class BufferedDataSource extends DataSource {
             // Use length + 200 bytes as bufferSize
             bufferSize = mLength + 200;
         }
-
-        mReadLimit = bufferSize / 2;
+        mBufferSize = bufferSize;
 
         // TODO: We need to check if we run on a low memory device and adjust
         // the buffer size.
@@ -472,9 +475,6 @@ public abstract class BufferedDataSource extends DataSource {
 
     @Override
     public abstract int readAt(long offset, byte[] buffer, int size) throws IOException;
-
-    @Override
-    public abstract void requestReadPosition(long offset) throws IOException;
 
     class ReconnectHandler extends Handler {
 

@@ -42,6 +42,7 @@ import com.sonymobile.android.media.TrackInfo;
 import com.sonymobile.android.media.TrackInfo.TrackType;
 import com.sonymobile.android.media.TrackRepresentation;
 import com.sonymobile.android.media.VideoTrackRepresentation;
+import com.sonymobile.android.media.internal.DataSource.DataAvailability;
 
 public class ISOBMFFParser extends MediaParser {
 
@@ -2985,24 +2986,25 @@ public class ISOBMFFParser extends MediaParser {
                 }
 
                 FragmentSample sample = mCurrentFragmentSampleQueue.peek();
-                boolean hasData = mDataSource.hasDataAvailable(sample.dataOffset, sample.size);
-                if (!hasData) {
-                    mDataSource.requestReadPosition(sample.dataOffset);
+                DataAvailability hasData = mDataSource
+                        .hasDataAvailable(sample.dataOffset, sample.size);
+                if (hasData == DataAvailability.NOT_AVAILABLE) {
+                    mDataSource.seek(sample.dataOffset);
                 }
-                return true;
+                return hasData != DataAvailability.IN_FUTURE;
             } else {
                 if (mCurrentSampleIndex >= mSampleTable.getSampleCount()) {
                     // End of stream, return true so other tracks can run to
                     // completion
                     return true;
                 }
-                boolean hasData = mDataSource
+                DataAvailability hasData = mDataSource
                         .hasDataAvailable(mSampleTable.getOffset(mCurrentSampleIndex),
                                 mSampleTable.getSize(mCurrentSampleIndex));
-                if (!hasData) {
-                    mDataSource.requestReadPosition(mSampleTable.getOffset(mCurrentSampleIndex));
+                if (hasData == DataAvailability.NOT_AVAILABLE) {
+                    mDataSource.seek(mSampleTable.getOffset(mCurrentSampleIndex));
                 }
-                return true;
+                return hasData != DataAvailability.IN_FUTURE;
             }
         }
 

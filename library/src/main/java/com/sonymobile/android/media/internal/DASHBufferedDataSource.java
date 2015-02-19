@@ -62,10 +62,7 @@ public class DASHBufferedDataSource extends BufferedDataSource {
                 return -1;
             }
             // Reconnect to the new offset
-            if (LOGS_ENABLED)
-                Log.d(TAG, "Read at reconnect now at " + offset + " using range "
-                        + "( " + mCurrentOffset + " + " + mReadLimit +
-                        " * 2 )");
+            if (LOGS_ENABLED) Log.d(TAG, "Read at reconnect now at " + offset);
             mCurrentOffset = offset;
             mOffset = offset;
 
@@ -76,11 +73,16 @@ public class DASHBufferedDataSource extends BufferedDataSource {
         int totalRead = 0;
         do {
             int read = mBis.read(buffer, totalRead, size - totalRead);
+
+            if (read == 0) {
+                mBis.compact(-1);
+            }
+
             if (read > -1) {
                 mCurrentOffset += read;
                 totalRead += read;
-            } else if (read == -1
-                    && mRangeExtended && mLength != -1 && mCurrentOffset < mOffset + mLength) {
+            } else if (read == -1 && mRangeExtended && mLength != -1 &&
+                    mCurrentOffset < mOffset + mLength) {
                 // EOS, but range was extended - so reconnect.
                 if (LOGS_ENABLED) Log.d(TAG, "reconnect, EOS at " + mCurrentOffset);
                 mOffset = mCurrentOffset;
@@ -101,18 +103,4 @@ public class DASHBufferedDataSource extends BufferedDataSource {
 
         return totalRead;
     }
-
-    @Override
-    public void requestReadPosition(long offset) throws IOException {
-        if (LOGS_ENABLED)
-            Log.d(TAG, "Request reconnect now at " + offset + " using range "
-                    + "( " + mCurrentOffset + " + " + mReadLimit + " * 2 )");
-
-        mCurrentOffset = offset;
-        mOffset = offset;
-
-        doCloseSync();
-        openConnectionsAndStreams();
-    }
-
 }

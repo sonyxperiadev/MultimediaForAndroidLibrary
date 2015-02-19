@@ -16,6 +16,8 @@
 
 package com.sonymobile.android.media.internal;
 
+import static com.sonymobile.android.media.internal.MediaSource.SOURCE_BUFFERING_END;
+import static com.sonymobile.android.media.internal.MediaSource.SOURCE_BUFFERING_START;
 import static com.sonymobile.android.media.internal.MediaSource.SOURCE_BUFFERING_UPDATE;
 
 import java.io.File;
@@ -31,6 +33,35 @@ import com.sonymobile.android.media.BandwidthEstimator;
 import com.sonymobile.android.media.internal.BufferedStream.ThresholdListener;
 
 public class HttpBufferedDataSource extends BufferedDataSource implements ThresholdListener {
+
+    /**
+     * Buffer handling Logic:
+     *
+     * This class act as the DataSource for HTTP progressive download.
+     * The logic for buffer handling / readAt function work like this:
+     *
+     * If the free space in the underlying BufferedStream is less than 0.5% of the buffer size
+     * the underlying buffer is compacted and up to 10% of the buffer data is removed. This data
+     * should already have been consumed.
+     *
+     * If the requested read position is the same as current read position the requested readAt
+     * operation is performed directly.
+     *
+     * If the requested read position is before current read position the stream is backed to
+     * the requested position only if data for the requested position exists.
+     *
+     * If the requested read position is after current read position the stream is forwarded to
+     * the requested position if the data has already been downloaded.
+     * If data has not been downloaded, there is enough room in the underlying buffer to
+     * download the amount of data and the data to wait for is less than 1/3 of the buffer size
+     * the readAt operation is blocked until the data has been downloaded. If a blocking read is
+     * not desired it is up to the caller to make sure this doesn't happen by checking data
+     * availability.
+     *
+     * In all other cases where the data is not available the HTTP connection is reestablished
+     * at the requested read position.
+     *
+     */
 
     private static final boolean LOGS_ENABLED = Configuration.DEBUG || false;
 
@@ -62,31 +93,45 @@ public class HttpBufferedDataSource extends BufferedDataSource implements Thresh
 
         checkConnectionAndStream();
 
-        if (mCurrentOffset > offset && mMarkedOffset <= offset && mMarkedOffset != -1) {
-            // Backing within the marked data.
-            if (LOGS_ENABLED) Log.d(TAG, "Backing to " + offset + " within the marked range");
+        if (mBis.freeSpace() < (mBufferSize / 200)) {
+            // Less than 0.5% buffer left, compact and remove 10%.
+            mBis.compact((mBufferSize / 10));
+        }
 
-            if (!mBis.rewind(mCurrentOffset - offset)) {
-                if (LOGS_ENABLED) Log.e(TAG, "could not rewind buffer");
-                return -1;
+        if (mCurrentOffset > offset && mBis.canRewind((int)(mCurrentOffset - offset))) {
+            mBis.rewind((int)(mCurrentOffset - offset));
+        } else if (mCurrentOffset < offset) {
+            if (mBis.canFastForward((int)(offset - mCurrentOffset))) {
+                mBis.fastForward((int)(offset - mCurrentOffset));
+            } else {
+                if (!mBis.canDataFit((int)((offset - mCurrentOffset) + size))) {
+                    mBis.compact((mBufferSize / 10));
+                }
+
+                if (mBis.canDataFit((int)(offset - mCurrentOffset) + size) &&
+                        offset - mCurrentOffset < mBufferSize / 3) {
+                    // Data will fit in the buffer and we need to wait for a buffer smaller than
+                    // 1/3 of the length. Send buffering start and wait here...
+                    mNotify.sendEmptyMessage(SOURCE_BUFFERING_START);
+                    Object waiterLock = new Object();
+                    while (!mBis.canFastForward((int)(offset - mCurrentOffset))) {
+                        synchronized (waiterLock) {
+                            try {
+                                waiterLock.wait(50);
+                            } catch (InterruptedException e) {
+                            }
+                        }
+                    }
+                    mNotify.sendEmptyMessage(SOURCE_BUFFERING_END);
+                    mBis.fastForward((int)(offset - mCurrentOffset));
+                } else {
+                    mCurrentOffset = offset;
+                    mOffset = offset;
+                    doCloseSync();
+                    openConnectionsAndStreams();
+                }
             }
-            mCurrentOffset = offset;
-        } else if (offset > mCurrentOffset && offset < (mMarkedOffset + (mReadLimit * 2))) {
-            // offset is inside current buffer, so we can wait until we reach
-            // the data
-            if (LOGS_ENABLED) Log.d(TAG, "requested offset inside current buffer, wait for data");
         } else if (mCurrentOffset != offset) {
-            if (mLength != -1 && (offset < mOffset || mOffset + mLength < offset)) {
-                if (LOGS_ENABLED) Log.e(TAG, "offset outside current range");
-                return -1;
-            }
-            // Reconnect to the new offset
-            if (LOGS_ENABLED)
-                Log.d(TAG, "Read at reconnect now at " + offset + " using range "
-                        + "( " + mCurrentOffset + " + " + mReadLimit +
-                        " * 2 ), markedOffset: "
-                        + mMarkedOffset);
-            mMarkedOffset = -1;
             mCurrentOffset = offset;
             mOffset = offset;
 
@@ -94,34 +139,7 @@ public class HttpBufferedDataSource extends BufferedDataSource implements Thresh
             openConnectionsAndStreams();
         }
 
-        if (mMarkedOffset == -1 || (mCurrentOffset + size) > (mMarkedOffset + mReadLimit)) {
-            // We have passed the mark read limit and need to reset!!
-            if (LOGS_ENABLED)
-                Log.d(TAG, "We have passed the read limit: " + mReadLimit +
-                        " mCurrentOffset: " + mCurrentOffset);
-
-            int keepBytes = mReadLimit / 4;
-            mBis.mark(mReadLimit, keepBytes);
-            if (mMarkedOffset == -1) {
-                mMarkedOffset = mOffset;
-            } else {
-                if (keepBytes > mCurrentOffset) {
-                    mMarkedOffset = mOffset;
-                } else if (keepBytes > mCurrentOffset - mMarkedOffset) {
-                    mMarkedOffset = mCurrentOffset - (mCurrentOffset - mMarkedOffset) + mOffset;
-                } else {
-                    mMarkedOffset = mCurrentOffset - keepBytes + mOffset;
-                }
-            }
-        }
-
         int totalRead = 0;
-        int offsetDiff = (int)(offset - mCurrentOffset);
-        if (offsetDiff > 0) {
-            mBis.fastforward(offsetDiff);
-        }
-        if (LOGS_ENABLED)
-            Log.d(TAG, "mCurrentOffset: " + mCurrentOffset + ", offsetDiff: " + offsetDiff);
         mCurrentOffset = offset;
         do {
             int read = mBis.read(buffer, totalRead, size - totalRead);
@@ -133,14 +151,6 @@ public class HttpBufferedDataSource extends BufferedDataSource implements Thresh
             }
 
             if (totalRead < size) {
-                if (mMarkedOffset != mCurrentOffset
-                        && ((mCurrentOffset + size - totalRead) > (mMarkedOffset + mReadLimit))) {
-                    if (LOGS_ENABLED)
-                        Log.d(TAG, "We passed the read limit again " + mReadLimit
-                                + " mCurrentOffset: " + mCurrentOffset);
-                    mBis.mark(mReadLimit);
-                    mMarkedOffset = mCurrentOffset;
-                }
                 try {
                     Thread.sleep(1); // Let the system take a breath....
                 } catch (InterruptedException e) {
@@ -157,8 +167,6 @@ public class HttpBufferedDataSource extends BufferedDataSource implements Thresh
 
         if (mBis != null) {
             mBis.setThresholdListener(this);
-            mBis.mark(mReadLimit);
-            mMarkedOffset = -1;
 
             // start thread for buffering callbacks
             if (mBufferingThread != null && !mBufferingThread.isAlive()) {
@@ -196,34 +204,24 @@ public class HttpBufferedDataSource extends BufferedDataSource implements Thresh
     }
 
     @Override
-    public synchronized boolean hasDataAvailable(long offset, int size) {
-        if (mCurrentOffset > offset && mMarkedOffset <= offset && mMarkedOffset != -1) {
-            // can back to offset in current buffer
-            return true;
+    public synchronized DataAvailability hasDataAvailable(long offset, int size) {
+        DataAvailability toReturn = DataAvailability.IN_FUTURE;
+        if (mCurrentOffset == offset) {
+            toReturn = DataAvailability.AVAILABLE;
+        } else if (mCurrentOffset > offset) {
+            if (mBis.canRewind((int)(mCurrentOffset - offset))) {
+                toReturn = DataAvailability.AVAILABLE;
+            } else {
+                toReturn = DataAvailability.NOT_AVAILABLE;
+            }
+        } else {
+            if (mBis.canFastForward((int)(offset - mCurrentOffset))) {
+                toReturn = DataAvailability.AVAILABLE;
+            } else if ((offset - mCurrentOffset) > mBufferSize / 3) {
+                toReturn = DataAvailability.NOT_AVAILABLE;
+            }
         }
-        if (offset >= mCurrentOffset && offset < (mMarkedOffset + (mReadLimit * 2))) {
-            // will reach offset in current buffer
-            return true;
-        }
-        return false;
-    }
-
-    @Override
-    public synchronized void requestReadPosition(long offset) throws IOException {
-        if (offset < mMarkedOffset
-                || (offset > mCurrentOffset && offset > (mMarkedOffset + (mReadLimit * 2)))) {
-            if (LOGS_ENABLED)
-                Log.d(TAG, "Request reconnect now at " + offset + " using range "
-                        + "( " + mCurrentOffset + " + " + mReadLimit + " * 2 ), mMarkedOffset: "
-                        + mMarkedOffset);
-
-            mMarkedOffset = -1;
-            mCurrentOffset = offset;
-            mOffset = offset;
-
-            doCloseSync();
-            openConnectionsAndStreams();
-        }
+        return toReturn;
     }
 
     @Override

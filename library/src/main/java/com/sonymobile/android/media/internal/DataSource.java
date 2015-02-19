@@ -55,6 +55,12 @@ public abstract class DataSource implements Closeable {
 
     private static final String TAG = "DataSource";
 
+    public static enum DataAvailability{
+        AVAILABLE,
+        IN_FUTURE,
+        NOT_AVAILABLE
+    }
+
     protected Handler mNotify;
 
     public static DataSource create(String uri, boolean isDash) {
@@ -168,13 +174,11 @@ public abstract class DataSource implements Closeable {
 
     public abstract String getRemoteIP();
 
-    public boolean hasDataAvailable(long offset, int size) {
-        return true;
+    public DataAvailability hasDataAvailable(long offset, int size) {
+        return DataAvailability.AVAILABLE;
     }
 
-    public void requestReadPosition(long offset) throws IOException {
-        // Empty implementation, interested subclasses should override.
-    }
+    public abstract void seek(long offset) throws IOException;
 
     protected long peekLong(byte[] src, int offset) {
         int h = ((src[offset++] & 0xff) << 24) | ((src[offset++] & 0xff) << 16)
