@@ -35,7 +35,7 @@ import com.sonymobile.android.media.TrackInfo.TrackType;
 
 public class VUParser extends ISOBMFFParser {
 
-    private static final boolean LOGS_ENABLED = Configuration.DEBUG || true;
+    private static final boolean LOGS_ENABLED = Configuration.DEBUG || false;
 
     private static final String TAG = "VUParser";
 
