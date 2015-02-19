@@ -25,10 +25,12 @@ android {
     buildTypes {
         debug {
             buildConfigField "String", "LIBRARY_VERSION", "\""+"DEBUG"+"\""
+            buildConfigField "boolean", "LOGS_ENABLED", "false"
         }
 
         release {
             buildConfigField "String", "LIBRARY_VERSION", "\""+getVersionName()+"\""
+            buildConfigField "boolean", "LOGS_ENABLED", "false"
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
         }

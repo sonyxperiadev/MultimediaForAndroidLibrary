@@ -16,9 +16,11 @@
 
 package com.sonymobile.android.media.internal;
 
+import com.sonymobile.android.media.BuildConfig;
+
 public class Configuration {
 
-    public static final boolean DEBUG = false;
+    public static final boolean DEBUG = BuildConfig.LOGS_ENABLED;
 
     public static final int SUBTITLE_PRETRIGGER_TIME_MS = 30;
 
