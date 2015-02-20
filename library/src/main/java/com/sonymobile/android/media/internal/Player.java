@@ -208,6 +208,8 @@ public final class Player {
 
     private HashMap<String, Integer> mCustomVideoMediaFormatParams;
 
+    private Message mLastSeek;
+
     public Player(Handler callbackListener, Context context, int audioSessionId) {
         mContext = context;
 
@@ -295,17 +297,17 @@ public final class Player {
     }
 
     public synchronized void seekTo(int msec) {
-        if (mEventHandler.hasMessages(MSG_SEEK)) {
-            // Remove all pending seeks, there is no point in doing them since
-            // we queue and only execute the last one anyway.
-            mEventHandler.removeMessages(MSG_SEEK);
-        }
         Message msg = mEventHandler.obtainMessage(MSG_SEEK, msec, -1);
-        if (mSource.supportsPreview()) {
-            msg.sendToTarget();
+        if (mEventHandler.hasMessages(MSG_SEEK)) {
+            // Queue the last seek made
+            mLastSeek = msg;
         } else {
-            mEventHandler
-                    .sendMessageAtTime(msg, SystemClock.uptimeMillis() + DEFAULT_SEEK_DELAY_MS);
+            if (mSource.supportsPreview()) {
+                msg.sendToTarget();
+            } else {
+                mEventHandler
+                        .sendMessageAtTime(msg, SystemClock.uptimeMillis() + DEFAULT_SEEK_DELAY_MS);
+            }
         }
     }
 
@@ -347,18 +349,16 @@ public final class Player {
         if (mSeekPositionMs < 0) {
             mSeekPositionMs = msec;
             if (mClockSource != null) {
-                mClockSource.pause();
                 mClockSource.setSeekTimeUs(msec * 1000l);
             }
 
-            if (mVideoThread != null) {
-                mVideoThread.pause();
-                mVideoThread.flush();
-                mVideoThread.updateAudioClockOnNextVideoFrame();
-            }
             if (mAudioThread != null) {
                 mFlushingAudio = true;
                 mAudioThread.flush();
+            }
+            if (mVideoThread != null) {
+                mVideoThread.flush();
+                mVideoThread.updateAudioClockOnNextVideoFrame();
             }
             if (mSubtitleThread != null) {
                 mSubtitleThread.flush();
@@ -977,9 +977,10 @@ public final class Player {
                             thiz.mFlushingAudio = false;
                             break;
                         case Codec.CODEC_VIDEO_SEEK_COMPLETED:
-                            if (thiz.mCurrentPositionMs != thiz.mSeekPositionMs) {
+                            if (thiz.mLastSeek != null) {
                                 // Execute queued seek
-                                thiz.seekTo((int)thiz.mCurrentPositionMs);
+                                thiz.mEventHandler.sendMessage(thiz.mLastSeek);
+                                thiz.mLastSeek = null;
                             } else {
                                 if (!thiz.mInternalSeekTriggered) {
                                     thiz.mCallbacks.obtainMessage(NOTIFY_SEEK_COMPLETE)
