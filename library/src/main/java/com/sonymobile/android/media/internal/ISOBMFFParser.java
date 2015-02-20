@@ -176,6 +176,8 @@ public class ISOBMFFParser extends MediaParser {
 
     protected static final int BOX_ID_SIDX = fourCC('s', 'i', 'd', 'x');
 
+    protected static final int BOX_ID_S263 = fourCC('s', '2', '6', '3');
+
     // iTunes metadata
     protected static final int BOX_ID_ILST = fourCC('i', 'l', 's', 't');
 
@@ -736,12 +738,13 @@ public class ISOBMFFParser extends MediaParser {
 
             mCurrentMediaFormat = new MediaFormat();
 
+            mCurrentMediaFormat.setString(MediaFormat.KEY_MIME, MimeType.AVC);
+            mCurrentTrack.getMetaData().addValue(KEY_MIME_TYPE, MimeType.AVC);
+
             parseVisualSampleEntry(data);
 
-            mCurrentMediaFormat.setString(MediaFormat.KEY_MIME, MimeType.AVC);
             // TODO: Update this when we add support for nalSize other than 4
             mCurrentMediaFormat.setInteger("nal-size", 4);
-            mCurrentTrack.getMetaData().addValue(KEY_MIME_TYPE, MimeType.AVC);
 
             while (mCurrentOffset < boxEndOffset && parseOK) {
                 BoxHeader nextBoxHeader = getNextBoxHeader();
@@ -883,11 +886,11 @@ public class ISOBMFFParser extends MediaParser {
 
             mCurrentMediaFormat = new MediaFormat();
 
-            // mp4v is a type of VisualSampleEntry
-            parseVisualSampleEntry(data);
-
             mCurrentMediaFormat.setString(MediaFormat.KEY_MIME, MimeType.MPEG4_VISUAL);
             mCurrentTrack.getMetaData().addValue(KEY_MIME_TYPE, MimeType.MPEG4_VISUAL);
+
+            // mp4v is a type of VisualSampleEntry
+            parseVisualSampleEntry(data);
 
             while (mCurrentOffset < boxEndOffset && parseOK) {
                 BoxHeader nextBoxHeader = getNextBoxHeader();
@@ -1116,6 +1119,9 @@ public class ISOBMFFParser extends MediaParser {
                 } else if (dataFormat == BOX_ID_MP4V) {
                     mCurrentMediaFormat.setString(MediaFormat.KEY_MIME, MimeType.MPEG4_VISUAL);
                     mCurrentTrack.getMetaData().addValue(KEY_MIME_TYPE, MimeType.MPEG4_VISUAL);
+                } else if (dataFormat == BOX_ID_S263) {
+                    mCurrentMediaFormat.setString(MediaFormat.KEY_MIME, MimeType.H263);
+                    mCurrentTrack.getMetaData().addValue(KEY_MIME_TYPE, MimeType.H263);
                 }
             } catch (IOException e) {
                 if (LOGS_ENABLED) Log.e(TAG, "Exception while parsing 'frma' box", e);
@@ -1515,6 +1521,31 @@ public class ISOBMFFParser extends MediaParser {
             }
         } else if (header.boxType == BOX_ID_SIDX) {
             parseOK = parseSidx(header);
+        } else if (header.boxType == BOX_ID_S263) {
+            byte[] data = new byte[78];
+            try {
+                if (mDataSource.readAt(mCurrentOffset, data, data.length) != data.length) {
+                    mCurrentBoxSequence.removeLast();
+                    return false;
+                }
+            } catch (IOException e) {
+                if (LOGS_ENABLED) Log.e(TAG, "Error while parsing 's263' box", e);
+                mCurrentBoxSequence.removeLast();
+                return false;
+            }
+
+            mCurrentMediaFormat = new MediaFormat();
+
+            mCurrentMediaFormat.setString(MediaFormat.KEY_MIME, MimeType.H263);
+            mCurrentTrack.getMetaData().addValue(KEY_MIME_TYPE, MimeType.H263);
+
+            parseVisualSampleEntry(data);
+
+            while (mCurrentOffset < boxEndOffset && parseOK) {
+                BoxHeader nextBoxHeader = getNextBoxHeader();
+                parseOK = parseBox(nextBoxHeader);
+            }
+            mCurrentTrack.addSampleDescriptionEntry(mCurrentMediaFormat);
         } else if (header.boxType == BOX_ID_MDAT) {
             if (mTracks.size() > 0 && !mIsFragmented) {
                 mInitDone = true;
@@ -2273,7 +2304,15 @@ public class ISOBMFFParser extends MediaParser {
         mCurrentTrack.getMetaData().addValue(KEY_WIDTH, width);
         mCurrentMediaFormat.setInteger(MediaFormat.KEY_HEIGHT, height);
         mCurrentTrack.getMetaData().addValue(KEY_HEIGHT, height);
-        int maxSize = ((width + 15) / 16) * ((height + 15) / 16) * 192;
+        String mime = mCurrentMediaFormat.getString(MediaFormat.KEY_MIME);
+        int maxSize;
+        // TODO: Move KEY_MAX_INPUT_SIZE setting from here, as we have not set mime
+        // in case of protected files
+        if (mime.equals(MimeType.AVC)) {
+            maxSize = ((width + 15) / 16) * ((height + 15) / 16) * 192;
+        } else {
+            maxSize = width * height * 3 / 2;
+        }
         mCurrentMediaFormat.setInteger(MediaFormat.KEY_MAX_INPUT_SIZE, maxSize);
         addMetaDataValue(KEY_WIDTH, width);
         addMetaDataValue(KEY_HEIGHT, height);

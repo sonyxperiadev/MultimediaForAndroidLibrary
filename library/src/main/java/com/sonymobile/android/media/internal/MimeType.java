@@ -47,4 +47,6 @@ public class MimeType {
     public static final String AMR_NB = "audio/3gpp";
 
     public static final String AMR_WB = "audio/amr-wb";
+
+    public static final String H263 = "video/3gpp";
 }

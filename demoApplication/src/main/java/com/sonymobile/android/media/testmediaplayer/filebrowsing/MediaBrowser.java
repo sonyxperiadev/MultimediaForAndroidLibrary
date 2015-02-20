@@ -65,6 +65,16 @@ public class MediaBrowser {
 
     private static final String TAG = "DEMOAPPLICATION_MEDIABROWSER";
 
+    private static final String[] SUPPORTED_FILE_EXTENSIONS = {
+            "MP4",
+            "MNV",
+            "ISMV",
+            "ISMA",
+            "M4V",
+            "M4A",
+            "3GP"
+    };
+
     private ExpandableListViewAdapter mlistAdapter;
 
     private ExpandableListView mExpandableListView;
@@ -162,11 +172,7 @@ public class MediaBrowser {
                 if (tmpStrArr[0].equals("video")
                         && (tmpStrArr[1].equals("mp4") || tmpStrArr[1].equals("vnd.sony.mnv"))) {
                     tmpStrArr = cursor.getString(3).split("\\.");
-                    if (tmpStrArr[tmpStrArr.length - 1].toUpperCase().equals("M4V")
-                            || tmpStrArr[tmpStrArr.length - 1].toUpperCase().equals("MNV")
-                            || tmpStrArr[tmpStrArr.length - 1].toUpperCase().equals("ISMV")
-                            || tmpStrArr[tmpStrArr.length - 1].toUpperCase().equals("M4A")
-                            || tmpStrArr[tmpStrArr.length - 1].toUpperCase().equals("MP4")) {
+                    if (isFileExtensionSupported(tmpStrArr[tmpStrArr.length - 1])) {
                         String titleWithFiletype = cursor.getString(3).substring(
                                 cursor.getString(3).lastIndexOf("/") + 1);
                         children.add(new MediaSource(titleWithFiletype,
@@ -197,19 +203,7 @@ public class MediaBrowser {
         mFiles = file.listFiles();
         ArrayList<String> nameList = new ArrayList<String>();
         for (int i = 0; i < mFiles.length; i++) {
-            if (mFiles[i].getName().contains(".mp4")
-                    || mFiles[i].getName().contains(".MP4")
-                    || mFiles[i].getName().contains(".ismv")
-                    || mFiles[i].getName().contains(".ISMV")
-                    || mFiles[i].getName().contains(".isma")
-                    || mFiles[i].getName().contains(".ISMA")
-                    || mFiles[i].getName().contains(".m4v")
-                    || mFiles[i].getName().contains(".M4V")
-                    || mFiles[i].getName().contains(".m4a")
-                    || mFiles[i].getName().contains(".M4A")
-                    || mFiles[i].getName().contains(".MNV")
-                    || mFiles[i].getName().contains(".mnv")
-                    || mFiles[i].isDirectory()) {
+            if (isFileExtensionSupported(mFiles[i].getName())) {
                 nameList.add(mFiles[i].getName());
             }
         }
@@ -267,19 +261,7 @@ public class MediaBrowser {
         mFiles = file.listFiles();
         ArrayList<String> nameList = new ArrayList<String>();
         for (int i = 0; i < mFiles.length; i++) {
-            if (mFiles[i].getName().contains(".mp4")
-                    || mFiles[i].getName().contains(".MP4")
-                    || mFiles[i].getName().contains(".ismv")
-                    || mFiles[i].getName().contains(".ISMV")
-                    || mFiles[i].getName().contains(".isma")
-                    || mFiles[i].getName().contains(".ISMA")
-                    || mFiles[i].getName().contains(".m4v")
-                    || mFiles[i].getName().contains(".M4V")
-                    || mFiles[i].getName().contains(".m4a")
-                    || mFiles[i].getName().contains(".M4A")
-                    || mFiles[i].getName().contains(".MNV")
-                    || mFiles[i].getName().contains(".mnv")
-                    || mFiles[i].isDirectory()) {
+            if (isFileExtensionSupported(mFiles[i].getName())) {
                 nameList.add(mFiles[i].getName());
             }
         }
@@ -396,5 +378,14 @@ public class MediaBrowser {
             mCurrentPath = path;
             mCurrentFile = new File(path);
         }
+    }
+
+    private boolean isFileExtensionSupported(String extension) {
+        for (String s : SUPPORTED_FILE_EXTENSIONS) {
+            if (extension.toUpperCase().endsWith(s)) {
+                return true;
+            }
+        }
+        return false;
     }
 }
