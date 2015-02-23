@@ -620,7 +620,6 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback,
                         .seekTo((int)((mCurrentMediaPlayer.getDuration()
                         * ((double)progressFromUser / 1000))));
                 mTimeSeekView.setVisibility(View.VISIBLE);
-                mSeekLock = true;
                 mSubtitleRenderer.pause();
             }
         }
@@ -655,9 +654,9 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback,
             mCurrentMediaPlayer
                     .seekTo((int)((mCurrentMediaPlayer.getDuration()
                     * ((double)progressFromUser / 1000))));
-            onPlayPauseClicked(null);
             mHandler.postDelayed(mHideNavigationRunnable, 3500);
             mTimeSeekView.setVisibility(View.GONE);
+            mSeekLock = false;
         }
     }
 
@@ -885,8 +884,11 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback,
     public void onSeekComplete(MediaPlayer arg0) {
         if (LOGS_ENABLED) Log.d(TAG, "SeekComplete");
         mSeekBarUpdater.activate();
-        mSeekLock = false;
         setTimeOnView(mTimeView, mMediaPlayer.getCurrentPosition());
+
+        if(!mSeekLock){
+            onPlayPauseClicked(null);
+        }
     }
 
     public boolean navigationBarAtBottom() {
