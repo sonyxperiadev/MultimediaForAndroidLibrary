@@ -69,6 +69,8 @@ public final class AudioThread extends CodecThread implements Clock {
 
     private static final int AUDIO_TIMESTAMP_NOT_SUPPORTED = -123;
 
+    private static final int AUDIO_BUFFERSIZE_MULTIPLIER = 4;
+
     private HandlerThread mEventThread;
 
     private EventHandler mEventHandler;
@@ -134,6 +136,8 @@ public final class AudioThread extends CodecThread implements Clock {
     private boolean mDequeueInputErrorFlag = false;
 
     private Object mRenderingLock = new Object();
+
+    private Method mSetAudioTrackMethod;
 
     public AudioThread(MediaFormat format, MediaSource source, int audioSessionId,
             Handler callback, DrmSession drmSession) {
@@ -359,6 +363,7 @@ public final class AudioThread extends CodecThread implements Clock {
                         MediaError.UNKNOWN).sendToTarget();
                 return;
             }
+            if (LOGS_ENABLED) Log.v(TAG, "invoke configureWithAudioTrack");
             configure.invoke(mCodec, format, mAudioTrack, mMediaCrypto, 0);
             mRenderAudioInPlatform = true;
             if (LOGS_ENABLED) Log.i(TAG, "Render audio in platform");
@@ -510,7 +515,8 @@ public final class AudioThread extends CodecThread implements Clock {
                         int channelConfig = getAudioChannelConfiguration(channelCount);
 
                         int bufferSize = AudioTrack.getMinBufferSize(mSampleRate,
-                                channelConfig, AudioFormat.ENCODING_PCM_16BIT);
+                                channelConfig, AudioFormat.ENCODING_PCM_16BIT)
+                                * AUDIO_BUFFERSIZE_MULTIPLIER;
 
                         mAudioTrack = new AudioTrack(AudioManager.STREAM_MUSIC,
                                 mSampleRate, channelConfig, AudioFormat.ENCODING_PCM_16BIT,
@@ -526,6 +532,23 @@ public final class AudioThread extends CodecThread implements Clock {
                         mAudioSessionId = mAudioTrack.getAudioSessionId();
                         if (mLeftVolume != -1 && mRightVolume != -1) {
                             mAudioTrack.setStereoVolume(mLeftVolume, mRightVolume);
+                        }
+                        if (mSetAudioTrackMethod != null) {
+                            try {
+                                if (LOGS_ENABLED) Log.v(TAG, "invoking setAudioTrack");
+                                mSetAudioTrackMethod.invoke(mCodec, mAudioTrack);
+                                mRenderAudioInPlatform = true;
+                                if (LOGS_ENABLED) Log.i(TAG, "Render audio in platform");
+                            } catch (IllegalAccessException e) {
+                                if (LOGS_ENABLED)
+                                    Log.e(TAG, "Exception when setting new AudioTrack", e);
+                            } catch (IllegalArgumentException e) {
+                                if (LOGS_ENABLED)
+                                    Log.e(TAG, "Exception when setting new AudioTrack", e);
+                            } catch (InvocationTargetException e) {
+                                if (LOGS_ENABLED)
+                                    Log.e(TAG, "Exception when setting new AudioTrack", e);
+                            }
                         }
                     }
                 } else {
@@ -587,7 +610,13 @@ public final class AudioThread extends CodecThread implements Clock {
         try {
             if (mMediaCrypto != null &&
                     mMediaCrypto.requiresSecureDecoderComponent(mime)) {
-                configCodecWithAudio(format);
+                Class<?>[] parameterTypes = {AudioTrack.class};
+                try {
+                    mSetAudioTrackMethod = MediaCodec.class.getMethod("setAudioTrack",
+                            parameterTypes);
+                } catch (NoSuchMethodException e) {
+                    configCodecWithAudio(format);
+                }
             }
         } catch (IllegalArgumentException e) {
             if (LOGS_ENABLED)
