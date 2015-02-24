@@ -26,5 +26,5 @@ public class Configuration {
 
     public static final boolean DO_COMPENSATE_AUDIO_TIMESTAMP_LATENCY = false;
 
-    public static final int DEFAULT_HTTP_BUFFER_SIZE = 30 * 1024 * 1024;
+    public static final int DEFAULT_HTTP_BUFFER_SIZE = 40 * 1024 * 1024;
 }

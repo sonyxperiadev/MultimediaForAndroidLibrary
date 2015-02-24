@@ -41,7 +41,7 @@ public class HttpBufferedDataSource extends BufferedDataSource implements Thresh
      * The logic for buffer handling / readAt function work like this:
      *
      * If the free space in the underlying BufferedStream is less than 0.5% of the buffer size
-     * the underlying buffer is compacted and up to 10% of the buffer data is removed. This data
+     * the underlying buffer is compacted and up to 5% of the buffer data is removed. This data
      * should already have been consumed.
      *
      * If the requested read position is the same as current read position the requested readAt
@@ -94,8 +94,8 @@ public class HttpBufferedDataSource extends BufferedDataSource implements Thresh
         checkConnectionAndStream();
 
         if (mBis.freeSpace() < (mBufferSize / 200)) {
-            // Less than 0.5% buffer left, compact and remove 10%.
-            mBis.compact((mBufferSize / 10));
+            // Less than 0.5% buffer left, compact and remove 5%.
+            mBis.compact((mBufferSize / 5));
         }
 
         if (mCurrentOffset > offset && mBis.canRewind((int)(mCurrentOffset - offset))) {
@@ -105,7 +105,7 @@ public class HttpBufferedDataSource extends BufferedDataSource implements Thresh
                 mBis.fastForward((int)(offset - mCurrentOffset));
             } else {
                 if (!mBis.canDataFit((int)((offset - mCurrentOffset) + size))) {
-                    mBis.compact((mBufferSize / 10));
+                    mBis.compact((mBufferSize / 5));
                 }
 
                 if (mBis.canDataFit((int)(offset - mCurrentOffset) + size) &&
