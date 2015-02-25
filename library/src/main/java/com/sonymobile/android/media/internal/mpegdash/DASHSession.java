@@ -250,8 +250,22 @@ public final class DASHSession {
                                 packetSource.queueAccessUnit(AccessUnit.ACCESS_UNIT_END_OF_STREAM);
                                 if (thiz.mFetchers.size() == 0 &&
                                         packetSource.getFormat() == null) {
-                                    thiz.mCallbackHandler.obtainMessage(DASHSource.MSG_ERROR)
-                                            .sendToTarget();
+                                    if (thiz.mSeekPending) {
+                                        thiz.mCallbackHandler.obtainMessage(DASHSource
+                                                .SOURCE_BUFFERING_END).sendToTarget();
+                                        PacketSource audioPacketSource = thiz.mPacketSources
+                                                .get(TrackType.AUDIO);
+                                        PacketSource subtitlePacketSource = thiz.mPacketSources
+                                                .get(TrackType.SUBTITLE);
+                                        audioPacketSource.queueAccessUnit(
+                                                AccessUnit.ACCESS_UNIT_END_OF_STREAM);
+                                        subtitlePacketSource.queueAccessUnit(
+                                                AccessUnit.ACCESS_UNIT_END_OF_STREAM);
+                                        thiz.mSeekPending = false;
+                                    } else {
+                                        thiz.mCallbackHandler.obtainMessage(DASHSource.MSG_ERROR)
+                                                .sendToTarget();
+                                    }
                                 }
                             } else if (thiz.mFetchers.size() == 0) {
                                 thiz.mMPDParser.nextPeriod();

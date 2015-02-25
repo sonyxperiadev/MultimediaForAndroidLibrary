@@ -733,8 +733,8 @@ public class MPDParser {
         for (int i = 0; i < mPeriods.size(); i++) {
             Period period = mPeriods.get(i);
 
+            mActivePeriod = i;
             if (timeUs >= period.startTimeUs && timeUs < period.startTimeUs + period.durationUs) {
-                mActivePeriod = i;
                 break;
             }
         }

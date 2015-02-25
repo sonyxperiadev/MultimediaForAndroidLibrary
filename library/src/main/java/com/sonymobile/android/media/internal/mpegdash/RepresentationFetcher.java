@@ -202,10 +202,12 @@ public class RepresentationFetcher {
                 }
 
                 if (source == null) {
-                    // Signal error
-                    Message callback = mSession.getFetcherCallbackMessage(mType);
-                    callback.arg1 = DASHSession.FETCHER_ERROR;
-                    callback.sendToTarget();
+                    if (!mEOS) {
+                        // Signal error
+                        Message callback = mSession.getFetcherCallbackMessage(mType);
+                        callback.arg1 = DASHSession.FETCHER_ERROR;
+                        callback.sendToTarget();
+                    }
                     return;
                 }
 
@@ -634,6 +636,7 @@ public class RepresentationFetcher {
                         Message callback = mSession.getFetcherCallbackMessage(mType);
                         callback.arg1 = DASHSession.FETCHER_EOS;
                         callback.sendToTarget();
+                        mEOS = true;
                         return null;
                     }
                 }

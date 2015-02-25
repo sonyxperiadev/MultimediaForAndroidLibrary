@@ -598,6 +598,7 @@ public final class VideoThread extends VideoCodecThread {
                     if ((frame.info.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
                         addDecodedFrame(frame);
                         mEOS = true;
+                        mReadyToRender = true;
                         if (mDequeueInputErrorFlag) {
                             mCallback.obtainMessage(MSG_CODEC_NOTIFY, CODEC_ERROR,
                                     MediaError.UNKNOWN).sendToTarget();
