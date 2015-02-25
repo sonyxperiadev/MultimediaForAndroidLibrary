@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.hardware.display.DisplayManager;
 import android.media.AudioManager;
 import android.media.MediaRouter;
 import android.media.MediaRouter.RouteGroup;
@@ -56,6 +57,10 @@ public class OutputController {
 
     private final MediaRouter.Callback mMediaRouterCallback;
 
+    private DisplayManager mDisplayManager;
+
+    private final DisplayListenerCallback mDisplayListenerCallback;
+
     private boolean mBlockWifDisplay;
 
     private boolean mBlockHDMI;
@@ -73,34 +78,38 @@ public class OutputController {
 
         private OutputController mOutputController;
 
-        public EventHandler(OutputController outputController, MediaRouter mediaRouter) {
+        public EventHandler(OutputController outputController, MediaRouter mediaRouter,
+                DisplayManager displayManager) {
             mOutputController = outputController;
             mMediaRouter = mediaRouter;
+            mDisplayManager = displayManager;
         }
 
         @Override
         public void handleMessage(Message msg) {
             switch (msg.what) {
                 case MSG_UPDATE:
-                    if (mMediaRouter != null) {
-                        RouteInfo routeInfo = mMediaRouter
-                                .getSelectedRoute(MediaRouter.ROUTE_TYPE_LIVE_VIDEO);
-
-                        if (routeInfo == null) {
-                            // No information about routing.
-                            return;
+                    if (msg.arg1 == Display.DEFAULT_DISPLAY) {
+                        //No new display is added, check restrictions for existing displays
+                        //and audiojack.
+                        Display[] displays = mDisplayManager.getDisplays();
+                        for (int i = 0; i < displays.length; i++) {
+                            if (displays[i].isValid()) {
+                                mOutputController.checkVideoOutputRestriction(displays[i]);
+                                mOutputController.checkAudioOutputRestriction(displays[i]);
+                            }
                         }
-
-                        final Display presentationDisplay = routeInfo.getPresentationDisplay();
-
+                    } else {
+                        //A new display is added, check restrictions on that one
+                        final Display presentationDisplay = mDisplayManager.getDisplay(msg.arg1);
                         mOutputController.checkVideoOutputRestriction(presentationDisplay);
                         mOutputController.checkAudioOutputRestriction(presentationDisplay);
-
                     }
                     break;
 
                 case MSG_RELEASE:
                     mMediaRouter.removeCallback(mMediaRouterCallback);
+                    mDisplayManager.unregisterDisplayListener(mDisplayListenerCallback);
                     // TODO: Keep track of state and set the mMediaRouter to
                     // null as well.
                     removeCallbacksAndMessages(null);
@@ -126,10 +135,14 @@ public class OutputController {
         if (mMediaRouter == null) {
             throw new RuntimeException("Failed to create mediarouter");
         }
-
-        mEventHandler = new EventHandler(this, mMediaRouter);
+        mDisplayManager = (DisplayManager)mContext.getSystemService(Context.DISPLAY_SERVICE);
+        if (mDisplayManager == null) {
+            throw new RuntimeException("Failed to create displaymanager");
+        }
+        mEventHandler = new EventHandler(this, mMediaRouter, mDisplayManager);
         mMediaRouterCallback = new MediaRouterCallback();
-
+        mDisplayListenerCallback = new DisplayListenerCallback();
+        mDisplayManager.registerDisplayListener(mDisplayListenerCallback, mEventHandler);
         mMediaRouter.addCallback(MediaRouter.ROUTE_TYPE_LIVE_AUDIO, mMediaRouterCallback,
                 MediaRouter.CALLBACK_FLAG_UNFILTERED_EVENTS);
 
@@ -165,7 +178,16 @@ public class OutputController {
      * Updates the OutputController on the present DRM session.
      */
     public void update() {
-        mEventHandler.obtainMessage(MSG_UPDATE).sendToTarget();
+        //Assume default display is used.
+        mEventHandler.obtainMessage(MSG_UPDATE, Display.DEFAULT_DISPLAY).sendToTarget();
+    }
+
+    /**
+     * Updates the OutputController on the present display status.
+     * @param displayId Id of the display that needs update.
+     */
+    public void updateDisplay(int displayId) {
+        mEventHandler.obtainMessage(MSG_UPDATE, displayId, 0).sendToTarget();
     }
 
     private void setRestrictions(LicenseInfo licenseInfo) {
@@ -411,6 +433,24 @@ public class OutputController {
         public void onRouteUnselected(MediaRouter router, int type,
                 RouteInfo info) {
             update();
+        }
+    }
+
+    private final class DisplayListenerCallback implements DisplayManager.DisplayListener {
+
+        @Override
+        public void onDisplayAdded(int id) {
+            updateDisplay(id);
+        }
+
+        @Override
+        public void onDisplayRemoved(int id) {
+            //Igore if displays are removed
+        }
+
+        @Override
+        public void onDisplayChanged(int id) {
+            updateDisplay(id);
         }
     }
 }
