@@ -30,6 +30,7 @@ import android.os.Message;
 import android.util.Log;
 
 import com.sonymobile.android.media.BandwidthEstimator;
+import com.sonymobile.android.media.MediaError;
 import com.sonymobile.android.media.MediaPlayer.Statistics;
 import com.sonymobile.android.media.MetaData;
 import com.sonymobile.android.media.MetaDataParserFactory;
@@ -110,7 +111,7 @@ public final class SimpleSource extends MediaSource {
         if (mMediaParser == null) {
             mEventHandler.sendEmptyMessage(MSG_PREPARE);
         } else {
-            notifyPrepared(true);
+            notifyPrepared();
         }
     }
 
@@ -234,7 +235,11 @@ public final class SimpleSource extends MediaSource {
                     mMaxBufferSize, mEventHandler);
         }
 
-        notifyPrepared(mMediaParser != null);
+        if (mMediaParser != null) {
+            notifyPrepared();
+        } else {
+            notifyPrepareFailed(MediaError.UNSUPPORTED);
+        }
     }
 
     private void onSeek(long timeUs) {

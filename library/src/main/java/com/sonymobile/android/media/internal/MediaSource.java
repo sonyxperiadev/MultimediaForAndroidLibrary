@@ -34,17 +34,19 @@ public abstract class MediaSource {
 
     public static final int SOURCE_PREPARED = 1;
 
-    public static final int SOURCE_BUFFERING_START = 2;
+    public static final int SOURCE_PREPARE_FAILED = 2;
 
-    public static final int SOURCE_BUFFERING_END = 3;
+    public static final int SOURCE_BUFFERING_START = 3;
 
-    public static final int SOURCE_CHANGE_SUBTITLE = 4;
+    public static final int SOURCE_BUFFERING_END = 4;
 
-    public static final int SOURCE_REPRESENTATION_CHANGED = 5;
+    public static final int SOURCE_CHANGE_SUBTITLE = 5;
 
-    public static final int SOURCE_ERROR = 6;
+    public static final int SOURCE_REPRESENTATION_CHANGED = 6;
 
-    public static final int SOURCE_BUFFERING_UPDATE = 7;
+    public static final int SOURCE_ERROR = 7;
+
+    public static final int SOURCE_BUFFERING_UPDATE = 8;
 
     private Handler mNotify;
 
@@ -72,8 +74,12 @@ public abstract class MediaSource {
 
     public abstract int getSelectedTrackIndex(TrackType type);
 
-    protected void notifyPrepared(boolean success) {
-        mNotify.obtainMessage(Player.MSG_SOURCE_NOTIFY, SOURCE_PREPARED, success ? 1 : 0)
+    protected void notifyPrepared() {
+        mNotify.obtainMessage(Player.MSG_SOURCE_NOTIFY, SOURCE_PREPARED, 0).sendToTarget();
+    }
+
+    protected void notifyPrepareFailed(int error) {
+        mNotify.obtainMessage(Player.MSG_SOURCE_NOTIFY, SOURCE_PREPARE_FAILED, error)
                 .sendToTarget();
     }
 

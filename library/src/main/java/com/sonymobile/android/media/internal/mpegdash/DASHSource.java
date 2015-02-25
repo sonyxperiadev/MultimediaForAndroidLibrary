@@ -16,9 +16,6 @@
 
 package com.sonymobile.android.media.internal.mpegdash;
 
-import java.lang.ref.WeakReference;
-import java.util.Vector;
-
 import android.media.MediaFormat;
 import android.os.Handler;
 import android.os.Message;
@@ -33,6 +30,9 @@ import com.sonymobile.android.media.TrackInfo.TrackType;
 import com.sonymobile.android.media.internal.AccessUnit;
 import com.sonymobile.android.media.internal.Configuration;
 import com.sonymobile.android.media.internal.MediaSource;
+
+import java.lang.ref.WeakReference;
+import java.util.Vector;
 
 public class DASHSource extends MediaSource {
 
@@ -138,10 +138,10 @@ public class DASHSource extends MediaSource {
             DASHSource thiz = mSource.get();
             switch (msg.what) {
                 case MSG_PREPARED:
-                    thiz.notifyPrepared(true);
+                    thiz.notifyPrepared();
                     break;
                 case MSG_PREPARE_FAILED:
-                    thiz.notifyPrepared(false);
+                    thiz.notifyPrepareFailed(msg.arg1);
                     break;
                 case MSG_BUFFERING_START:
                     thiz.notify(SOURCE_BUFFERING_START);

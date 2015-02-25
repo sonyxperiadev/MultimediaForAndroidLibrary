@@ -35,6 +35,7 @@ import android.util.Log;
 
 import com.sonymobile.android.media.BandwidthEstimator;
 import com.sonymobile.android.media.DASHTrackInfo;
+import com.sonymobile.android.media.MediaError;
 import com.sonymobile.android.media.MediaPlayer.Statistics;
 import com.sonymobile.android.media.MetaData;
 import com.sonymobile.android.media.RepresentationSelector;
@@ -344,6 +345,7 @@ public final class DASHSession {
 
     private void onConnect(Message msg) {
         boolean success = false;
+        int error = MediaError.UNKNOWN;
         try {
             String uri = (String)msg.obj;
             if (LOGS_ENABLED) Log.i(TAG, "onConnect " + uri);
@@ -383,19 +385,24 @@ public final class DASHSession {
                             selectedRepresentations);
                     mMPDParser.updateRepresentations(selectedRepresentations);
                     changeConfiguration(0);
+                } else {
+                    error = MediaError.MALFORMED;
                 }
             } else {
                 if (LOGS_ENABLED) Log.e(TAG, "Error: " + urlConnection.getResponseCode());
+                error = MediaError.IO;
             }
 
         } catch (MalformedURLException e) {
             if (LOGS_ENABLED) Log.e(TAG, "MalformedURLException in onConnect", e);
+            error = MediaError.UNSUPPORTED;
         } catch (IOException e) {
             if (LOGS_ENABLED) Log.e(TAG, "IOException in onConnect", e);
+            error = MediaError.IO;
         }
 
         if (!success) {
-            mCallbackHandler.obtainMessage(DASHSource.MSG_PREPARE_FAILED).sendToTarget();
+            mCallbackHandler.obtainMessage(DASHSource.MSG_PREPARE_FAILED, error, 0).sendToTarget();
         }
     }
 

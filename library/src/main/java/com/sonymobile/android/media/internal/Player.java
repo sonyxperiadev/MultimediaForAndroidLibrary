@@ -551,7 +551,7 @@ public final class Player {
                             reply.sendToTarget();
                             thiz.mPrepareHandler = null;
                         }
-                        thiz.onError(MediaError.UNKNOWN);
+                        thiz.onError(MediaError.UNSUPPORTED);
                     } else {
                         thiz.mSource.setBandwidthEstimator(thiz.mBandwidthEstimator);
                         thiz.mSource.setRepresentationSelector(thiz.mRepresentationSelector);
@@ -1003,29 +1003,29 @@ public final class Player {
                 case MSG_SOURCE_NOTIFY:
                     switch (msg.arg1) {
                         case MediaSource.SOURCE_PREPARED:
-                            if (msg.arg2 == 1) {
-                                thiz.mDurationMs = (int)(thiz.mSource.getDurationUs() / 1000);
-                                boolean drmSetupOk = thiz.doSetupDrm();
-                                if (thiz.mPrepareHandler != null) {
-                                    Message replyMsg = thiz.mPrepareHandler.obtainMessage();
-                                    replyMsg.obj = drmSetupOk;
-                                    replyMsg.sendToTarget();
-                                    thiz.mPrepareHandler = null;
-                                } else if (drmSetupOk) {
-                                    thiz.mCallbacks.obtainMessage(NOTIFY_PREPARED).sendToTarget();
-                                }
-                                if (drmSetupOk) {
-                                    thiz.notifyVideoSize(thiz.mSource.getMetaData());
-                                }
-                            } else {
-                                if (thiz.mPrepareHandler != null) {
-                                    Message replyMsg = thiz.mPrepareHandler.obtainMessage();
-                                    replyMsg.obj = false;
-                                    replyMsg.sendToTarget();
-                                    thiz.mPrepareHandler = null;
-                                }
-                                thiz.onError(MediaError.UNKNOWN);
+                            thiz.mDurationMs = (int) (thiz.mSource.getDurationUs() / 1000);
+                            boolean drmSetupOk = thiz.doSetupDrm();
+                            if (thiz.mPrepareHandler != null) {
+                                Message replyMsg = thiz.mPrepareHandler.obtainMessage();
+                                replyMsg.obj = drmSetupOk;
+                                replyMsg.sendToTarget();
+                                thiz.mPrepareHandler = null;
+                            } else if (drmSetupOk) {
+                                thiz.mCallbacks.obtainMessage(NOTIFY_PREPARED).sendToTarget();
                             }
+                            if (drmSetupOk) {
+                                thiz.notifyVideoSize(thiz.mSource.getMetaData());
+                            }
+                            break;
+                        case MediaSource.SOURCE_PREPARE_FAILED:
+                            if (thiz.mPrepareHandler != null) {
+                                Message replyMsg = thiz.mPrepareHandler.obtainMessage();
+                                replyMsg.obj = false;
+                                replyMsg.sendToTarget();
+                                thiz.mPrepareHandler = null;
+                            }
+
+                            thiz.onError(msg.arg2);
                             break;
                         case MediaSource.SOURCE_BUFFERING_START:
                             thiz.mCallbacks.obtainMessage(NOTIFY_BUFFERING_START).sendToTarget();
