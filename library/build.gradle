@@ -16,7 +16,7 @@ android {
     defaultConfig {
         minSdkVersion 19
         targetSdkVersion 21
-        testApplicationId "com.sonymobile.anroid.media.test"
+        testApplicationId "com.sonymobile.android.media.test"
         testInstrumentationRunner "android.test.InstrumentationTestRunner"
         testHandleProfiling true
         testFunctionalTest true

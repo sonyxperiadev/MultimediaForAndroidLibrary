@@ -21,7 +21,7 @@ import android.os.Bundle;
 import android.view.SurfaceView;
 
 import com.sonymobile.android.media.MockSurfaceView;
-import com.sonymobile.anroid.media.test.R;
+import com.sonymobile.android.media.test.R;
 
 public class SurfaceViewStubActivity extends Activity {
 
