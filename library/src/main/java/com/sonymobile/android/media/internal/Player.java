@@ -364,9 +364,7 @@ public final class Player {
                 mSubtitleThread.flush();
             }
 
-            if (!internal) {
-                mSource.seekTo(msec * 1000l);
-            }
+            mSource.seekTo(msec * 1000l);
 
             if (mVideoThread == null && mAudioThread == null) {
                 // Both Audio and Video are Null. Prepared state send callback
