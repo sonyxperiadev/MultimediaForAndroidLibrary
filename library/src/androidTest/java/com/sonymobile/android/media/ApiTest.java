@@ -34,6 +34,7 @@ import android.content.Context;
 import android.net.Uri;
 import android.os.Looper;
 import android.os.SystemClock;
+import android.util.Log;
 import android.view.SurfaceHolder;
 
 import com.sonymobile.android.media.MediaInfo;
@@ -59,7 +60,7 @@ import com.sonymobile.android.media.VideoTrackRepresentation;
 
 public class ApiTest {
 
-    private static final String TAG = "ApiTester";
+    private static final String TAG = "ApiTest";
 
     private static MediaPlayer sMediaPlayer;
 
@@ -101,8 +102,6 @@ public class ApiTest {
 
     public static void createMediaPlayer() {
 
-        final String testName = "createMediaPlayer";
-        Utils.logv(TAG, testName, "");
         MediaPlayer mp1, mp2;
 
         final MediaPlayer mp3;
@@ -1226,8 +1225,6 @@ public class ApiTest {
         assertNotNull("No content uri", tc.getContentUri());
 
         try {
-            final String testName = "selectTrack";
-            Utils.logv(TAG, testName, "");
             assertNotNull("Test content null", tc);
             assertNotNull("No content URI for testcontent", tc.getContentUri());
             // TODO: investigate exactly how selectTrack works and how this can
@@ -1836,7 +1833,6 @@ public class ApiTest {
          * test method has been completed.
          */
         setHandlerForUncaughtExceptions();
-        final String testName = "initMediaPlayer";
         final CountDownLatch latch = new CountDownLatch(1);
         Thread t = new Thread("testThread") {
             @Override
@@ -1853,7 +1849,7 @@ public class ApiTest {
         try {
             latch.await(1, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
-            Utils.loge(TAG, testName, "Could not create MediaPlayer");
+            Log.e(TAG, "Could not create MediaPlayer");
         }
     }
 
@@ -1879,7 +1875,6 @@ public class ApiTest {
     }
 
     protected static void shutDown() {
-        final String testName = "shutDown";
         try {
             if (sMediaPlayer != null && sMediaPlayer.getState() != MediaPlayer.State.END) {
                 sMediaPlayer.release();
@@ -1889,7 +1884,7 @@ public class ApiTest {
                 sLooper.quit();
             }
         } catch (Exception e) {
-            Utils.loge(TAG, testName, "Could not shutdown MediaPlayer");
+            Log.e(TAG, "Could not shutdown MediaPlayer");
         }
         assertTrue("UncaughtException: " + sUncaughtExceptionMessage, sNoUncaughtException);
     }

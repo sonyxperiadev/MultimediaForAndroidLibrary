@@ -31,12 +31,11 @@ import android.net.Uri;
 import android.os.Environment;
 import android.provider.MediaStore.Video.Media;
 import android.text.format.Time;
+import android.util.Log;
 import android.util.Xml;
 
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
-
-import com.sonymobile.android.media.MetaData;
 
 public class TestContentProvider {
     private static final String XML_CONTENT = "TestContent";
@@ -103,6 +102,8 @@ public class TestContentProvider {
 
     private static final String PATH_TO_TESTFILE = Environment.getExternalStorageDirectory()
             .getAbsolutePath() + "/testcontent.xml";
+
+    private static final String TAG = "TestContentProvider";
 
     private ArrayList<TestContent> mContents;
 
@@ -210,7 +211,7 @@ public class TestContentProvider {
                                     duration.minute = Integer.parseInt(mm);
                                     duration.second = Integer.parseInt(ss);
                                 } else {
-                                    Utils.logd("No valid duration provided: \"" +
+                                    Log.d(TAG, "No valid duration provided: \"" +
                                             text + "\". Use format HHMMSS");
                                 }
                                 obj.setDuration(duration);
@@ -404,15 +405,15 @@ public class TestContentProvider {
                 } // Leaving <TestContent> tag
             } // End of document
         } catch (IOException e) {
-            Utils.logd("Error in loadContents(). Please make sure your testcontent.xml" +
+            Log.d(TAG, "Error in loadContents(). Please make sure your testcontent.xml" +
                     " is correctly formatted and located at " + PATH_TO_TESTFILE
                     + e.getMessage());
         } catch (NumberFormatException e) {
-            Utils.logd("Error in loadContents(). Please make sure your testcontent.xml" +
+            Log.d(TAG, "Error in loadContents(). Please make sure your testcontent.xml" +
                     " is correctly formatted and located at " + PATH_TO_TESTFILE
                     + e.getMessage());
         } catch (XmlPullParserException e) {
-            Utils.logd("Error in loadContents(). Please make sure your testcontent.xml" +
+            Log.d(TAG, "Error in loadContents(). Please make sure your testcontent.xml" +
                     " is correctly formatted and located at " + PATH_TO_TESTFILE
                     + e.getMessage());
         } finally {

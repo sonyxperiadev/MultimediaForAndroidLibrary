@@ -46,7 +46,6 @@ public class TestRunner extends
     protected void setUp() throws Exception {
         super.setUp();
         mTcp = new TestContentProvider(getActivity().getApplicationContext());
-        Utils.logd(this, "setUp", "Start test");
         mSurfaceView = getActivity();
     }
 
@@ -55,7 +54,6 @@ public class TestRunner extends
         super.tearDown();
         mTcp = null;
         mSurfaceView = null;
-        Utils.logd(this, "tearDown", "End test");
     }
 
     public void testCreateMediaPlayer() {
