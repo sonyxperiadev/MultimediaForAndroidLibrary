@@ -766,8 +766,8 @@ public final class VideoThread extends VideoCodecThread {
 
             try {
                 mCodec.releaseOutputBuffer(frame.bufferIndex, true);
-                mCallback.obtainMessage(MSG_CODEC_NOTIFY, CODEC_VIDEO_SEEK_COMPLETED, 0)
-                        .sendToTarget();
+                mCallback.obtainMessage(MSG_CODEC_NOTIFY, CODEC_VIDEO_SEEK_COMPLETED,
+                        (int)(mClock.getCurrentTimeUs() / 1000) + 1).sendToTarget();
 
             } catch (IllegalStateException e) {
                 if (LOGS_ENABLED) Log.e(TAG, "Codec error", e);

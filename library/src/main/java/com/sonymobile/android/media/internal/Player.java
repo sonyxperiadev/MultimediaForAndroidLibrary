@@ -996,6 +996,8 @@ public final class Player {
                                 if (!thiz.mInternalSeekTriggered) {
                                     thiz.mCallbacks.obtainMessage(NOTIFY_SEEK_COMPLETE)
                                             .sendToTarget();
+                                } else {
+                                    thiz.mCurrentPositionMs = msg.arg2;
                                 }
                                 thiz.mInternalSeekTriggered = false;
                                 thiz.mExecutingSeekMessage = null;
