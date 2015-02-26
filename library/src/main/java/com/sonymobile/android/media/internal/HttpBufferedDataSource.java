@@ -118,6 +118,10 @@ public class HttpBufferedDataSource extends BufferedDataSource implements Thresh
                         synchronized (waiterLock) {
                             try {
                                 waiterLock.wait(50);
+                                if (mBis.isStreamClosed()) {
+                                    mNotify.sendEmptyMessage(SOURCE_BUFFERING_END);
+                                    return -1;
+                                }
                             } catch (InterruptedException e) {
                             }
                         }
@@ -205,6 +209,9 @@ public class HttpBufferedDataSource extends BufferedDataSource implements Thresh
 
     @Override
     public synchronized DataAvailability hasDataAvailable(long offset, int size) {
+        if (mBis.isStreamClosed()) {
+            return DataAvailability.IN_FUTURE;
+        }
         DataAvailability toReturn = DataAvailability.IN_FUTURE;
         if (mCurrentOffset == offset) {
             toReturn = DataAvailability.AVAILABLE;

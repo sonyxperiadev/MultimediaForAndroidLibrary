@@ -278,11 +278,13 @@ public abstract class BufferedDataSource extends DataSource {
 
     @Override
     public void seek(long offset) throws IOException {
-        mCurrentOffset = offset;
-        mOffset = offset;
+        if (!mBis.isStreamClosed()) {
+            mCurrentOffset = offset;
+            mOffset = offset;
 
-        doCloseSync();
-        openConnectionsAndStreams();
+            doCloseSync();
+            openConnectionsAndStreams();
+        }
     }
 
     protected void openConnectionsAndStreams() throws FileNotFoundException, IOException {
@@ -478,6 +480,8 @@ public abstract class BufferedDataSource extends DataSource {
 
     class ReconnectHandler extends Handler {
 
+        private int mPreviousAvailable = 0;
+
         public ReconnectHandler(Looper looper) {
             super(looper);
         }
@@ -488,7 +492,9 @@ public abstract class BufferedDataSource extends DataSource {
                 case MSG_RECONNECT:
                     try {
                         if (mBis != null) {
-                            if (mBis.available() > 0) {
+                            int available = mBis.available();
+                            if (available != mPreviousAvailable) {
+                                mPreviousAvailable = available;
                                 doReconnect();
                             } else {
                                 mBis.close();

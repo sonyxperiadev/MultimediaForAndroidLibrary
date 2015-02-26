@@ -257,6 +257,10 @@ public class BufferedStream extends InputStream {
         return new IOException("Stream is closed");
     }
 
+    public synchronized boolean isStreamClosed() {
+        return mClosed;
+    }
+
     private class DownloaderThread extends Thread {
 
         private boolean mEos = false;
