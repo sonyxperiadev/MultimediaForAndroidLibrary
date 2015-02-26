@@ -788,6 +788,7 @@ public final class Player {
                     }
                     thiz.mVideoThread = null;
                     thiz.mAudioThread = null;
+                    thiz.mSubtitleThread = null;
                     thiz.mClockSource = null;
                     thiz.mSource = null;
                     // Marked as a release request
