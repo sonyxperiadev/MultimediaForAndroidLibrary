@@ -126,6 +126,8 @@ public final class VideoThread extends VideoCodecThread {
 
     private HashMap<String, Integer> mCustomMediaFormatParams;
 
+    private boolean mHasQueuedInputBuffers = false;
+
     public VideoThread(MediaFormat format, MediaSource source, Surface surface, Clock clock,
             Handler callback, DrmSession drmSession, int videoScalingMode,
             HashMap<String, Integer> customMediaFormatParams) {
@@ -153,6 +155,7 @@ public final class VideoThread extends VideoCodecThread {
         mVideoScalingMode = videoScalingMode;
 
         mCustomMediaFormatParams = customMediaFormatParams;
+        mHasQueuedInputBuffers = false;
     }
 
     @Override
@@ -263,6 +266,7 @@ public final class VideoThread extends VideoCodecThread {
 
     private void doSetup(MediaFormat format) {
         mFormat = format;
+        mHasQueuedInputBuffers = false;
 
         String mime = format.getString(MediaFormat.KEY_MIME);
 
@@ -412,9 +416,14 @@ public final class VideoThread extends VideoCodecThread {
     }
 
     private void doFlush() {
+        if (!mHasQueuedInputBuffers) {
+            //No need to flush if no input buffers are queued
+            return;
+        }
         synchronized (mRenderingLock) {
             try {
                 mReadyToRender = false;
+                mHasQueuedInputBuffers = false;
                 mCodec.flush();
             } catch (RuntimeException e) {
                 if (LOGS_ENABLED) Log.e(TAG, "Exception in flush", e);
@@ -488,6 +497,7 @@ public final class VideoThread extends VideoCodecThread {
                                             : 0);
                         }
 
+                        mHasQueuedInputBuffers = true;
                         mInputBuffer = -1;
                     }
                 } else if (accessUnit.status == AccessUnit.FORMAT_CHANGED) {
