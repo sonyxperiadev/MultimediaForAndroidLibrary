@@ -47,7 +47,6 @@ import com.sonymobile.android.media.internal.drm.DrmSession;
 import com.sonymobile.android.media.internal.drm.DrmSession.DrmLicenseException;
 import com.sonymobile.android.media.internal.drm.DrmSessionFactory;
 import com.sonymobile.android.media.internal.drm.DrmUUID;
-import com.sonymobile.android.media.internal.drm.OutputController;
 import com.sonymobile.android.media.internal.mpegdash.DASHSource;
 
 public final class Player {
@@ -208,7 +207,9 @@ public final class Player {
 
     private HashMap<String, Integer> mCustomVideoMediaFormatParams;
 
-    private Message mLastSeek;
+    private Message mExecutingSeekMessage;
+
+    private Message mPendingSeekMessage;
 
     public Player(Handler callbackListener, Context context, int audioSessionId) {
         mContext = context;
@@ -300,7 +301,9 @@ public final class Player {
         Message msg = mEventHandler.obtainMessage(MSG_SEEK, msec, -1);
         if (mEventHandler.hasMessages(MSG_SEEK)) {
             // Queue the last seek made
-            mLastSeek = msg;
+            if (mExecutingSeekMessage == null || mExecutingSeekMessage.arg1 != msec) {
+                mPendingSeekMessage = msg;
+            }
         } else {
             if (mSource.supportsPreview()) {
                 msg.sendToTarget();
@@ -341,6 +344,14 @@ public final class Player {
         if (!mSource.supportsPreview() && msec == 0 && mCurrentPositionMs == 0 &&
                 mAudioThread == null && mVideoThread == null) {
             mCallbacks.obtainMessage(NOTIFY_SEEK_COMPLETE).sendToTarget();
+            return;
+        }
+
+        if (mPendingSeekMessage != null && !mSource.supportsPreview()) {
+            // We have some queued seeks.
+            mEventHandler.sendMessageAtTime(mPendingSeekMessage,
+                    SystemClock.uptimeMillis() + DEFAULT_SEEK_DELAY_MS);
+            mPendingSeekMessage = null;
             return;
         }
 
@@ -799,6 +810,7 @@ public final class Player {
                     }
                     break;
                 case MSG_SEEK:
+                    thiz.mExecutingSeekMessage = msg;
                     thiz.onSeek(msg.arg1, false);
                     break;
                 case MSG_ERROR:
@@ -976,16 +988,17 @@ public final class Player {
                             thiz.mFlushingAudio = false;
                             break;
                         case Codec.CODEC_VIDEO_SEEK_COMPLETED:
-                            if (thiz.mLastSeek != null) {
+                            if (thiz.mPendingSeekMessage != null) {
                                 // Execute queued seek
-                                thiz.mEventHandler.sendMessage(thiz.mLastSeek);
-                                thiz.mLastSeek = null;
+                                thiz.mEventHandler.sendMessage(thiz.mPendingSeekMessage);
+                                thiz.mPendingSeekMessage = null;
                             } else {
                                 if (!thiz.mInternalSeekTriggered) {
                                     thiz.mCallbacks.obtainMessage(NOTIFY_SEEK_COMPLETE)
                                             .sendToTarget();
                                 }
                                 thiz.mInternalSeekTriggered = false;
+                                thiz.mExecutingSeekMessage = null;
                             }
                             thiz.mVideoSeekPending = false;
                             thiz.mSeekPositionMs = -1;

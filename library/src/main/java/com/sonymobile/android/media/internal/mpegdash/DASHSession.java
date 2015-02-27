@@ -567,6 +567,7 @@ public final class DASHSession {
     }
 
     private void onSeek(long timeUs) {
+        mSeekPending = false;
         mMPDParser.seekTo(timeUs);
 
         mPacketSources.get(TrackType.AUDIO).clear();
