@@ -888,6 +888,14 @@ public final class MediaPlayer {
                         }
                     }
                     break;
+                case Player.NOTIFY_BUFFERING_UPDATE:
+                    synchronized (thiz.mStateLock) {
+                        if (thiz.mState == State.INITIALIZED) {
+                            // Don't send any callbacks about buffering after stop.
+                            return;
+                        }
+                    }
+                    break;
             }
 
             if (thiz.mCallbackDispatcher != null) {
