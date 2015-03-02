@@ -212,33 +212,58 @@ public class BufferedStream extends InputStream {
     }
 
     protected synchronized boolean rewind(int rewindBytes) {
-        if (!mClosed) {
-            return mDataBuffer.rewind(rewindBytes);
+        if (mClosed) {
+            return false;
         }
-        return false;
+
+        return mDataBuffer.rewind(rewindBytes);
     }
 
     protected synchronized void fastForward(int fastForwardBytes) {
+        if (mClosed) {
+            return;
+        }
+
         mDataBuffer.fastForward(fastForwardBytes);
     }
 
     protected synchronized int freeSpace() {
+        if (mClosed) {
+            return -1;
+        }
+
         return mDataBuffer.freeSpace();
     }
 
     protected synchronized boolean canDataFit(int bytes) {
+        if (mClosed) {
+            return false;
+        }
+
         return mDataBuffer.canDataFit(bytes);
     }
 
     protected synchronized boolean canRewind(int bytesToRewind) {
+        if (mClosed) {
+            return false;
+        }
+
         return mDataBuffer.canRewind(bytesToRewind);
     }
 
     protected synchronized boolean canFastForward(int bytesToFastForward) {
+        if (mClosed) {
+            return false;
+        }
+
         return mDataBuffer.canFastForward(bytesToFastForward);
     }
 
     protected synchronized void compact(int bytesToDiscard) {
+        if (mClosed) {
+            return;
+        }
+
         mDataBuffer.compact(bytesToDiscard);
     }
 
