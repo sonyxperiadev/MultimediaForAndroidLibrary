@@ -25,4 +25,7 @@
         </activity>
     </application>
 
+    <instrumentation android:name="com.sonymobile.android.media.MultipleContentTestRunner"
+                     android:targetPackage="com.sonymobile.android.media.test"></instrumentation>
+
 </manifest>

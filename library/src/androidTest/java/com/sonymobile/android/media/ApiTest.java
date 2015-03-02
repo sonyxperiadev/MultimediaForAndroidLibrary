@@ -758,7 +758,8 @@ public class ApiTest {
     public static void getCurrentPosition(TestContent tc) throws IOException {
         assertNotNull("No test content", tc);
         assertNotNull("No content uri", tc.getContentUri());
-        assertTrue("Test content is to short", tc.getDuration() >= 4000);
+        assertTrue("Test content is too short (" + tc.getDuration() + ") " + tc.getContentUri(),
+                tc.getDuration() >= 4000);
 
         try {
             initMediaPlayer();
@@ -1305,7 +1306,6 @@ public class ApiTest {
             throws IOException {
         assertNotNull("No test content", tc);
         assertNotNull("No content uri", tc.getContentUri());
-        assertEquals("Expecting MPEG-DASH content", TestContent.ID_TYPE_DASH, tc.getId());
         assertTrue("No maxIFrameInterval set", tc.getMaxIFrameInterval() > 0);
 
         try {
@@ -1403,7 +1403,6 @@ public class ApiTest {
             throws IOException {
         assertNotNull("No test content", tc);
         assertNotNull("No content uri", tc.getContentUri());
-        assertEquals("Expecting local content", TestContent.ID_TYPE_LOCAL, tc.getId());
 
         try {
             initMediaPlayer();
@@ -1428,7 +1427,6 @@ public class ApiTest {
             throws IOException {
         assertNotNull("No test content", tc);
         assertNotNull("No content uri", tc.getContentUri());
-        assertEquals("Expecting local content", TestContent.ID_TYPE_LOCAL, tc.getId());
 
         try {
             initMediaPlayer(context);
@@ -1741,7 +1739,6 @@ public class ApiTest {
             throws IOException {
         assertNotNull("No test content", tc);
         assertNotNull("No content uri", tc.getContentUri());
-        assertEquals("Expecting local content", TestContent.ID_TYPE_LOCAL, tc.getId());
 
         try {
             sCompleted = false;

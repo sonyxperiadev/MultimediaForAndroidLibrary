@@ -26,35 +26,39 @@ public class TestContent {
 
     private String mId;
 
-    private int mWidth;
+    private int mWidth = -1;
 
-    private int mHeight;
+    private int mHeight = -1;
 
-    private int mBitrate;
+    private int mBitrate = -1;
 
-    private int mSubtitleDataLength;
+    private int mSubtitleDataLength = -1;
 
-    private int mSubtitleLengthInterval;
+    private int mSubtitleLengthInterval = -1;
 
-    private int mTrackCount;
+    private int mTrackCount = -1;
 
-    private int mSubtitleTrack;
+    private int mSubtitleTrack = -1;
 
     private Time mDuration;
 
-    private float mFramerate;
+    private float mFramerate = -1;
 
-    private int mMaxIFrameInterval;
+    private int mMaxIFrameInterval = -1;
 
-    private long mOffset;
+    private long mOffset = -1;
 
-    private long mLength;
+    private long mLength = 1;
 
     private String mMimeType;
 
     private String mTrackMimeTypeAudio;
 
     private String mTrackMimeTypeVideo;
+
+    private String mProtocolType;
+
+    private String mContentType;
 
     private HashMap<String, String> mMetaDataValues;
 
@@ -128,6 +132,9 @@ public class TestContent {
     }
 
     public int getDuration() {
+        if (mDuration == null) {
+            return -1;
+        }
         return mDuration.hour * 60 * 60 * 1000 + mDuration.minute * 60 * 1000 + mDuration.second
                 * 1000;
     }
@@ -231,6 +238,22 @@ public class TestContent {
 
     public String getMetaDataValue(String key) {
         return mMetaDataValues.get(key);
+    }
+
+    public void setContentType(String contentType) {
+        mContentType = contentType;
+    }
+
+    public String getContentType() {
+        return mContentType;
+    }
+
+    public void setProtocolType(String protocolType) {
+        mProtocolType = protocolType;
+    }
+
+    public String getProtocolType() {
+        return mProtocolType;
     }
 
 }

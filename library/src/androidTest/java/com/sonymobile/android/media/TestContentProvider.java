@@ -38,67 +38,71 @@ import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 
 public class TestContentProvider {
-    private static final String XML_CONTENT = "TestContent";
+    public static final String KEY_CONTENT = "TestContent";
 
-    private static final String XML_CONTENT_URI = "ContentURI";
+    public static final String KEY_CONTENT_URI = "ContentURI";
 
-    private static final String XML_WIDTH = "Width";
+    public static final String KEY_WIDTH = "Width";
 
-    private static final String XML_HEIGHT = "Height";
+    public static final String KEY_HEIGHT = "Height";
 
-    private static final String XML_DURATION = "Duration";
+    public static final String KEY_DURATION = "Duration";
 
-    private static final String XML_FRAMERATE = "Framerate";
+    public static final String KEY_FRAMERATE = "Framerate";
 
-    private static final String XML_BITRATE = "BitRate";
+    public static final String KEY_BITRATE = "BitRate";
 
-    private static final String XML_SUBTITLE_DATA_LENGTH = "SubtitleDataLength";
+    public static final String KEY_SUBTITLE_DATA_LENGTH = "SubtitleDataLength";
 
-    private static final String XML_SUBTITLE_LENGTH_INTERVAL = "SubtitleLengthInterval";
+    public static final String KEY_SUBTITLE_LENGTH_INTERVAL = "SubtitleLengthInterval";
 
-    private static final String XML_TRACK_COUNT = "TrackCount";
+    public static final String KEY_TRACK_COUNT = "TrackCount";
 
-    private static final String XML_SUBTITLE_TRACK = "SubtitleTrack";
+    public static final String KEY_SUBTITLE_TRACK = "SubtitleTrack";
 
-    private static final String XML_ID = "Id";
+    public static final String KEY_ID = "Id";
 
-    private static final String XML_MAX_I_FRAME_INTERVAL = "maxIFrameInterval";
+    public static final String KEY_MAX_I_FRAME_INTERVAL = "maxIFrameInterval";
 
-    private static final String XML_HEADER_OFFSET = "Offset";
+    public static final String KEY_HEADER_OFFSET = "Offset";
 
-    private static final String XML_FILE_LENGTH = "Length";
+    public static final String KEY_FILE_LENGTH = "Length";
 
-    private static final String XML_TRACK_MIME_TYPE_VIDEO = "TrackMimeTypeVideo";
+    public static final String KEY_TRACK_MIME_TYPE_VIDEO = "TrackMimeTypeVideo";
 
-    private static final String XML_TRACK_MIME_TYPE_AUDIO = "TrackMimeTypeAudio";
+    public static final String KEY_TRACK_MIME_TYPE_AUDIO = "TrackMimeTypeAudio";
 
-    private static final String XML_MIME_TYPE = "MimeType";
+    public static final String KEY_MIME_TYPE = "MimeType";
 
-    private static final String XML_METADATA_TITLE = "Title";
+    public static final String KEY_CONTENT_TYPE = "Content";
 
-    private static final String XML_METADATA_ALBUM = "Album";
+    public static final String KEY_PROTOCOL_TYPE = "Protocol";
 
-    private static final String XML_METADATA_ARTIST = "Artist";
+    public static final String KEY_METADATA_TITLE = "Title";
 
-    private static final String XML_METADATA_ALBUMARTIST = "AlbumArtist";
+    public static final String KEY_METADATA_ALBUM = "Album";
 
-    private static final String XML_METADATA_GENRE = "Genre";
+    public static final String KEY_METADATA_ARTIST = "Artist";
 
-    private static final String XML_METADATA_TRACKNUMBER = "TrackNumber";
+    public static final String KEY_METADATA_ALBUMARTIST = "AlbumArtist";
 
-    private static final String XML_METADATA_COMPILATION = "Compilation";
+    public static final String KEY_METADATA_GENRE = "Genre";
 
-    private static final String XML_METADATA_AUTHOR = "Author";
+    public static final String KEY_METADATA_TRACKNUMBER = "TrackNumber";
 
-    private static final String XML_METADATA_COMPOSER = "Composer";
+    public static final String KEY_METADATA_COMPILATION = "Compilation";
 
-    private static final String XML_METADATA_NUMBERTRACKS = "NumberTracks";
+    public static final String KEY_METADATA_AUTHOR = "Author";
 
-    private static final String XML_METADATA_WRITER = "Writer";
+    public static final String KEY_METADATA_COMPOSER = "Composer";
 
-    private static final String XML_METADATA_DISCNUMBER = "DiscNumber";
+    public static final String KEY_METADATA_NUMBERTRACKS = "NumberTracks";
 
-    private static final String XML_METADATA_YEAR = "Year";
+    public static final String KEY_METADATA_WRITER = "Writer";
+
+    public static final String KEY_METADATA_DISCNUMBER = "DiscNumber";
+
+    public static final String KEY_METADATA_YEAR = "Year";
 
     private static final String PATH_TO_TESTFILE = Environment.getExternalStorageDirectory()
             .getAbsolutePath() + "/testcontent.xml";
@@ -130,9 +134,38 @@ public class TestContentProvider {
         return mContents;
     }
 
+    public ArrayList<TestContent> getFilteredTestItems(boolean protocolTypeSet,
+            boolean contentTypeSet) {
+
+        ArrayList<TestContent> filteredList = new ArrayList<>();
+
+        for (TestContent content : mContents) {
+            String protocolType = content.getProtocolType();
+            String contentType = content.getContentType();
+
+            if (protocolTypeSet && contentTypeSet) {
+                if (protocolType != null && contentType != null) {
+                    filteredList.add(content);
+                }
+            } else if (protocolTypeSet) {
+                if (protocolType != null) {
+                    filteredList.add(content);
+                }
+            } else if (contentTypeSet) {
+                if (contentType != null) {
+                    filteredList.add(content);
+                }
+            } else {
+                filteredList.add(content);
+            }
+        }
+
+        return filteredList;
+    }
+
     private String getMediaStoreUri(String idName) {
 
-        if (!idName.equals("")) {
+        if (!idName.equals("") && mContext != null) {
             ContentResolver cr = mContext.getContentResolver();
             Cursor c = cr.query(Media.EXTERNAL_CONTENT_URI, null, Media.DISPLAY_NAME
                     + "=? COLLATE NOCASE",
@@ -170,33 +203,33 @@ public class TestContentProvider {
 
             while (parser.next() != XmlPullParser.END_DOCUMENT) {
                 String tagName = parser.getName();
-                if (XML_CONTENT.equals(tagName)) { // On <TestContent> tag
+                if (KEY_CONTENT.equals(tagName)) { // On <TestContent> tag
                     TestContent obj = new TestContent();
                     while (parser.next() != XmlPullParser.END_TAG ||
-                            !XML_CONTENT.equals(parser.getName())) {
+                            !KEY_CONTENT.equals(parser.getName())) {
                         // While not on the </TestContent> tag
-                        if (XML_CONTENT_URI.equals(parser.getName()) &&
+                        if (KEY_CONTENT_URI.equals(parser.getName()) &&
                                 parser.getEventType() == XmlPullParser.START_TAG) {
                             parser.next(); // Step to the text content
                             if (parser.getEventType() == XmlPullParser.TEXT) {
                                 obj.setContentUri(parser.getText());
                             }
                         } // done with filename
-                        else if (XML_HEIGHT.equals(parser.getName()) &&
+                        else if (KEY_HEIGHT.equals(parser.getName()) &&
                                 parser.getEventType() == XmlPullParser.START_TAG) {
                             parser.next();
                             if (parser.getEventType() == XmlPullParser.TEXT) {
                                 obj.setHeight(Integer.parseInt(parser.getText()));
                             }
                         } // done with height
-                        else if (XML_WIDTH.equals(parser.getName()) &&
+                        else if (KEY_WIDTH.equals(parser.getName()) &&
                                 parser.getEventType() == XmlPullParser.START_TAG) {
                             parser.next();
                             if (parser.getEventType() == XmlPullParser.TEXT) {
                                 obj.setWidth(Integer.parseInt(parser.getText()));
                             }
                         } // done with width
-                        else if (XML_DURATION.equals(parser.getName()) &&
+                        else if (KEY_DURATION.equals(parser.getName()) &&
                                 parser.getEventType() == XmlPullParser.START_TAG) {
                             parser.next();
                             if (parser.getEventType() == XmlPullParser.TEXT) {
@@ -217,181 +250,195 @@ public class TestContentProvider {
                                 obj.setDuration(duration);
                             }
                         } // done with duration
-                        else if (XML_FRAMERATE.equals(parser.getName()) &&
+                        else if (KEY_FRAMERATE.equals(parser.getName()) &&
                                 parser.getEventType() == XmlPullParser.START_TAG) {
                             parser.next();
                             if (parser.getEventType() == XmlPullParser.TEXT) {
                                 obj.setFramerate(Float.parseFloat(parser.getText()));
                             }
                         } // done with framerate
-                        else if (XML_BITRATE.equals(parser.getName()) &&
+                        else if (KEY_BITRATE.equals(parser.getName()) &&
                                 parser.getEventType() == XmlPullParser.START_TAG) {
                             parser.next();
                             if (parser.getEventType() == XmlPullParser.TEXT) {
                                 obj.setBitrate(Integer.parseInt(parser.getText()));
                             }
                         } // done with bitrate
-                        else if (XML_ID.equals(parser.getName()) &&
+                        else if (KEY_ID.equals(parser.getName()) &&
                                 parser.getEventType() == XmlPullParser.START_TAG) {
                             parser.next();
                             if (parser.getEventType() == XmlPullParser.TEXT) {
                                 obj.setId(parser.getText());
                             }
                         }// done with id
-                        else if (XML_MAX_I_FRAME_INTERVAL.equals(parser.getName()) &&
+                        else if (KEY_MAX_I_FRAME_INTERVAL.equals(parser.getName()) &&
                                 parser.getEventType() == XmlPullParser.START_TAG) {
                             parser.next();
                             if (parser.getEventType() == XmlPullParser.TEXT) {
                                 obj.setMaxIFrameInterval(Integer.parseInt(parser.getText()));
                             }
                         }// done with seekpoint
-                        else if (XML_SUBTITLE_DATA_LENGTH.equals(parser.getName())
+                        else if (KEY_SUBTITLE_DATA_LENGTH.equals(parser.getName())
                                 && parser.getEventType() == XmlPullParser.START_TAG) {
                             parser.next();
                             if (parser.getEventType() == XmlPullParser.TEXT) {
                                 obj.setSubtitleDataLength(Integer.parseInt(parser.getText()));
                             }
                         } // done with subtitledata
-                        else if (XML_SUBTITLE_LENGTH_INTERVAL.equals(parser.getName())
+                        else if (KEY_SUBTITLE_LENGTH_INTERVAL.equals(parser.getName())
                                 && parser.getEventType() == XmlPullParser.START_TAG) {
                             parser.next();
                             if (parser.getEventType() == XmlPullParser.TEXT) {
                                 obj.setSubtitleLengthInterval(Integer.parseInt(parser.getText()));
                             }
                         } // done with subtitlelengthinterval
-                        else if (XML_SUBTITLE_TRACK.equals(parser.getName())
+                        else if (KEY_SUBTITLE_TRACK.equals(parser.getName())
                                 && parser.getEventType() == XmlPullParser.START_TAG) {
                             parser.next();
                             if (parser.getEventType() == XmlPullParser.TEXT) {
                                 obj.setSubtitleTrack(Integer.parseInt(parser.getText()));
                             }
                         } // done with subtitletrack
-                        else if (XML_HEADER_OFFSET.equals(parser.getName()) &&
+                        else if (KEY_HEADER_OFFSET.equals(parser.getName()) &&
                                 parser.getEventType() == XmlPullParser.START_TAG) {
                             parser.next();
                             if (parser.getEventType() == XmlPullParser.TEXT) {
                                 obj.setOffset(Integer.parseInt(parser.getText()));
                             }
                         }// done with offset
-                        else if (XML_FILE_LENGTH.equals(parser.getName()) &&
+                        else if (KEY_FILE_LENGTH.equals(parser.getName()) &&
                                 parser.getEventType() == XmlPullParser.START_TAG) {
                             parser.next();
                             if (parser.getEventType() == XmlPullParser.TEXT) {
                                 obj.setLength(Long.parseLong(parser.getText()));
                             }
                         }// done with length
-                        else if (XML_TRACK_MIME_TYPE_AUDIO.equals(parser.getName()) &&
+                        else if (KEY_TRACK_MIME_TYPE_AUDIO.equals(parser.getName()) &&
                                 parser.getEventType() == XmlPullParser.START_TAG) {
                             parser.next();
                             if (parser.getEventType() == XmlPullParser.TEXT) {
                                 obj.setTrackMimeTypeAudio(parser.getText());
                             }
                         } // done with trackmimetypeaudio
-                        else if (XML_MIME_TYPE.equals(parser.getName()) &&
+                        else if (KEY_MIME_TYPE.equals(parser.getName()) &&
                                 parser.getEventType() == XmlPullParser.START_TAG) {
                             parser.next();
                             if (parser.getEventType() == XmlPullParser.TEXT) {
                                 obj.setMimeType(parser.getText());
                             }
                         } // done with mimetype
-                        else if (XML_TRACK_COUNT.equals(parser.getName()) &&
+                        else if (KEY_TRACK_COUNT.equals(parser.getName()) &&
                                 parser.getEventType() == XmlPullParser.START_TAG) {
                             parser.next();
                             if (parser.getEventType() == XmlPullParser.TEXT) {
                                 obj.setTrackCount(Integer.parseInt(parser.getText()));
                             }
                         } // done with trackcount
-                        else if (XML_TRACK_MIME_TYPE_VIDEO.equals(parser.getName()) &&
+                        else if (KEY_TRACK_MIME_TYPE_VIDEO.equals(parser.getName()) &&
                                 parser.getEventType() == XmlPullParser.START_TAG) {
                             parser.next();
                             if (parser.getEventType() == XmlPullParser.TEXT) {
                                 obj.setTrackMimeTypeVideo(parser.getText());
                             }
                         } // done with trackmimetypevideo
-                        else if (XML_METADATA_TITLE.equals(parser.getName()) &&
+                        else if (KEY_METADATA_TITLE.equals(parser.getName()) &&
                                 parser.getEventType() == XmlPullParser.START_TAG) {
                             parser.next();
                             if (parser.getEventType() == XmlPullParser.TEXT) {
                                 obj.setMetaDataValue(MetaData.KEY_TITLE, parser.getText());
                             }
                         } // done with KEY_TITLE
-                        else if (XML_METADATA_ALBUM.equals(parser.getName()) &&
+                        else if (KEY_METADATA_ALBUM.equals(parser.getName()) &&
                                 parser.getEventType() == XmlPullParser.START_TAG) {
                             parser.next();
                             if (parser.getEventType() == XmlPullParser.TEXT) {
                                 obj.setMetaDataValue(MetaData.KEY_ALBUM, parser.getText());
                             }
                         } // done with KEY_ALBUM
-                        else if (XML_METADATA_ARTIST.equals(parser.getName()) &&
+                        else if (KEY_METADATA_ARTIST.equals(parser.getName()) &&
                                 parser.getEventType() == XmlPullParser.START_TAG) {
                             parser.next();
                             if (parser.getEventType() == XmlPullParser.TEXT) {
                                 obj.setMetaDataValue(MetaData.KEY_ARTIST, parser.getText());
                             }
                         } // done with KEY_ARTIST
-                        else if (XML_METADATA_ALBUMARTIST.equals(parser.getName()) &&
+                        else if (KEY_METADATA_ALBUMARTIST.equals(parser.getName()) &&
                                 parser.getEventType() == XmlPullParser.START_TAG) {
                             parser.next();
                             if (parser.getEventType() == XmlPullParser.TEXT) {
                                 obj.setMetaDataValue(MetaData.KEY_ALBUM_ARTIST, parser.getText());
                             }
                         } // done with KEY_ALBUM_ARTIST
-                        else if (XML_METADATA_GENRE.equals(parser.getName()) &&
+                        else if (KEY_METADATA_GENRE.equals(parser.getName()) &&
                                 parser.getEventType() == XmlPullParser.START_TAG) {
                             parser.next();
                             if (parser.getEventType() == XmlPullParser.TEXT) {
                                 obj.setMetaDataValue(MetaData.KEY_GENRE, parser.getText());
                             }
                         } // done with KEY_GENRE
-                        else if (XML_METADATA_TRACKNUMBER.equals(parser.getName()) &&
+                        else if (KEY_METADATA_TRACKNUMBER.equals(parser.getName()) &&
                                 parser.getEventType() == XmlPullParser.START_TAG) {
                             parser.next();
                             if (parser.getEventType() == XmlPullParser.TEXT) {
                                 obj.setMetaDataValue(MetaData.KEY_TRACK_NUMBER, parser.getText());
                             }
                         } // done with KEY_TRACK_NUMBER
-                        else if (XML_METADATA_COMPILATION.equals(parser.getName()) &&
+                        else if (KEY_METADATA_COMPILATION.equals(parser.getName()) &&
                                 parser.getEventType() == XmlPullParser.START_TAG) {
                             parser.next();
                             if (parser.getEventType() == XmlPullParser.TEXT) {
                                 obj.setMetaDataValue(MetaData.KEY_COMPILATION, parser.getText());
                             }
                         } // done with KEY_COMPILATION
-                        else if (XML_METADATA_AUTHOR.equals(parser.getName()) &&
+                        else if (KEY_METADATA_AUTHOR.equals(parser.getName()) &&
                                 parser.getEventType() == XmlPullParser.START_TAG) {
                             parser.next();
                             if (parser.getEventType() == XmlPullParser.TEXT) {
                                 obj.setMetaDataValue(MetaData.KEY_AUTHOR, parser.getText());
                             }
                         } // done with KEY_AUTHOR
-                        else if (XML_METADATA_COMPOSER.equals(parser.getName()) &&
+                        else if (KEY_METADATA_COMPOSER.equals(parser.getName()) &&
                                 parser.getEventType() == XmlPullParser.START_TAG) {
                             parser.next();
                             if (parser.getEventType() == XmlPullParser.TEXT) {
                                 obj.setMetaDataValue(MetaData.KEY_COMPOSER, parser.getText());
                             }
                         } // done with KEY_COMPOSER
-                        else if (XML_METADATA_WRITER.equals(parser.getName()) &&
+                        else if (KEY_METADATA_WRITER.equals(parser.getName()) &&
                                 parser.getEventType() == XmlPullParser.START_TAG) {
                             parser.next();
                             if (parser.getEventType() == XmlPullParser.TEXT) {
                                 obj.setMetaDataValue(MetaData.KEY_WRITER, parser.getText());
                             }
                         } // done with KEY_WRITER
-                        else if (XML_METADATA_DISCNUMBER.equals(parser.getName()) &&
+                        else if (KEY_METADATA_DISCNUMBER.equals(parser.getName()) &&
                                 parser.getEventType() == XmlPullParser.START_TAG) {
                             parser.next();
                             if (parser.getEventType() == XmlPullParser.TEXT) {
                                 obj.setMetaDataValue(MetaData.KEY_DISC_NUMBER, parser.getText());
                             }
                         } // done with KEY_DISC_NUMBER
-                        else if (XML_METADATA_YEAR.equals(parser.getName()) &&
+                        else if (KEY_METADATA_YEAR.equals(parser.getName()) &&
                                 parser.getEventType() == XmlPullParser.START_TAG) {
                             parser.next();
                             if (parser.getEventType() == XmlPullParser.TEXT) {
                                 obj.setMetaDataValue(MetaData.KEY_YEAR, parser.getText());
                             }
                         } // done with KEY_YEAR
+                        else if (KEY_CONTENT_TYPE.equals(parser.getName()) &&
+                                parser.getEventType() == XmlPullParser.START_TAG) {
+                            parser.next();
+                            if (parser.getEventType() == XmlPullParser.TEXT) {
+                                obj.setContentType(parser.getText());
+                            }
+                        } // done with content type
+                        else if (KEY_PROTOCOL_TYPE.equals(parser.getName()) &&
+                                parser.getEventType() == XmlPullParser.START_TAG) {
+                            parser.next();
+                            if (parser.getEventType() == XmlPullParser.TEXT) {
+                                obj.setProtocolType(parser.getText());
+                            }
+                        } // done with protocol type
                         else {
                             // No match for tags, do nothing
                         }
