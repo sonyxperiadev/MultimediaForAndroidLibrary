@@ -58,6 +58,8 @@ public final class VideoThread extends VideoCodecThread {
 
     private static final int LATE_FRAME_TIME_MS = -40;
 
+    private static final int MAX_EARLY_FRAME_TIME_ALLOWED_MS = 10;
+
     private HandlerThread mEventThread;
 
     private EventHandler mEventHandler;
@@ -128,6 +130,14 @@ public final class VideoThread extends VideoCodecThread {
 
     private boolean mHasQueuedInputBuffers = false;
 
+    private int mDelayCounter = 0;
+
+    private boolean mCheckAudioClockAfterResume = false;
+
+    private long mResumeTimeUs = 0;
+
+    private long mLastAudioTimeUs = 0;
+
     public VideoThread(MediaFormat format, MediaSource source, Surface surface, Clock clock,
             Handler callback, DrmSession drmSession, int videoScalingMode,
             HashMap<String, Integer> customMediaFormatParams) {
@@ -170,6 +180,9 @@ public final class VideoThread extends VideoCodecThread {
 
     @Override
     public void seek() {
+        // we were likely paused to perform the seek but as we are seeking,
+        // mLastAudioTimeUs is not correct
+        mCheckAudioClockAfterResume = false;
         if (!mSeeking) {
             mSeeking = true;
             mRenderingHandler.removeMessages(MSG_RENDER);
@@ -379,6 +392,9 @@ public final class VideoThread extends VideoCodecThread {
         synchronized (mRenderingLock) {
             mStarted = true;
         }
+
+        mResumeTimeUs = System.nanoTime() / 1000;
+
         if (!mSeeking) {
             mRenderingHandler.sendEmptyMessage(MSG_RENDER);
             mEventHandler.sendEmptyMessage(MSG_DEQUEUE_INPUT_BUFFER);
@@ -390,6 +406,8 @@ public final class VideoThread extends VideoCodecThread {
         synchronized (mRenderingLock) {
             mStarted = false;
         }
+
+        mCheckAudioClockAfterResume = true;
 
         mRenderingHandler.removeMessages(MSG_RENDER);
         if (!mSeeking) {
@@ -692,18 +710,37 @@ public final class VideoThread extends VideoCodecThread {
                     return;
                 }
 
-                long delayMs = (frame.info.presentationTimeUs - mClock.getCurrentTimeUs()) / 1000;
+                long currentClockTimeUs = mClock.getCurrentTimeUs();
 
-                if (delayMs > 10) {
+                long delayMs = (frame.info.presentationTimeUs - currentClockTimeUs) / 1000;
+
+                if (delayMs > MAX_EARLY_FRAME_TIME_ALLOWED_MS) {
                     // if (LOGS_ENABLED) Log.w(TAG, "Frame early! (" +
                     // (++mNumEarlyFrames)
                     // + ") is early with " + delayMs);
 
-                    delayMs = (long)((float)delayMs / mCurrentSpeed);
+                    if (mCheckAudioClockAfterResume) {
+                        long systemTimeUs = System.nanoTime() / 1000;
+                        delayMs = (frame.info.presentationTimeUs - (mLastAudioTimeUs +
+                                (systemTimeUs -mResumeTimeUs))) / 1000;
 
-                    mRenderingHandler.sendEmptyMessageAtTime(MSG_RENDER,
-                            SystemClock.uptimeMillis() + delayMs);
-                    return;
+                    }
+                    if (delayMs > MAX_EARLY_FRAME_TIME_ALLOWED_MS) {
+                        if (mDelayCounter++ < 20 && delayMs > 100) {
+                            delayMs = MAX_EARLY_FRAME_TIME_ALLOWED_MS;
+                        } else {
+                            mDelayCounter = 0;
+                        }
+
+                        delayMs = (long)((float)delayMs / mCurrentSpeed);
+
+                        mRenderingHandler.sendEmptyMessageAtTime(MSG_RENDER, SystemClock
+                                .uptimeMillis() + delayMs);
+                        return;
+                    }
+                } else {
+                    mCheckAudioClockAfterResume = false;
+                    mResumeTimeUs = 0;
                 }
 
                 try {
@@ -715,6 +752,9 @@ public final class VideoThread extends VideoCodecThread {
                         mCodec.releaseOutputBuffer(frame.bufferIndex, false);
                     } else if (mSurface.isValid()) {
                         mCodec.releaseOutputBuffer(frame.bufferIndex, true);
+                        if (!mCheckAudioClockAfterResume) {
+                            mLastAudioTimeUs = currentClockTimeUs;
+                        }
 
                         if (!mVideoRenderingStarted) {
                             mVideoRenderingStarted = true;
@@ -737,9 +777,9 @@ public final class VideoThread extends VideoCodecThread {
                 addFrameToPool(frame);
 
                 Frame nextFrame = peekDecodedFrame();
-                delayMs = 10;
+                delayMs = MAX_EARLY_FRAME_TIME_ALLOWED_MS;
 
-                if (nextFrame != null) {
+                if (nextFrame != null && !mCheckAudioClockAfterResume) {
                     delayMs = ((nextFrame.info.presentationTimeUs - mClock
                             .getCurrentTimeUs()) / 1000);
                     delayMs = (long)((float)delayMs / mCurrentSpeed);
