@@ -140,6 +140,9 @@ public abstract class CodecThread implements Codec {
             case CryptoException.ERROR_NO_KEY:
                 error = MediaError.DRM_NO_LICENSE;
                 break;
+            case CryptoException.ERROR_INSUFFICIENT_OUTPUT_PROTECTION:
+                error = MediaError.DRM_INSUFFICIENT_OUTPUT_PROTECTION;
+                break;
             default:
                 break;
         }

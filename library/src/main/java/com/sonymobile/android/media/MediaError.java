@@ -89,4 +89,10 @@ public class MediaError {
      */
     public static final int DRM_LICENSE_FUTURE = -2004;
 
+    /**
+     * The output protection is insufficient to be able to render the content on an external
+     * device.
+     */
+    public static final int DRM_INSUFFICIENT_OUTPUT_PROTECTION = -2005;
+
 }
