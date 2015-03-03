@@ -263,7 +263,12 @@ public class RepresentationFetcher {
 
                     queueCSD(format);
 
-                    mParser.parseMoof(source, mCurrentTimeUs + mTimeOffset);
+                    if (!mParser.parseMoof(source, mCurrentTimeUs + mTimeOffset)) {
+                        Message callback = mSession.getFetcherCallbackMessage(mType);
+                        callback.arg1 = DASHSession.FETCHER_ERROR;
+                        callback.sendToTarget();
+                        return;
+                    }
 
                     if (mSeek && mType == TrackType.VIDEO) {
                         Message callback = mSession.getFetcherCallbackMessage(mType);

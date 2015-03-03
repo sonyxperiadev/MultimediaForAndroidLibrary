@@ -174,7 +174,7 @@ public class DASHISOParser extends ISOBMFFParser {
         return OK;
     }
 
-    public void parseMoof(DataSource source, long timeUs) {
+    public boolean parseMoof(DataSource source, long timeUs) {
         mDataSource = source;
         mCurrentOffset = source.getCurrentOffset();
         mFirstMoofOffset = 0;
@@ -185,9 +185,13 @@ public class DASHISOParser extends ISOBMFFParser {
                 mCurrentOffset += header.boxDataSize;
             }
             header = getNextBoxHeader();
+            if (header == null) {
+                return false;
+            }
         } while (header.boxType != BOX_ID_MOOF);
         super.parseBox(header);
         mCurrentTrack.mTimeTicks = timeUs * (long)mCurrentTrack.getTimeScale() / (long)1000000;
+        return true;
     }
 
     private int parseBox12(BoxHeader nextHeader) {
