@@ -112,21 +112,21 @@ public class HttpBufferedDataSource extends BufferedDataSource implements Thresh
                         offset - mCurrentOffset < mBufferSize / 3) {
                     // Data will fit in the buffer and we need to wait for a buffer smaller than
                     // 1/3 of the length. Send buffering start and wait here...
-                    mNotify.sendEmptyMessage(SOURCE_BUFFERING_START);
+                    sendMessage(SOURCE_BUFFERING_START);
                     Object waiterLock = new Object();
                     while (!mBis.canFastForward((int)(offset - mCurrentOffset))) {
                         synchronized (waiterLock) {
                             try {
                                 waiterLock.wait(50);
                                 if (mBis.isStreamClosed()) {
-                                    mNotify.sendEmptyMessage(SOURCE_BUFFERING_END);
+                                    sendMessage(SOURCE_BUFFERING_END);
                                     return -1;
                                 }
                             } catch (InterruptedException e) {
                             }
                         }
                     }
-                    mNotify.sendEmptyMessage(SOURCE_BUFFERING_END);
+                    sendMessage(SOURCE_BUFFERING_END);
                     mBis.fastForward((int)(offset - mCurrentOffset));
                 } else {
                     mCurrentOffset = offset;
@@ -246,6 +246,12 @@ public class HttpBufferedDataSource extends BufferedDataSource implements Thresh
     @Override
     public void onHighThreshold() {
         // Not used.
+    }
+
+    private void sendMessage(int what) {
+        if (mNotify != null) {
+            mNotify.sendEmptyMessage(what);
+        }
     }
 
     private class BufferingUpdateThread extends Thread {
