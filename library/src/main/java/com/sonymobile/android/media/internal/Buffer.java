@@ -169,15 +169,15 @@ public class Buffer {
         return mByteBuffer.length - mCurrentWritePosition;
     }
 
-    protected synchronized boolean canRewind(int bytesToRewind) {
+    protected synchronized boolean canRewind(long bytesToRewind) {
         return mCurrentReadPosition >= bytesToRewind;
     }
 
-    protected synchronized boolean canFastForward(int bytesToFastForward) {
+    protected synchronized boolean canFastForward(long bytesToFastForward) {
         return mCurrentReadPosition + bytesToFastForward < mCurrentWritePosition;
     }
 
-    protected synchronized boolean canDataFit(int bytes) {
+    protected synchronized boolean canDataFit(long bytes) {
         return mByteBuffer.length >= bytes;
     }
 
@@ -204,7 +204,7 @@ public class Buffer {
      *
      * @param rewindBytes The number of bytes to move backwards in this buffer
      */
-    protected synchronized boolean rewind(int rewindBytes) {
+    protected synchronized boolean rewind(long rewindBytes) {
         if (mCurrentReadPosition >= rewindBytes) {
             mCurrentReadPosition -= rewindBytes;
             return true;
@@ -221,7 +221,7 @@ public class Buffer {
      * @param fastForwardBytes The number of bytes to move forward in this
      *            buffer
      */
-    protected synchronized void fastForward(int fastForwardBytes) {
+    protected synchronized void fastForward(long fastForwardBytes) {
         mCurrentReadPosition += fastForwardBytes;
     }
 

@@ -66,7 +66,7 @@ public class BufferedStream extends InputStream {
 
     private boolean mClosed = false;
 
-    private int mTotalBytesLoaded = 0;
+    private long mTotalBytesLoaded = 0;
 
     private Handler mCallback;
 
@@ -211,7 +211,7 @@ public class BufferedStream extends InputStream {
         mThresholdListener = listener;
     }
 
-    protected synchronized boolean rewind(int rewindBytes) {
+    protected synchronized boolean rewind(long rewindBytes) {
         if (mClosed) {
             return false;
         }
@@ -219,7 +219,7 @@ public class BufferedStream extends InputStream {
         return mDataBuffer.rewind(rewindBytes);
     }
 
-    protected synchronized void fastForward(int fastForwardBytes) {
+    protected synchronized void fastForward(long fastForwardBytes) {
         if (mClosed) {
             return;
         }
@@ -235,7 +235,7 @@ public class BufferedStream extends InputStream {
         return mDataBuffer.freeSpace();
     }
 
-    protected synchronized boolean canDataFit(int bytes) {
+    protected synchronized boolean canDataFit(long bytes) {
         if (mClosed) {
             return false;
         }
@@ -243,7 +243,7 @@ public class BufferedStream extends InputStream {
         return mDataBuffer.canDataFit(bytes);
     }
 
-    protected synchronized boolean canRewind(int bytesToRewind) {
+    protected synchronized boolean canRewind(long bytesToRewind) {
         if (mClosed) {
             return false;
         }
@@ -251,7 +251,7 @@ public class BufferedStream extends InputStream {
         return mDataBuffer.canRewind(bytesToRewind);
     }
 
-    protected synchronized boolean canFastForward(int bytesToFastForward) {
+    protected synchronized boolean canFastForward(long bytesToFastForward) {
         if (mClosed) {
             return false;
         }
@@ -274,7 +274,7 @@ public class BufferedStream extends InputStream {
         mDownloaderThread.start();
     }
 
-    public int getTotalBytesLoaded() {
+    public long getTotalBytesLoaded() {
         return mTotalBytesLoaded;
     }
 

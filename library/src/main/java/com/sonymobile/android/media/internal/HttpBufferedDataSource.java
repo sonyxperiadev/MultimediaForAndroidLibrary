@@ -98,23 +98,23 @@ public class HttpBufferedDataSource extends BufferedDataSource implements Thresh
             mBis.compact((mBufferSize / 5));
         }
 
-        if (mCurrentOffset > offset && mBis.canRewind((int)(mCurrentOffset - offset))) {
-            mBis.rewind((int)(mCurrentOffset - offset));
+        if (mCurrentOffset > offset && mBis.canRewind(mCurrentOffset - offset)) {
+            mBis.rewind(mCurrentOffset - offset);
         } else if (mCurrentOffset < offset) {
-            if (mBis.canFastForward((int)(offset - mCurrentOffset))) {
-                mBis.fastForward((int)(offset - mCurrentOffset));
+            if (mBis.canFastForward(offset - mCurrentOffset)) {
+                mBis.fastForward(offset - mCurrentOffset);
             } else {
-                if (!mBis.canDataFit((int)((offset - mCurrentOffset) + size))) {
+                if (!mBis.canDataFit((offset - mCurrentOffset) + size)) {
                     mBis.compact((mBufferSize / 5));
                 }
 
-                if (mBis.canDataFit((int)(offset - mCurrentOffset) + size) &&
+                if (mBis.canDataFit((offset - mCurrentOffset) + size) &&
                         offset - mCurrentOffset < mBufferSize / 3) {
                     // Data will fit in the buffer and we need to wait for a buffer smaller than
                     // 1/3 of the length. Send buffering start and wait here...
                     sendMessage(SOURCE_BUFFERING_START);
                     Object waiterLock = new Object();
-                    while (!mBis.canFastForward((int)(offset - mCurrentOffset))) {
+                    while (!mBis.canFastForward(offset - mCurrentOffset)) {
                         synchronized (waiterLock) {
                             try {
                                 waiterLock.wait(50);
@@ -127,7 +127,7 @@ public class HttpBufferedDataSource extends BufferedDataSource implements Thresh
                         }
                     }
                     sendMessage(SOURCE_BUFFERING_END);
-                    mBis.fastForward((int)(offset - mCurrentOffset));
+                    mBis.fastForward(offset - mCurrentOffset);
                 } else {
                     mCurrentOffset = offset;
                     mOffset = offset;
@@ -216,13 +216,13 @@ public class HttpBufferedDataSource extends BufferedDataSource implements Thresh
         if (mCurrentOffset == offset) {
             toReturn = DataAvailability.AVAILABLE;
         } else if (mCurrentOffset > offset) {
-            if (mBis.canRewind((int)(mCurrentOffset - offset))) {
+            if (mBis.canRewind(mCurrentOffset - offset)) {
                 toReturn = DataAvailability.AVAILABLE;
             } else {
                 toReturn = DataAvailability.NOT_AVAILABLE;
             }
         } else {
-            if (mBis.canFastForward((int)(offset - mCurrentOffset))) {
+            if (mBis.canFastForward(offset - mCurrentOffset)) {
                 toReturn = DataAvailability.AVAILABLE;
             } else if ((offset - mCurrentOffset) > mBufferSize / 3) {
                 toReturn = DataAvailability.NOT_AVAILABLE;
