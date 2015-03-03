@@ -2721,7 +2721,7 @@ public class ISOBMFFParser extends MediaParser {
                     } else if (isHEVC) {
                         int nalType = (accessUnit.data[srcOffset] & 0x7e) >> 1;
 
-                        if (nalType == 19 || nalType == 20) {
+                        if (nalType == 19 || nalType == 20 || nalType == 21) {
                             accessUnit.isSyncSample = true;
                         }
                     }
