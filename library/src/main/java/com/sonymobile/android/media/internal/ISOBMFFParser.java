@@ -234,6 +234,16 @@ public class ISOBMFFParser extends MediaParser {
 
     protected static final int sNALHeaderSize = 4;
 
+    protected static final int AVC_NAL_UNIT_TYPE_IDR_PICTURE = 5;
+
+    protected static final int AVC_NAL_UNIT_TYPE_SPS = 7;
+
+    protected static final int HEVC_NAL_UNIT_TYPE_IDR_PICTURE_W_RADL = 19;
+
+    protected static final int HEVC_NAL_UNIT_TYPE_IDR_PICTURE_N_LP = 20;
+
+    protected static final int HEVC_NAL_UNIT_TYPE_CRA_PICTURE = 21;
+
     protected IsoTrack mCurrentAudioTrack;
 
     protected IsoTrack mCurrentVideoTrack;
@@ -2716,12 +2726,15 @@ public class ISOBMFFParser extends MediaParser {
                     accessUnit.data[dstOffset++] = 0;
                     accessUnit.data[dstOffset++] = 1;
 
-                    if (isAVC && (accessUnit.data[srcOffset] & 0x1f) == 5) {
+                    if (isAVC && (accessUnit.data[srcOffset] & 0x1f)
+                            == AVC_NAL_UNIT_TYPE_IDR_PICTURE) {
                         accessUnit.isSyncSample = true;
                     } else if (isHEVC) {
                         int nalType = (accessUnit.data[srcOffset] & 0x7e) >> 1;
 
-                        if (nalType == 19 || nalType == 20 || nalType == 21) {
+                        if (nalType == HEVC_NAL_UNIT_TYPE_IDR_PICTURE_W_RADL
+                                || nalType == HEVC_NAL_UNIT_TYPE_IDR_PICTURE_N_LP
+                                || nalType == HEVC_NAL_UNIT_TYPE_CRA_PICTURE) {
                             accessUnit.isSyncSample = true;
                         }
                     }
@@ -3443,7 +3456,7 @@ public class ISOBMFFParser extends MediaParser {
 
         int nal_unit_type = br.getBits(5);
 
-        if (nal_unit_type != 7) {
+        if (nal_unit_type != AVC_NAL_UNIT_TYPE_SPS) {
             return;
         }
 
