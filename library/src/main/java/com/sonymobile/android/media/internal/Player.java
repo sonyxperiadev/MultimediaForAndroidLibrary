@@ -360,6 +360,7 @@ public final class Player {
         if (mSeekPositionMs < 0) {
             mSeekPositionMs = msec;
             if (mClockSource != null) {
+                mClockSource.pause();
                 mClockSource.setSeekTimeUs(msec * 1000l);
             }
 
