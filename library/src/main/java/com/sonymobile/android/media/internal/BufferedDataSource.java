@@ -363,7 +363,13 @@ public abstract class BufferedDataSource extends DataSource {
             if (mLength != -1 || offset == 0) {
                 // Unless a finite range is set, full length is defined by first
                 // connect.
-                mContentLength = httpConnection.getContentLength();
+                try {
+                    mContentLength =
+                            Long.parseLong(httpConnection.getHeaderField("Content-Length"));
+                } catch (NumberFormatException e) {
+                    mContentLength = -1;
+                    if (LOGS_ENABLED) Log.e(TAG, "Failed to Parse header field");
+                }
             }
 
             return httpConnection;
