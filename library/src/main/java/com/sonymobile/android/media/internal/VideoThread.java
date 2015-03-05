@@ -766,7 +766,10 @@ public final class VideoThread extends VideoCodecThread {
                         mCodec.releaseOutputBuffer(frame.bufferIndex, false);
                     }
                 } catch (IllegalStateException e) {
-                    if (LOGS_ENABLED) Log.e(TAG, "Codec error", e);
+                    if (LOGS_ENABLED) {
+                        Log.e(TAG, "Codec error: Window(Surface) valid: " +
+                                mSurface.isValid(), e);
+                    }
                     mCallback.obtainMessage(MSG_CODEC_NOTIFY, CODEC_ERROR,
                             MediaError.UNKNOWN).sendToTarget();
                     return;
