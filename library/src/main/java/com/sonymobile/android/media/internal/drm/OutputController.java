@@ -25,10 +25,6 @@ import java.util.Map.Entry;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.hardware.display.DisplayManager;
-import android.media.AudioManager;
-import android.media.MediaRouter;
-import android.media.MediaRouter.RouteGroup;
-import android.media.MediaRouter.RouteInfo;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
@@ -53,10 +49,6 @@ public class OutputController {
 
     private HashMap<String, String> mDrmInfo;
 
-    private MediaRouter mMediaRouter;
-
-    private final MediaRouter.Callback mMediaRouterCallback;
-
     private DisplayManager mDisplayManager;
 
     private final DisplayListenerCallback mDisplayListenerCallback;
@@ -65,8 +57,6 @@ public class OutputController {
 
     private boolean mBlockHDMI;
 
-    private boolean mBlockAudioJack;
-
     private LicenseInfo mLicenseInfo;
 
     private Handler mEventHandler;
@@ -74,14 +64,10 @@ public class OutputController {
     @SuppressLint("HandlerLeak")
     private class EventHandler extends Handler {
 
-        private MediaRouter mMediaRouter;
-
         private OutputController mOutputController;
 
-        public EventHandler(OutputController outputController, MediaRouter mediaRouter,
-                DisplayManager displayManager) {
+        public EventHandler(OutputController outputController, DisplayManager displayManager) {
             mOutputController = outputController;
-            mMediaRouter = mediaRouter;
             mDisplayManager = displayManager;
         }
 
@@ -90,28 +76,24 @@ public class OutputController {
             switch (msg.what) {
                 case MSG_UPDATE:
                     if (msg.arg1 == Display.DEFAULT_DISPLAY) {
+                        //When coming from play and resume
                         //No new display is added, check restrictions for existing displays
-                        //and audiojack.
                         Display[] displays = mDisplayManager.getDisplays();
                         for (int i = 0; i < displays.length; i++) {
                             if (displays[i].isValid()) {
                                 mOutputController.checkVideoOutputRestriction(displays[i]);
-                                mOutputController.checkAudioOutputRestriction(displays[i]);
                             }
                         }
                     } else {
+                        //When coming from callback onDisplayAdded
                         //A new display is added, check restrictions on that one
                         final Display presentationDisplay = mDisplayManager.getDisplay(msg.arg1);
                         mOutputController.checkVideoOutputRestriction(presentationDisplay);
-                        mOutputController.checkAudioOutputRestriction(presentationDisplay);
                     }
                     break;
 
                 case MSG_RELEASE:
-                    mMediaRouter.removeCallback(mMediaRouterCallback);
                     mDisplayManager.unregisterDisplayListener(mDisplayListenerCallback);
-                    // TODO: Keep track of state and set the mMediaRouter to
-                    // null as well.
                     removeCallbacksAndMessages(null);
                     break;
                 default:
@@ -131,20 +113,13 @@ public class OutputController {
         mContext = context;
         mOutputControllerUpdateListener = listener;
 
-        mMediaRouter = (MediaRouter)mContext.getSystemService(Context.MEDIA_ROUTER_SERVICE);
-        if (mMediaRouter == null) {
-            throw new RuntimeException("Failed to create mediarouter");
-        }
         mDisplayManager = (DisplayManager)mContext.getSystemService(Context.DISPLAY_SERVICE);
         if (mDisplayManager == null) {
             throw new RuntimeException("Failed to create displaymanager");
         }
-        mEventHandler = new EventHandler(this, mMediaRouter, mDisplayManager);
-        mMediaRouterCallback = new MediaRouterCallback();
+        mEventHandler = new EventHandler(this, mDisplayManager);
         mDisplayListenerCallback = new DisplayListenerCallback();
         mDisplayManager.registerDisplayListener(mDisplayListenerCallback, mEventHandler);
-        mMediaRouter.addCallback(MediaRouter.ROUTE_TYPE_LIVE_AUDIO, mMediaRouterCallback,
-                MediaRouter.CALLBACK_FLAG_UNFILTERED_EVENTS);
 
         // Initialize license info and presentation
         mLicenseInfo = new LicenseInfo();
@@ -178,33 +153,22 @@ public class OutputController {
      * Updates the OutputController on the present DRM session.
      */
     public void update() {
-        //Assume default display is used.
-        mEventHandler.obtainMessage(MSG_UPDATE, Display.DEFAULT_DISPLAY).sendToTarget();
+        mEventHandler.obtainMessage(MSG_UPDATE).sendToTarget();
     }
 
     /**
      * Updates the OutputController on the present display status.
+     * Used by the nested class DisplayListenerCallback.
      * @param displayId Id of the display that needs update.
      */
-    public void updateDisplay(int displayId) {
-        mEventHandler.obtainMessage(MSG_UPDATE, displayId, 0).sendToTarget();
+    private void updateDisplay(int displayId) {
+        mEventHandler.obtainMessage(MSG_UPDATE, displayId).sendToTarget();
     }
 
     private void setRestrictions(LicenseInfo licenseInfo) {
 
-        mBlockAudioJack = true;
         mBlockHDMI = true;
         mBlockWifDisplay = true;
-
-        // Check if HEADPHONES is allowed.
-        if (licenseInfo.getOplUncompressedDigitalAudio() <=
-                OplValues.HEADPHONE_UNCOMPRESSED_AUDIO_LIMIT &&
-                licenseInfo.getOplCompressedDigitalAudio() <=
-                OplValues.HEADPHONE_COMPRESSED_AUDIO_LIMIT &&
-                licenseInfo.getOplUncompressedDigitalVideo() <=
-                OplValues.UNCOMPRESSED_DIGITAL_VIDEO_LIMIT) {
-            mBlockAudioJack = false;
-        }
 
         // Check if HDMI (MHL) is allowed.
         if (licenseInfo.getOplUncompressedDigitalAudio() <=
@@ -222,8 +186,7 @@ public class OutputController {
         }
 
         if (DEBUG_ENABLED)
-            Log.d(TAG, "Restrictions set HDMI: " + mBlockHDMI + " WIFI: " + mBlockWifDisplay
-                    + " AudioJack: " + mBlockAudioJack);
+            Log.d(TAG, "Restrictions set HDMI: " + mBlockHDMI + " WIFI: " + mBlockWifDisplay);
     }
 
     private void initLicenseInfo(HashMap<String, String> drmInfo) {
@@ -302,37 +265,6 @@ public class OutputController {
         mLicenseInfo.setAllowRingtone(ringtoneAllowedVal);
     }
 
-    @SuppressWarnings("deprecation")
-    private boolean isRoutedToHeadphones(Display currentDisplay) {
-
-        AudioManager audioManager = (AudioManager)mContext
-                .getSystemService(Context.AUDIO_SERVICE);
-
-        // isWiredHeadsetOn only gives information about connect and not
-        // routing. That is why it is deprecated.
-        boolean wiredHeadsetConnected = audioManager.isWiredHeadsetOn();
-
-        if (currentDisplay == null) {
-            // If we play on local screen this might be null. Just return the
-            // headset connection status.
-            return wiredHeadsetConnected;
-        }
-
-        boolean defaultDisplay = currentDisplay.getDisplayId() == Display.DEFAULT_DISPLAY;
-
-        return (wiredHeadsetConnected && defaultDisplay);
-    }
-
-    private void checkAudioOutputRestriction(Display display) {
-        OutputControlEvent event = new OutputControlEvent(mLicenseInfo);
-
-        boolean routedToHeadPhones = isRoutedToHeadphones(display);
-
-        if (mBlockAudioJack && routedToHeadPhones) {
-            notifyListener(OutputControlEvent.OUTPUT_AUDIO_HEADPHONES_RESTRICTED, event, null);
-        }
-    }
-
     private void checkVideoOutputRestriction(Display display) {
 
         if (display == null || (!mBlockWifDisplay && !mBlockHDMI)) {
@@ -348,11 +280,12 @@ public class OutputController {
             int type = (Integer)getTypeMethod.invoke(display, (Object[])null);
 
             OutputControlEvent event = new OutputControlEvent(mLicenseInfo);
+            int hdcpEnabled = display.getFlags() & Display.FLAG_SUPPORTS_PROTECTED_BUFFERS;
 
-            if (mBlockWifDisplay && type == typeWfd) {
-                notifyListener(OutputControlEvent.OUTPUT_EXTERNAL_WIFI_RESTRICTED, event, null);
-            } else if (mBlockHDMI && type == typeHdmi) {
-                notifyListener(OutputControlEvent.OUTPUT_EXTERNAL_HDMI_RESTRICTED, event, null);
+            if ((mBlockWifDisplay || hdcpEnabled == 0) && type == typeWfd) {
+                notifyListener(OutputControlEvent.OUTPUT_EXTERNAL_WIFI_RESTRICTED, event);
+            } else if ((mBlockHDMI || hdcpEnabled == 0) && type == typeHdmi) {
+                notifyListener(OutputControlEvent.OUTPUT_EXTERNAL_HDMI_RESTRICTED, event);
             }
 
         } catch (IllegalAccessException e) {
@@ -370,8 +303,7 @@ public class OutputController {
         }
     }
 
-    private synchronized void notifyListener(int action, OutputControlEvent event,
-            RouteInfo route) {
+    private synchronized void notifyListener(int action, OutputControlEvent event) {
 
         if (DEBUG_ENABLED) Log.d(TAG, "Notify Listeners Action: " + action);
         if (mOutputControllerUpdateListener == null) {
@@ -379,9 +311,6 @@ public class OutputController {
         }
 
         switch (action) {
-            case OutputControlEvent.OUTPUT_AUDIO_HEADPHONES_RESTRICTED:
-                mOutputControllerUpdateListener.onHeadphonesRestricted(event);
-                break;
             case OutputControlEvent.OUTPUT_EXTERNAL_HDMI_RESTRICTED:
                 mOutputControllerUpdateListener.onExternalHDMIRestricted(event);
                 break;
@@ -394,48 +323,6 @@ public class OutputController {
 
     }
 
-    private final class MediaRouterCallback extends MediaRouter.SimpleCallback {
-
-        @Override
-        public void onRouteAdded(MediaRouter router, RouteInfo info) {
-            update();
-        }
-
-        @Override
-        public void onRouteChanged(MediaRouter router, RouteInfo info) {
-            update();
-        }
-
-        @Override
-        public void onRouteGrouped(MediaRouter router, RouteInfo info,
-                RouteGroup group, int index) {
-            update();
-        }
-
-        @Override
-        public void onRouteRemoved(MediaRouter router, RouteInfo info) {
-            update();
-        }
-
-        @Override
-        public void onRouteSelected(MediaRouter router, int type,
-                RouteInfo info) {
-            update();
-        }
-
-        @Override
-        public void onRouteUngrouped(MediaRouter router, RouteInfo info,
-                RouteGroup group) {
-            update();
-        }
-
-        @Override
-        public void onRouteUnselected(MediaRouter router, int type,
-                RouteInfo info) {
-            update();
-        }
-    }
-
     private final class DisplayListenerCallback implements DisplayManager.DisplayListener {
 
         @Override
@@ -445,12 +332,12 @@ public class OutputController {
 
         @Override
         public void onDisplayRemoved(int id) {
-            //Igore if displays are removed
+            //Ignore if displays are removed
         }
 
         @Override
         public void onDisplayChanged(int id) {
-            updateDisplay(id);
+            //Ignore display change callbacks
         }
     }
 }
