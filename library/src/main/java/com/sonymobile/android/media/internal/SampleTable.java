@@ -199,6 +199,14 @@ class SampleTable {
         mStscData.rewind();
         mStcoData.rewind();
 
+        if (mStssData != null) {
+            mStssData.rewind();
+        }
+
+        if (mCttsData != null) {
+            mCttsData.rewind();
+        }
+
         // stsz data
         mStszData.getInt(); // version and flags
         int sampleSize = mStszData.getInt(); // sample_size
