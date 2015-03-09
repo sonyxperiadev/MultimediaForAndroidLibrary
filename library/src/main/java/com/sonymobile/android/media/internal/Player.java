@@ -287,8 +287,7 @@ public final class Player {
 
     public synchronized void resume() {
         mStarted = true;
-        Message nMsg = mEventHandler.obtainMessage(MSG_RESUME);
-        mEventHandler.sendMessageAtFrontOfQueue(nMsg);
+        mEventHandler.sendEmptyMessage(MSG_RESUME);
     }
 
     public synchronized void stop() {
@@ -360,7 +359,6 @@ public final class Player {
         if (mSeekPositionMs < 0) {
             mSeekPositionMs = msec;
             if (mClockSource != null) {
-                mClockSource.pause();
                 mClockSource.setSeekTimeUs(msec * 1000l);
             }
 
@@ -402,6 +400,7 @@ public final class Player {
             } else {
                 mCallbacks.obtainMessage(NOTIFY_SEEK_COMPLETE).sendToTarget();
                 mSeekPositionMs = -1;
+                mExecutingSeekMessage = null;
             }
         } else {
             if (LOGS_ENABLED) Log.d(TAG, "Seek in progress, queue next seek to: " + msec);
@@ -739,6 +738,10 @@ public final class Player {
                     }
                     break;
                 case MSG_RESUME:
+                    if (thiz.mExecutingSeekMessage != null || thiz.mPendingSeekMessage != null
+                            || hasMessages(MSG_SEEK)) {
+                        break;
+                    }
                     if (hasMessages(MSG_SCAN_SOURCES)
                             || hasMessages(MSG_WAIT_FOR_SETUP_COMPLETE)) {
                         // Still in setup-loop, mStarted should have been set
