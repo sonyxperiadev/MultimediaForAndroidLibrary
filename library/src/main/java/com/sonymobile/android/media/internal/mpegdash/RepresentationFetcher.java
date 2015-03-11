@@ -249,11 +249,16 @@ public class RepresentationFetcher {
                     MediaFormat format = mParser.getFormat(mType);
 
                     if (mStartUp && mType == TrackType.VIDEO) {
-                        if (format != null && format.getInteger(MediaFormat.KEY_WIDTH) == 0) {
-                            if (LOGS_ENABLED)
-                                Log.w(TAG, "No video width and height in file, use mpd values");
-                            format.setInteger(MediaFormat.KEY_HEIGHT, mRepresentation.height);
-                            format.setInteger(MediaFormat.KEY_WIDTH, mRepresentation.width);
+                        if (format != null) {
+                            if (format.getInteger(MediaFormat.KEY_WIDTH) == 0) {
+                                if (LOGS_ENABLED)
+                                    Log.w(TAG, "No video width and height in file, use mpd values");
+                                format.setInteger(MediaFormat.KEY_HEIGHT, mRepresentation.height);
+                                format.setInteger(MediaFormat.KEY_WIDTH, mRepresentation.width);
+                            }
+
+                            format.setInteger(MediaFormat.KEY_MAX_INPUT_SIZE,
+                                    mSession.getMaxVideoInputSize());
                         }
                         AccessUnit accessUnit = new AccessUnit(AccessUnit.FORMAT_CHANGED);
                         accessUnit.timeUs = -1;

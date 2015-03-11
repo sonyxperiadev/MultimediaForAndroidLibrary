@@ -215,6 +215,10 @@ public final class DASHSession {
         return mMetaData;
     }
 
+    public int getMaxVideoInputSize() {
+        return mMPDParser.getMaxVideoInputBufferSize();
+    }
+
     private static class EventHandler extends Handler {
 
         private WeakReference<DASHSession> mSession;

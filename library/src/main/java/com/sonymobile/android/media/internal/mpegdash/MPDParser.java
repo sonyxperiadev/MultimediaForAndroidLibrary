@@ -945,6 +945,27 @@ public class MPDParser {
         }
     }
 
+    public int getMaxVideoInputBufferSize() {
+        int maxWidth = 0, maxHeight = 0;
+        for (Period period : mPeriods) {
+            for (AdaptationSet adaptationSet : period.adaptationSets) {
+                if (adaptationSet.type == TrackType.VIDEO) {
+                    for (Representation representation : adaptationSet.representations) {
+                        if (representation.width > maxWidth) {
+                            maxWidth = representation.width;
+                        }
+
+                        if (representation.height > maxHeight) {
+                            maxHeight = representation.height;
+                        }
+                    }
+                }
+            }
+        }
+
+        return ((maxWidth + 15) / 16) * ((maxHeight + 15) / 16) * 192;
+    }
+
     public static class SegmentBase {
         String url;
 
