@@ -484,6 +484,17 @@ public final class VideoThread extends VideoCodecThread {
                     } else {
                         mSkipToIframe = false;
 
+                        if (mInputBuffers[inputBufferIndex].capacity() < accessUnit.size) {
+                            if (LOGS_ENABLED) {
+                                Log.v(TAG, "Input buffer too small " +
+                                        mInputBuffers[inputBufferIndex].capacity() +
+                                        " vs " + accessUnit.size);
+                            }
+                            mCallback.obtainMessage(MSG_CODEC_NOTIFY, CODEC_ERROR,
+                                    MediaError.UNKNOWN).sendToTarget();
+                            return;
+                        }
+
                         mInputBuffers[inputBufferIndex].position(0);
                         mInputBuffers[inputBufferIndex].put(accessUnit.data, 0,
                                 accessUnit.size);
