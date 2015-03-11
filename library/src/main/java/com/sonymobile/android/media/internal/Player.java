@@ -689,6 +689,10 @@ public final class Player {
                                     }
                                     thiz.mClockSource.start();
                                 }
+                            } else if (thiz.mExecutingSeekMessage != null) {
+                                thiz.mCallbacks.obtainMessage(NOTIFY_SEEK_COMPLETE)
+                                        .sendToTarget();
+                                thiz.mExecutingSeekMessage = null;
                             }
                         }
                     } else {
