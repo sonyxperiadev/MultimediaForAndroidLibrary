@@ -80,6 +80,9 @@ public class MsDrmSession extends DrmSession {
                 } catch (ResourceBusyException e) {
                     mState = STATE_ERROR;
                     throw new DrmLicenseException(MediaError.DRM_UNKNOWN);
+                } catch (IllegalStateException e) {
+                    mState = STATE_ERROR;
+                    throw new DrmLicenseException(MediaError.DRM_UNKNOWN);
                 }
             }
         }
