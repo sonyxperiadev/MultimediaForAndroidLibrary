@@ -249,9 +249,7 @@ public final class AudioThread extends CodecThread implements Clock {
     }
 
     private long getPlaybackHeadPositionUs() {
-        // We always have to compensate for audio latency when using
-        // getPlaybackHeadPosition
-        return framesToDurationUs(getPlaybackHeadPosition()) - getAudioLatency();
+        return framesToDurationUs(getPlaybackHeadPosition());
     }
 
     private long getPlaybackHeadPosition() {
