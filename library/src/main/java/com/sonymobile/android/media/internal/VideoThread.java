@@ -434,7 +434,7 @@ public final class VideoThread extends VideoCodecThread {
     }
 
     private void doFlush() {
-        if (!mHasQueuedInputBuffers && !mEOS) {
+        if (!mHasQueuedInputBuffers) {
             //No need to flush if no input buffers are queued
             return;
         }
