@@ -20,11 +20,8 @@ import static com.sonymobile.android.media.internal.MediaSource.SOURCE_BUFFERING
 import static com.sonymobile.android.media.internal.MediaSource.SOURCE_BUFFERING_START;
 import static com.sonymobile.android.media.internal.MediaSource.SOURCE_BUFFERING_UPDATE;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
 
 import android.os.Handler;
 import android.util.Log;
@@ -94,8 +91,11 @@ public class HttpBufferedDataSource extends BufferedDataSource implements Thresh
         checkConnectionAndStream();
 
         if (mBis.freeSpace() < (mBufferSize / 200)) {
-            // Less than 0.5% buffer left, compact and remove 5%.
-            mBis.compact((mBufferSize / 5));
+            // Less than 0.5% buffer left to fill
+            if (mBis.available() < mBufferSize / 10) {
+                // Less than 10% available to read, compact and remove 10%.
+                mBis.compact((mBufferSize / 10));
+            }
         }
 
         if (mCurrentOffset > offset && mBis.canRewind(mCurrentOffset - offset)) {
@@ -105,7 +105,7 @@ public class HttpBufferedDataSource extends BufferedDataSource implements Thresh
                 mBis.fastForward(offset - mCurrentOffset);
             } else {
                 if (!mBis.canDataFit((offset - mCurrentOffset) + size)) {
-                    mBis.compact((mBufferSize / 5));
+                    mBis.compact((mBufferSize / 10));
                 }
 
                 if (mBis.canDataFit((offset - mCurrentOffset) + size) &&
