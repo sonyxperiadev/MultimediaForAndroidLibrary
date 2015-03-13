@@ -19,6 +19,7 @@ package com.sonymobile.android.media;
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertNotNull;
+import static junit.framework.Assert.assertNull;
 import static junit.framework.Assert.assertTrue;
 import static junit.framework.Assert.fail;
 
@@ -1706,6 +1707,21 @@ public class ApiTest {
         MetaDataParser parser = MetaDataParserFactory.create(tc.getContentUri());
         assertNotNull("Parserfactory returned null parser", parser);
         parser.release();
+    }
+
+    public static void createMetaDataParserWithInvalidContent(TestContent tc) {
+        assertNotNull("No test content", tc);
+        assertNotNull("No content uri", tc.getContentUri());
+        MetaDataParser parser = null;
+
+        try {
+            parser = MetaDataParserFactory.create(tc.getContentUri());
+            assertNull("Parserfactory did not return null parser", parser);
+        } finally {
+            if (parser != null) {
+                parser.release();
+            }
+        }
     }
 
     public static void pauseAndSeekAvailable(TestContent tc) throws IOException {

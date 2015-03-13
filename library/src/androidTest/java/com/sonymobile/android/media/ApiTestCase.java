@@ -397,9 +397,9 @@ public class ApiTestCase extends
         ApiTest.getTrackCount(mTestContent);
     }
 
-    @Protocol(types = "Local")
+    @Protocol(types = "Local||Http")
     @Content(types = "Audio||Video")
-    @MetaInfo(fields = "Offset&&MimeType")
+    @MetaInfo(fields = "Duration&&MimeType")
     public void testGetMetaData() {
         setDefaultTestContent(TestContent.ID_TYPE_LOCAL);
         ApiTest.getMetaData(mTestContent);
@@ -427,6 +427,13 @@ public class ApiTestCase extends
     public void testReleaseMetaData() {
         setDefaultTestContent(TestContent.ID_TYPE_LOCAL);
         ApiTest.releaseMetaData(mTestContent);
+    }
+
+    @Protocol(types = "Local||Http||Dash")
+    @Content(types = "Invalid")
+    public void testCreateMetaDataParserWithInvalidContent() {
+        setDefaultTestContent(TestContent.ID_TYPE_INVALID);
+        ApiTest.createMetaDataParserWithInvalidContent(mTestContent);
     }
 
     @Protocol(types = "Local")
