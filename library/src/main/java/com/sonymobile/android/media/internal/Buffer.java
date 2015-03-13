@@ -178,7 +178,7 @@ public class Buffer {
     }
 
     protected synchronized boolean canDataFit(long bytes) {
-        return mByteBuffer.length >= bytes;
+        return mByteBuffer.length > mCurrentWritePosition + bytes;
     }
 
     protected synchronized void compact(int bytesToDiscard) {
