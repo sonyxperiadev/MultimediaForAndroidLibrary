@@ -63,25 +63,27 @@ public abstract class DataSource implements Closeable {
 
     protected Handler mNotify;
 
-    public static DataSource create(String uri, boolean isDash) {
+    public static DataSource create(String uri, boolean isDash) throws IOException {
         return create(uri, -1, -1, -1, null, null, isDash);
     }
 
     public static DataSource create(String uri, BandwidthEstimator bandwidthEstimator,
-            boolean isDash) {
+            boolean isDash) throws IOException {
         return create(uri, -1, -1, -1, null, bandwidthEstimator, isDash);
     }
 
-    public static DataSource create(String uri, int bufferSize, boolean isDash) {
+    public static DataSource create(String uri, int bufferSize,
+            boolean isDash) throws IOException {
         return create(uri, -1, -1, bufferSize, null, null, isDash);
     }
 
-    public static DataSource create(String uri, long offset, int length, boolean isDash) {
+    public static DataSource create(String uri, long offset, int length,
+            boolean isDash) throws IOException {
         return create(uri, offset, length, -1, null, null, isDash);
     }
 
     public static DataSource create(String uri, long offset, int length,
-            BandwidthEstimator bandwidthEstimator, boolean isDash) {
+            BandwidthEstimator bandwidthEstimator, boolean isDash) throws IOException {
         return create(uri, offset, length, -1, null, bandwidthEstimator, isDash);
     }
 
@@ -100,8 +102,9 @@ public abstract class DataSource implements Closeable {
      * @param bandwidthEstimator The BandwidthEstimator to use.
      * @param isDash If a DASH related data source should be created.
      */
-    public static DataSource create(String uri, long offset, int length, int bufferSize,
-            Handler notify, BandwidthEstimator bandwidthEstimator, boolean isDash) {
+    public static DataSource create(String uri, long offset, int length,
+            int bufferSize, Handler notify, BandwidthEstimator bandwidthEstimator,
+            boolean isDash) throws IOException {
         if (uri == null) {
             throw new IllegalArgumentException("Null uri is not allowed!");
         }
@@ -121,8 +124,7 @@ public abstract class DataSource implements Closeable {
 
         } catch (FileNotFoundException e) {
             if (LOGS_ENABLED) Log.e(TAG, "File not found!", e);
-        } catch (IOException e) {
-            if (LOGS_ENABLED) Log.e(TAG, "Error creating datasource.", e);
+            throw new IOException("File not found");
         }
 
         throw new IllegalArgumentException("Create Failed! Unsupported uri: " + uri);

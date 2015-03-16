@@ -66,8 +66,6 @@ public final class SimpleSource extends MediaSource {
 
     private boolean mIsHttp = false;
 
-    private ReentrantLock mReentrantLock;
-
     public SimpleSource(String path, long offset, long length, Handler notify, int maxBufferSize) {
         super(notify);
         if (maxBufferSize == -1) {
@@ -92,13 +90,11 @@ public final class SimpleSource extends MediaSource {
             mBuffering = true;
             notify(SOURCE_BUFFERING_START);
         }
-
-        mReentrantLock = new ReentrantLock();
     }
 
     public SimpleSource(FileDescriptor fd, long offset, long length, Handler notify) {
         super(notify);
-        mMediaParser = (MediaParser)MetaDataParserFactory.createParser(fd, offset, length);
+        mMediaParser = MediaParserFactory.createParser(fd, offset, length);
 
         if (mMediaParser == null) {
             throw new IllegalArgumentException("Invalid content!");
@@ -231,8 +227,13 @@ public final class SimpleSource extends MediaSource {
 
     private void onPrepareAsync() {
         if (mMediaParser == null) {
-            mMediaParser = (MediaParser)MetaDataParserFactory.create(mPath, mOffset, mLength,
-                    mMaxBufferSize, mEventHandler);
+            try {
+                mMediaParser = MediaParserFactory.createParser(mPath, mOffset, mLength,
+                        mMaxBufferSize, mEventHandler);
+            } catch (IOException e) {
+                notifyPrepareFailed(MediaError.IO);
+                return;
+            }
         }
 
         if (mMediaParser != null) {

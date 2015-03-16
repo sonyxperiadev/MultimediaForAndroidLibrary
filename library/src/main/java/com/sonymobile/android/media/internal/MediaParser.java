@@ -66,7 +66,7 @@ abstract public class MediaParser implements MetaDataParser, MetaData {
      * @param uri to the content.
      * @param maxBufferSize for http content.
      */
-    public MediaParser(String uri, int maxBufferSize) {
+    public MediaParser(String uri, int maxBufferSize) throws IOException {
         if (maxBufferSize == -1) {
             maxBufferSize = Configuration.DEFAULT_HTTP_BUFFER_SIZE;
         }
@@ -84,7 +84,7 @@ abstract public class MediaParser implements MetaDataParser, MetaData {
      * @param length of the content.
      * @param maxBufferSize for http content.
      */
-    public MediaParser(String uri, long offset, long length, int maxBufferSize) {
+    public MediaParser(String uri, long offset, long length, int maxBufferSize) throws IOException {
         if (maxBufferSize == -1) {
             maxBufferSize = Configuration.DEFAULT_HTTP_BUFFER_SIZE;
         }

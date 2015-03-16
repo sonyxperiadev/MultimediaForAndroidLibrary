@@ -447,9 +447,13 @@ public class RepresentationFetcher {
 
                 mLastFragmentUri = getTemplatedUri(mRepresentation.segmentTemplate.media,
                         segmentTimelineTemplateTicks);
-                source = DataSource.create(
-                        getTemplatedUri(mRepresentation.segmentTemplate.media,
-                                segmentTimelineTemplateTicks), bandwidthEstimator, true);
+                try {
+                    source = DataSource.create(
+                            getTemplatedUri(mRepresentation.segmentTemplate.media,
+                                    segmentTimelineTemplateTicks), bandwidthEstimator, true);
+                } catch (IOException e) {
+                    return null;
+                }
 
                 mCurrentTimeUs = segmentTimelineTemplateTicks * 1000000L
                         / mRepresentation.segmentTemplate.timescale;
@@ -466,8 +470,12 @@ public class RepresentationFetcher {
                 }
 
                 mLastFragmentUri = getTemplatedUri(mRepresentation.segmentTemplate.media);
-                source = DataSource.create(getTemplatedUri(mRepresentation.segmentTemplate.media),
-                        bandwidthEstimator, true);
+                try {
+                    source = DataSource.create(getTemplatedUri(
+                            mRepresentation.segmentTemplate.media), bandwidthEstimator, true);
+                } catch (IOException e) {
+                    return null;
+                }
 
                 mSegmentNumber++;
 
@@ -512,12 +520,16 @@ public class RepresentationFetcher {
                                             && mSeekTimeUs < timelineTime + segmentDurationUs) {
                                         found = true;
                                         mNextTimeUs = timelineTime + segmentDurationUs;
-                                        source = DataSource.create(
-                                                getTemplatedUri(
-                                                        mRepresentation.segmentTemplate.media,
-                                                        segmentTimelineTemplateTicks),
-                                                subsegment.offset, subsegment.size,
-                                                bandwidthEstimator, true);
+                                        try {
+                                            source = DataSource.create(
+                                                    getTemplatedUri(
+                                                            mRepresentation.segmentTemplate.media,
+                                                            segmentTimelineTemplateTicks),
+                                                    subsegment.offset, subsegment.size,
+                                                    bandwidthEstimator, true);
+                                        } catch (IOException e) {
+                                            return null;
+                                        }
                                     }
                                 } else if (timelineTime >= mNextTimeUs) {
                                     found = true;
@@ -526,12 +538,16 @@ public class RepresentationFetcher {
                                     mLastFragmentUri = getTemplatedUri(
                                             mRepresentation.segmentTemplate.media,
                                             segmentTimelineTemplateTicks);
-                                    source = DataSource.create(
-                                            getTemplatedUri(
-                                                    mRepresentation.segmentTemplate.media,
-                                                    segmentTimelineTemplateTicks),
-                                            subsegment.offset, subsegment.size,
-                                            bandwidthEstimator, true);
+                                    try {
+                                        source = DataSource.create(
+                                                getTemplatedUri(
+                                                        mRepresentation.segmentTemplate.media,
+                                                        segmentTimelineTemplateTicks),
+                                                subsegment.offset, subsegment.size,
+                                                bandwidthEstimator, true);
+                                    } catch (IOException e) {
+                                        return null;
+                                    }
                                     break;
                                 }
 
@@ -546,9 +562,13 @@ public class RepresentationFetcher {
                         mNextTimeUs = subsegment.timeUs + subsegment.durationUs;
                         mLastFragmentUri =
                                 getTemplatedUri(mRepresentation.segmentTemplate.media);
-                        source = DataSource.create(
-                                getTemplatedUri(mRepresentation.segmentTemplate.media),
-                                subsegment.offset, subsegment.size, bandwidthEstimator, true);
+                        try {
+                            source = DataSource.create(
+                                    getTemplatedUri(mRepresentation.segmentTemplate.media),
+                                    subsegment.offset, subsegment.size, bandwidthEstimator, true);
+                        } catch (IOException e) {
+                            return null;
+                        }
                     }
 
                     if (i == mSegmentIndex.size() - 1) {
@@ -559,8 +579,12 @@ public class RepresentationFetcher {
                 } else if (mRepresentation.segmentBase != null) {
                     mNextTimeUs = subsegment.timeUs + subsegment.durationUs;
                     mLastFragmentUri = mRepresentation.segmentBase.url;
-                    source = DataSource.create(mRepresentation.segmentBase.url,
-                            subsegment.offset, subsegment.size, bandwidthEstimator, true);
+                    try {
+                        source = DataSource.create(mRepresentation.segmentBase.url,
+                                subsegment.offset, subsegment.size, bandwidthEstimator, true);
+                    } catch (IOException e) {
+                        return null;
+                    }
 
                     if (i == mSegmentIndex.size() - 1) {
                         Message callback = mSession.getFetcherCallbackMessage(mType);
@@ -636,9 +660,13 @@ public class RepresentationFetcher {
                     return null;
                 }
 
-                return DataSource.create(
-                        getTemplatedUri(mRepresentation.segmentTemplate.media,
-                                segmentTimelineTemplateTicks), 0, SIDX_HEADER_SNIFF_SIZE, true);
+                try {
+                    return DataSource.create(
+                            getTemplatedUri(mRepresentation.segmentTemplate.media,
+                                    segmentTimelineTemplateTicks), 0, SIDX_HEADER_SNIFF_SIZE, true);
+                } catch (IOException e) {
+                    return null;
+                }
             } else {
                 if (mRepresentation.segmentTemplate.noSegments > -1) {
                     if (mSegmentNumber >= mRepresentation.segmentTemplate.startNumber
@@ -651,13 +679,21 @@ public class RepresentationFetcher {
                     }
                 }
 
-                return DataSource.create(getTemplatedUri(mRepresentation.segmentTemplate.media), 0,
-                        SIDX_HEADER_SNIFF_SIZE, true);
+                try {
+                    return DataSource.create(getTemplatedUri(mRepresentation.segmentTemplate.media),
+                            0, SIDX_HEADER_SNIFF_SIZE, true);
+                } catch (IOException e) {
+                    return null;
+                }
             }
         } else if (mRepresentation.segmentBase != null) {
-            return DataSource.create(mRepresentation.segmentBase.url,
-                    mRepresentation.segmentBase.sidxOffset,
-                    (int)mRepresentation.segmentBase.sidxSize, true);
+            try {
+                return DataSource.create(mRepresentation.segmentBase.url,
+                        mRepresentation.segmentBase.sidxOffset,
+                        (int)mRepresentation.segmentBase.sidxSize, true);
+            } catch (IOException e) {
+                return null;
+            }
         }
 
         return null;
@@ -665,12 +701,21 @@ public class RepresentationFetcher {
 
     private DataSource createInitDataSource() {
         if (mRepresentation.segmentTemplate != null) {
-            return DataSource
-                    .create(getTemplatedUri(mRepresentation.segmentTemplate.initialization), true);
+            try {
+                return DataSource
+                        .create(getTemplatedUri(mRepresentation.segmentTemplate.initialization),
+                                true);
+            } catch (IOException e) {
+                return null;
+            }
         } else if (mRepresentation.segmentBase != null) {
-            return DataSource.create(mRepresentation.segmentBase.url,
-                    mRepresentation.segmentBase.initOffset,
-                    (int)mRepresentation.segmentBase.initSize, true);
+            try {
+                return DataSource.create(mRepresentation.segmentBase.url,
+                        mRepresentation.segmentBase.initOffset,
+                        (int)mRepresentation.segmentBase.initSize, true);
+            } catch (IOException e) {
+                return null;
+            }
         }
         if (LOGS_ENABLED) Log.e(TAG, "No init url");
         return null;

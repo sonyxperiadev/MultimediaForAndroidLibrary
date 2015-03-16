@@ -16,13 +16,15 @@
 
 package com.sonymobile.android.media.internal;
 
+import java.io.IOException;
+
 class MPEG4Parser extends ISOBMFFParser {
 
     public MPEG4Parser(DataSource source) {
         super(source);
     }
 
-    public MPEG4Parser(String path, int maxBufferSize) {
+    public MPEG4Parser(String path, int maxBufferSize) throws IOException {
         super(path, maxBufferSize);
     }
 

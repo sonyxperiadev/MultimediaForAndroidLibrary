@@ -308,12 +308,13 @@ public class ISOBMFFParser extends MediaParser {
         if (LOGS_ENABLED) Log.v(TAG, "create ISOBMFFParser from source");
     }
 
-    public ISOBMFFParser(String path, int maxBufferSize) {
+    public ISOBMFFParser(String path, int maxBufferSize) throws IOException {
         super(path, maxBufferSize);
         if (LOGS_ENABLED) Log.v(TAG, "create ISOBMFFParser from path");
     }
 
-    public ISOBMFFParser(String path, long offset, long length, int maxBufferSize) {
+    public ISOBMFFParser(String path, long offset, long length, int maxBufferSize)
+            throws IOException {
         super(path, offset, length, maxBufferSize);
         if (LOGS_ENABLED) Log.v(TAG, "create ISOBMFFParser from path with length " + length);
     }
