@@ -487,8 +487,8 @@ public class ISOBMFFParser extends MediaParser {
             Log.v(TAG, "boxSize bytes = " + buffer[0] + " " + buffer[1] + " " + buffer[2] + " "
                     + buffer[3] + " ");
 
-        long boxSize = (buffer[0] & 0xFF) << 24 | (buffer[1] & 0xFF) << 16
-                | (buffer[2] & 0xFF) << 8 | buffer[3] & 0xFF;
+        long boxSize = ((long)buffer[0] & 0xFF) << 24 | ((long)buffer[1] & 0xFF) << 16
+                | ((long)buffer[2] & 0xFF) << 8 | (long)buffer[3] & 0xFF;
         int boxType = (buffer[4] & 0xFF) << 24 | (buffer[5] & 0xFF) << 16
                 | (buffer[6] & 0xFF) << 8 | buffer[7] & 0xFF;
         int boxHeaderSize = 8;
@@ -505,8 +505,8 @@ public class ISOBMFFParser extends MediaParser {
             mCurrentOffset += 8;
             boxSize = ((long)(buffer[0] & 0xFF) << 56 | (long)(buffer[1] & 0xFF) << 48
                     | (long)(buffer[2] & 0xFF) << 40 | (long)(buffer[3] & 0xFF) << 32
-                    | (buffer[4] & 0xFF) << 24 | (buffer[5] & 0xFF) << 16
-                    | (buffer[6] & 0xFF) << 8 | buffer[7] & 0xFF);
+                    | (long)(buffer[4] & 0xFF) << 24 | (long)(buffer[5] & 0xFF) << 16
+                    | (long)(buffer[6] & 0xFF) << 8 | (long)buffer[7] & 0xFF);
             boxSize -= 8;
             boxHeaderSize += 8;
         }
