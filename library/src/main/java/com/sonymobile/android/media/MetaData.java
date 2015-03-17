@@ -206,6 +206,11 @@ public interface MetaData {
     /*package*/ static final String KEY_SAR_HEIGHT = "sar_height";
 
     /**
+     * Key for rotation degrees.
+     */
+    public static final String KEY_ROTATION_DEGREES = "rotation-degrees";
+
+    /**
      * Gets an integer value from the meta data.
      *
      * @param key of the integer value that is wanted. Keys are specified in

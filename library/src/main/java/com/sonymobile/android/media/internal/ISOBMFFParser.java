@@ -405,6 +405,8 @@ public class ISOBMFFParser extends MediaParser {
 
         updateAspectRatio();
 
+        updateRotation();
+
         if (mCurrentAudioTrack != null) {
             mCurrentAudioTrack.buildSampleTable();
         }
@@ -434,6 +436,18 @@ public class ISOBMFFParser extends MediaParser {
 
                 addMetaDataValue(KEY_WIDTH, adjustedWidth);
                 mCurrentVideoTrack.getMetaData().addValue(KEY_WIDTH, adjustedWidth);
+            }
+        }
+    }
+
+    private void updateRotation() {
+        if (getMetaData().containsKey(MetaData.KEY_ROTATION_DEGREES)) {
+            int rotationAngle = getMetaData().getInteger(MetaData.KEY_ROTATION_DEGREES);
+            for (Track track : mTracks) {
+                if (track.getTrackType() == TrackType.VIDEO) {
+                    track.getMediaFormat()
+                            .setInteger(MetaData.KEY_ROTATION_DEGREES, rotationAngle);
+                }
             }
         }
     }
@@ -2089,6 +2103,8 @@ public class ISOBMFFParser extends MediaParser {
         int trackId = 0;
         // long duration = 0;
         boolean trackEnabled = false;
+        int dynSize = -1;
+
         int flags = (data[1] & 0xFF) << 16 | (data[2] & 0xFF) << 8 | data[3] & 0xFF;
         if (data[0] == 1) { // version 1
             // skip 8 for creation_time
@@ -2100,15 +2116,59 @@ public class ISOBMFFParser extends MediaParser {
             // (data[30] & 0xFF) << 40 | (data[31] & 0xFF) << 32 |
             // (data[32] & 0xFF) << 24 | (data[33] & 0xFF) << 16 |
             // (data[34] & 0xFF) << 8 | data[35] & 0xFF;
+            dynSize = 36;
         } else { // version 0
-                 // skip 4 for creation_time
-                 // skip 4 for modification_time
+            // skip 4 for creation_time
+            // skip 4 for modification_time
             trackId = (data[12] & 0xFF) << 24 | (data[13] & 0xFF) << 16 | (data[14] & 0xFF) << 8
                     | data[15] & 0xFF;
             // skip 4 for reserved
             // duration = (data[20] & 0xFF) << 24 | (data[21] & 0xFF) << 16 |
             // (data[22] & 0xFF) << 8 | data[23] & 0xFF;
+            dynSize = 24;
         }
+
+        int rotationAngle = 0;
+        // Check that we can read the rotation matrix
+        if (data.length >= dynSize + 36) {
+            int matrixOffset = dynSize + 16;
+            int r00 = (data[matrixOffset] & 0xFF) << 24 |
+                    (data[++matrixOffset] & 0xFF) << 16 |
+                    (data[++matrixOffset] & 0xFF) << 8 |
+                    data[++matrixOffset] & 0xFF;
+            int r01 = (data[++matrixOffset] & 0xFF) << 24 |
+                    (data[++matrixOffset] & 0xFF) << 16 |
+                    (data[++matrixOffset] & 0xFF) << 8 |
+                    data[++matrixOffset] & 0xFF;
+            matrixOffset += 4; // Skip the transformation vector.
+            int r10 = (data[++matrixOffset] & 0xFF) << 24 |
+                    (data[++matrixOffset] & 0xFF) << 16 |
+                    (data[++matrixOffset] & 0xFF) << 8 |
+                    data[++matrixOffset] & 0xFF;
+            int r11 = (data[++matrixOffset] & 0xFF) << 24 |
+                    (data[++matrixOffset] & 0xFF) << 16 |
+                    (data[++matrixOffset] & 0xFF) << 8 |
+                    data[++matrixOffset] & 0xFF;
+
+            int one = 0x10000;
+            if (r00 == one && r01 == 0 && r10 == 0 && r11 == one) {
+                rotationAngle = 0;
+            } else if (r00 == 0 && r01 == one && r10 == -one && r11 == 0) {
+                rotationAngle = 90;
+            } else if (r00 == 0 && r01 == -one && r10 == one && r11 == 0) {
+                rotationAngle = 270;
+            } else if (r00 == -one && r01 == 0 && r10 == 0 && r11 == -one) {
+                rotationAngle = 180;
+            } else {
+                rotationAngle = 0;
+                if (LOGS_ENABLED) {
+                    Log.w(TAG, "Only rotation of 0,90,180,270 degrees are supported.");
+                }
+            }
+        } else if (LOGS_ENABLED) {
+            Log.w(TAG, "Can't read the rotation matrix");
+        }
+
         if ((flags & 1) == 1) {
             trackEnabled = true;
         } else {
@@ -2127,6 +2187,10 @@ public class ISOBMFFParser extends MediaParser {
             mCurrentTrack = (IsoTrack)createTrack();
             mCurrentTrack.setTrackId(trackId);
             mTracks.add(mCurrentTrack);
+        }
+
+        if (rotationAngle != 0) {
+            addMetaDataValue(MetaData.KEY_ROTATION_DEGREES, rotationAngle);
         }
 
         return true;
