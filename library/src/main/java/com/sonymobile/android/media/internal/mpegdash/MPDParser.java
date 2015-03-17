@@ -444,7 +444,7 @@ public class MPDParser {
             if (entry.repeat < 0) {
                 long tmpRepeat = mCurrentPeriod.durationUs
                         / (entry.durationTicks * 1000000L / template.timescale);
-                entry.repeat = (int)tmpRepeat;
+                entry.repeat = (int)tmpRepeat - 1;
             }
         }
 
