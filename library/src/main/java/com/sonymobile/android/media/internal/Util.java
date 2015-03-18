@@ -17,6 +17,7 @@
 package com.sonymobile.android.media.internal;
 
 import java.io.UnsupportedEncodingException;
+import java.math.BigInteger;
 import java.nio.ByteBuffer;
 
 import android.media.MediaCrypto;
@@ -121,6 +122,14 @@ public class Util {
             hexChars[j * 2 + 1] = HEX_ARRAY[v & 0x0F];
         }
         return new String(hexChars);
+    }
+
+    public static byte[] hexToBytes(String hexString) {
+        byte[] signed = new BigInteger(hexString, 16).toByteArray();
+        byte[] unsigned = new byte[hexString.length()/2];
+        //BigInteger returns a signed byte array so we need to get rid of the signing.
+        System.arraycopy(signed, 1, unsigned, 0, unsigned.length);
+        return unsigned;
     }
 
     public static String getMarlinPSSHTable(byte[] pssh, byte[][] kids) throws JSONException {

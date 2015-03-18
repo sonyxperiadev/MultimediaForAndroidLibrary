@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Vector;
 
+import android.util.Base64;
 import android.util.Log;
 import android.util.Xml;
 
@@ -37,6 +38,7 @@ import com.sonymobile.android.media.TrackInfo.TrackType;
 import com.sonymobile.android.media.TrackRepresentation;
 import com.sonymobile.android.media.VideoTrackRepresentation;
 import com.sonymobile.android.media.internal.Configuration;
+import com.sonymobile.android.media.internal.Util;
 
 public class MPDParser {
 
@@ -58,11 +60,11 @@ public class MPDParser {
 
     private SegmentBase mCurrentSegmentBase;
 
+    private ContentProtection mContentProtection;
+
     private int mActivePeriod = 0;
 
     private String mBaseUri;
-
-    private boolean mExpectingText = false;
 
     private String mMPDFile = "";
 
@@ -131,6 +133,11 @@ public class MPDParser {
                         handleAdaptationSet(parser);
                     } else if (parser.getName().equals("ContentComponent")) {
                         handleContentComponent(parser);
+                    } else if (parser.getName().equals("ContentProtection")) {
+                        handleContentProtection(parser);
+                    } else if (parser.getName().equals("mspr:pro")) {
+                        parser.next(); // Step to get to the data inside the tag.
+                        handlePsshData(parser);
                     } else if (parser.getName().equals("SegmentTemplate")) {
                         handleSegmentTemplate(parser);
                     } else if (parser.getName().equals("SegmentBase")) {
@@ -150,7 +157,8 @@ public class MPDParser {
                     } else if (parser.getName().equals("Rating")) {
                         handleRating(parser);
                     } else if (parser.getName().equals("BaseURL")) {
-                        mExpectingText = true;
+                        parser.next();
+                        handleBaseURL(parser);
                     }
                 } else if (parser.getEventType() == XmlPullParser.END_TAG) {
                     if (parser.getName().equals("MPD")) {
@@ -165,9 +173,6 @@ public class MPDParser {
                     } else if (parser.getName().equals("SegmentBase")) {
                         endSegmentBase();
                     }
-                } else if (parser.getEventType() == XmlPullParser.TEXT && mExpectingText) {
-                    handleBaseURL(parser.getText());
-                    mExpectingText = false;
                 }
             }
         } catch (XmlPullParserException e) {
@@ -303,6 +308,24 @@ public class MPDParser {
             } else {
                 mCurrentAdaptationSet.type = TrackType.UNKNOWN;
             }
+        }
+    }
+
+    private void handleContentProtection(XmlPullParser parser) {
+        String uuid = parser.getAttributeValue(null, "schemeIdUri");
+        String compare = "urn:uuid:";
+        // Multiple schemeIdUri tags can exist, check for correct one.
+        if (uuid.startsWith(compare)) {
+            mContentProtection = new ContentProtection();
+            uuid = uuid.substring(compare.length(), uuid.length());
+            uuid = uuid.replace("-", "");
+            mContentProtection.uuid = Util.hexToBytes(uuid);
+        }
+    }
+
+    private void handlePsshData(XmlPullParser parser) {
+        if (mContentProtection != null && mContentProtection.psshData == null) {
+            mContentProtection.psshData = Base64.decode(parser.getText(), Base64.DEFAULT);
         }
     }
 
@@ -532,11 +555,11 @@ public class MPDParser {
         mCurrentAdaptationSet.rating = parser.getAttributeValue(null, "value");
     }
 
-    private void handleBaseURL(String baseURL) {
+    private void handleBaseURL(XmlPullParser parser) {
         if (mCurrentRepresentation != null) {
-            mCurrentRepresentation.baseURL = baseURL;
+            mCurrentRepresentation.baseURL = parser.getText();
         } else if (mCurrentPeriod != null) {
-            mCurrentPeriod.baseURL = baseURL;
+            mCurrentPeriod.baseURL = parser.getText();
         }
     }
 
@@ -905,6 +928,10 @@ public class MPDParser {
         return null;
     }
 
+    public ContentProtection getContentProtection() {
+        return mContentProtection;
+    }
+
     public void selectRepresentations(int trackIndex, Vector<Integer> representations) {
         Period period = null;
         int trackCount = 0;
@@ -1067,5 +1094,11 @@ public class MPDParser {
         int durationTicks;
 
         public ArrayList<SegmentTimelineEntry> segmentTimeline;
+    }
+
+    public static class ContentProtection {
+        byte[] uuid;
+
+        byte[] psshData;
     }
 }

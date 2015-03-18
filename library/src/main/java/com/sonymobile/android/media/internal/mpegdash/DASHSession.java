@@ -45,6 +45,7 @@ import com.sonymobile.android.media.internal.AccessUnit;
 import com.sonymobile.android.media.internal.Configuration;
 import com.sonymobile.android.media.internal.MetaDataImpl;
 import com.sonymobile.android.media.internal.MimeType;
+import com.sonymobile.android.media.internal.mpegdash.MPDParser.ContentProtection;
 import com.sonymobile.android.media.internal.mpegdash.MPDParser.Representation;
 
 public final class DASHSession {
@@ -390,7 +391,16 @@ public final class DASHSession {
                     mMetaData.addValue(MetaData.KEY_MPD, mMPDParser.getMPDFile());
 
                     boolean isLive = mMPDParser.getDurationUs() == -1;
-
+                    ContentProtection contentProtection = mMPDParser.getContentProtection();
+                    if (contentProtection != null ) {
+                        if (contentProtection.uuid != null) {
+                            mMetaData.addValue(MetaData.KEY_DRM_UUID, contentProtection.uuid);
+                        }
+                        if (contentProtection.psshData != null) {
+                            mMetaData.addValue(MetaData.KEY_DRM_PSSH_DATA,
+                                    contentProtection.psshData);
+                        }
+                    }
                     mMetaData.addValue(MetaData.KEY_PAUSE_AVAILABLE, isLive ? 0 : 1);
                     mMetaData.addValue(MetaData.KEY_SEEK_AVAILABLE, isLive ? 0 : 1);
 
