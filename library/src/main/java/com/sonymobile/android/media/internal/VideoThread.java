@@ -60,6 +60,15 @@ public final class VideoThread extends VideoCodecThread {
 
     private static final int MAX_EARLY_FRAME_TIME_ALLOWED_MS = 10;
 
+    // Use constants from MediaFormat when and if they are made public.
+    private static final String KEY_CROP_LEFT = "crop-left";
+
+    private static final String KEY_CROP_RIGHT = "crop-right";
+
+    private static final String KEY_CROP_BOTTOM = "crop-bottom";
+
+    private static final String KEY_CROP_TOP = "crop-top";
+
     private HandlerThread mEventThread;
 
     private EventHandler mEventHandler;
@@ -653,11 +662,28 @@ public final class VideoThread extends VideoCodecThread {
 
                         MediaFormat newFormat = mCodec.getOutputFormat();
 
-                        int newWidth = (newFormat.getInteger(MediaFormat.KEY_WIDTH)
-                                * mSampleAspectRatioWidth) / mSampleAspectRatioHeight;
+                        int newWidth = newFormat.getInteger(MediaFormat.KEY_WIDTH);
                         int newHeight = newFormat.getInteger(MediaFormat.KEY_HEIGHT);
 
+                        boolean foundCrop = newFormat.containsKey(KEY_CROP_LEFT) &&
+                                newFormat.containsKey(KEY_CROP_RIGHT) &&
+                                newFormat.containsKey(KEY_CROP_TOP) &&
+                                newFormat.containsKey(KEY_CROP_BOTTOM);
+
+                        if (foundCrop) {
+                            int leftCrop = newFormat.getInteger(KEY_CROP_LEFT);
+                            int rightCrop = newFormat.getInteger(KEY_CROP_RIGHT);
+                            int topCrop = newFormat.getInteger(KEY_CROP_TOP);
+                            int bottomCrop = newFormat.getInteger(KEY_CROP_BOTTOM);
+
+                            newWidth = rightCrop - leftCrop + 1;
+                            newHeight = bottomCrop - topCrop + 1;
+                        }
+
+                        newWidth = (newWidth * mSampleAspectRatioWidth) / mSampleAspectRatioHeight;
+
                         if (newWidth != mWidth || newHeight != mHeight) {
+
                             mWidth = newWidth;
                             mHeight = newHeight;
 
