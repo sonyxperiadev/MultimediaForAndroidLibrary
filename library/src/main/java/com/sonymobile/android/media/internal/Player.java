@@ -343,15 +343,25 @@ public final class Player {
         if (!mSource.supportsPreview() && msec == 0 && mCurrentPositionMs == 0 &&
                 mAudioThread == null && mVideoThread == null) {
             mCallbacks.obtainMessage(NOTIFY_SEEK_COMPLETE).sendToTarget();
+            mExecutingSeekMessage = null;
+            mPendingSeekMessage = null;
             return;
         }
 
-        if (mPendingSeekMessage != null && !mSource.supportsPreview()) {
+        if (mPendingSeekMessage != null) {
             // We have some queued seeks.
-            mEventHandler.sendMessageAtTime(mPendingSeekMessage,
-                    SystemClock.uptimeMillis() + DEFAULT_SEEK_DELAY_MS);
-            mPendingSeekMessage = null;
-            return;
+            if (mVideoThread == null && mSource.getSelectedTrackIndex(TrackType.VIDEO) == -1) {
+                // Audio Only perform the seek now
+                mEventHandler.sendMessageAtTime(mPendingSeekMessage, SystemClock.uptimeMillis());
+                mPendingSeekMessage = null;
+                return;
+            } else if (!mSource.supportsPreview()) {
+                // Probably streaming, send the event delayed.
+                mEventHandler.sendMessageAtTime(mPendingSeekMessage,
+                        SystemClock.uptimeMillis() + DEFAULT_SEEK_DELAY_MS);
+                mPendingSeekMessage = null;
+                return;
+            }
         }
 
         mInternalSeekTriggered = internal;
@@ -380,6 +390,7 @@ public final class Player {
                 // Both Audio and Video are Null. Prepared state send callback
                 // directly.
                 mSeekPositionMs = -1;
+                mExecutingSeekMessage = null;
                 mCallbacks.obtainMessage(NOTIFY_SEEK_COMPLETE).sendToTarget();
                 return;
             }
@@ -389,6 +400,7 @@ public final class Player {
                     mSource.getSelectedTrackIndex(TrackType.AUDIO) > -1)) {
                 // Audio only. Send callback directly and mark as seek complete.
                 mSeekPositionMs = -1;
+                mExecutingSeekMessage = null;
                 mCallbacks.obtainMessage(NOTIFY_SEEK_COMPLETE).sendToTarget();
                 return;
             }
