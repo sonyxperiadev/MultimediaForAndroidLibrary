@@ -985,6 +985,7 @@ public class ApiTest {
         assertTrue("Testcontent has too short duration", tc.getDuration() > 5000);
 
         try {
+            int allowedDiff = 200;
             initMediaPlayer();
             sMediaPlayer.setDataSource(tc.getContentUri());
             sMediaPlayer.setDisplay(sh);
@@ -998,12 +999,14 @@ public class ApiTest {
                 timeOut += 25;
             }
             long startTime = System.currentTimeMillis();
-            SystemClock.sleep(1000); // Play for 1s at 2x speed
+            SystemClock.sleep(2000); // Play for 2s at 2x speed
             long endTime = System.currentTimeMillis();
             int pos = sMediaPlayer.getCurrentPosition();
             int diff = (int)((endTime - startTime) * 2);
-            assertTrue("Position should be between " + (diff - 175) + " and " + (diff + 175) +
-                    ", pos = " + pos, pos > (diff - 175) && pos < (diff + 175));
+            assertTrue(
+                    "Position should be between " + (diff - allowedDiff) + " and " + (diff +
+                            allowedDiff) + ", pos = " + pos,
+                    pos > (diff - allowedDiff) && pos < (diff + allowedDiff));
             shutDown();
 
             initMediaPlayer();
@@ -1017,12 +1020,14 @@ public class ApiTest {
                 timeOut += 25;
             }
             startTime = System.currentTimeMillis();
-            SystemClock.sleep(1000); // Play for 1s at 0.5x speed
+            SystemClock.sleep(4000); // Play for 4s at 0.5x speed
             endTime = System.currentTimeMillis();
             pos = sMediaPlayer.getCurrentPosition();
             diff = (int)((endTime - startTime) * 0.5);
-            assertTrue("Position should be between " + (diff - 175) + " and " + (diff + 175) +
-                    ", pos = " + pos, pos > (diff - 175) && pos < (diff + 175));
+            assertTrue(
+                    "Position should be between " + (diff - allowedDiff) + " and " + (diff +
+                            allowedDiff) + ", pos = " + pos,
+                    pos > (diff - allowedDiff) && pos < (diff + allowedDiff));
             shutDown();
 
             initMediaPlayer();
