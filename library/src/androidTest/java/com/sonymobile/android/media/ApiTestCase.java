@@ -479,6 +479,14 @@ public class ApiTestCase extends
         ApiTest.setGetCustomVideoConfigurationParameter();
     }
 
+    @Protocol(types = "Local")
+    @Content(types = "Video")
+    public void testSeekToSwitchSurface() throws IOException {
+        setDefaultTestContent(TestContent.ID_TYPE_LOCAL);
+        ApiTest.seekToSwitchSurface(mTestContent, mSurfaceView.getSurfaceView().getHolder(),
+                mSurfaceView.getSurfaceView2().getHolder());
+    }
+
     /**
      * Calls to this function will update to use the Default Test Content if a content has not
      * already been set.

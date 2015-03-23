@@ -1892,6 +1892,62 @@ public class ApiTest {
         }
     }
 
+    public static void seekToSwitchSurface(TestContent tc, SurfaceHolder sh,
+            SurfaceHolder sh2) throws IOException {
+        assertNotNull("No test content", tc);
+        assertNotNull("No content uri", tc.getContentUri());
+        assertTrue("Testcontent must have a valid duration", tc.getDuration() > 0);
+
+        try {
+            sCompleted = false;
+            sCompletedCounter = 0;
+
+            initMediaPlayer();
+
+            sMediaPlayer.setOnSeekCompleteListener(new OnSeekCompleteListener() {
+
+                @Override
+                public void onSeekComplete(MediaPlayer mp) {
+                    sCompleted = true;
+                }
+            });
+
+            sMediaPlayer.setDataSource(tc.getContentUri());
+            sMediaPlayer.setDisplay(sh);
+            assertTrue("Prepare failed", sMediaPlayer.prepare());
+
+            sMediaPlayer.play();
+            int timeout = 0;
+            while (sMediaPlayer.getCurrentPosition() == 0) {
+                SystemClock.sleep(50);
+                timeout += 50;
+                if (timeout > 10000) {
+                    break;
+                }
+            }
+
+            assertTrue("Failed to start playback ", sMediaPlayer.getCurrentPosition() != 0);
+
+            int seekTime = sMediaPlayer.getDuration() / 4 * 3;
+            sMediaPlayer.seekTo(seekTime);
+            sMediaPlayer.setDisplay(sh2);
+
+            timeout = 0;
+            while (!sCompleted) {
+                SystemClock.sleep(50);
+                timeout += 50;
+                if (timeout > 10000) {
+                    break;
+                }
+            }
+
+            assertTrue("onSeekComplete not called after surface change", sCompleted);
+
+        } finally {
+            shutDown();
+        }
+    }
+
     protected static void shutDown() {
         try {
             if (sMediaPlayer != null && sMediaPlayer.getState() != MediaPlayer.State.END) {
