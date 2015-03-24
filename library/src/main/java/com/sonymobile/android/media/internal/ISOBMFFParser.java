@@ -2338,8 +2338,15 @@ public class ISOBMFFParser extends MediaParser {
                     hvccData[1] = 0x00;
                     hvccData[2] = 0x00;
                     hvccData[3] = 0x01;
-                    System.arraycopy(buffer, currentBufferOffset, hvccData, 4,
-                            nalUnitLength);
+                    if (buffer.length > currentBufferOffset + nalUnitLength) {
+                        System.arraycopy(buffer, currentBufferOffset, hvccData, 4, nalUnitLength);
+                    } else {
+                        if (LOGS_ENABLED) {
+                            Log.e(TAG, "Range of desired copy length exceeds that of the input " +
+                                    "data buffer size");
+                        }
+                        return null;
+                    }
                 } else {
                     byte[] newArray = new byte[hvccData.length + nalUnitLength + 4];
                     System.arraycopy(hvccData, 0, newArray, 0,
