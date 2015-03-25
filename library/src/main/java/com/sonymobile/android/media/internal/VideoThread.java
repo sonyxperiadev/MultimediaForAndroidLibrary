@@ -684,7 +684,8 @@ public final class VideoThread extends VideoCodecThread {
                             newHeight = bottomCrop - topCrop + 1;
                         }
 
-                        newWidth = (newWidth * mSampleAspectRatioWidth) / mSampleAspectRatioHeight;
+                        newWidth = (int)Math.round((double)(newWidth * mSampleAspectRatioWidth) /
+                                mSampleAspectRatioHeight);
 
                         if (newWidth != mWidth || newHeight != mHeight) {
 
