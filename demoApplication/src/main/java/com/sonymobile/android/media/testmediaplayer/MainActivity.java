@@ -57,6 +57,7 @@ import android.widget.Toast;
 
 import com.sonymobile.android.media.MediaInfo;
 import com.sonymobile.android.media.MediaPlayer;
+import com.sonymobile.android.media.MediaPlayer.OnBufferingUpdateListener;
 import com.sonymobile.android.media.MediaPlayer.OnCompletionListener;
 import com.sonymobile.android.media.MediaPlayer.OnErrorListener;
 import com.sonymobile.android.media.MediaPlayer.OnOutputControlEventListener;
@@ -79,7 +80,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback,
         MediaPlayer.OnPreparedListener, DrawerLayout.DrawerListener,
         OnSystemUiVisibilityChangeListener, OnCompletionListener, OnTouchListener,
         OnSeekCompleteListener, OnErrorListener, OnSubtitleDataListener,
-        OnOutputControlEventListener {
+        OnOutputControlEventListener, OnBufferingUpdateListener {
 
     private boolean LOGS_ENABLED = PlayerConfiguration.DEBUG || false;
 
@@ -423,6 +424,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback,
                         .getLayoutParams();
         mTimeSeekView = (TextView)findViewById(R.id.activity_main_time_seek);
         mMediaPlayer.setOnInfoListener(this);
+        mMediaPlayer.setOnBufferingUpdateListener(this);
         RelativeLayout browsingL = (RelativeLayout)findViewById(R.id.activity_main_browsing_layout);
         ExpandableListView elv = (ExpandableListView)browsingL
                 .findViewById(R.id.file_browsing_exp_list_view);
@@ -727,6 +729,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback,
         mMediaPlayer.setOnCompletionListener(this);
         mMediaPlayer.setOnPreparedListener(this);
         mMediaPlayer.setOnInfoListener(this);
+        mMediaPlayer.setOnBufferingUpdateListener(this);
         mMediaPlayer.setOnSeekCompleteListener(this);
         mMediaPlayer.setOnSubtitleDataListener(this);
         mSeekbar.setOnSeekBarChangeListener(new OwnOnSeekBarChangeListener(mMediaPlayer));
@@ -762,6 +765,11 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback,
             default:
                 return false;
         }
+    }
+
+    @Override
+    public void onBufferingUpdate(MediaPlayer mp, int percent) {
+        Log.i(TAG, "onBufferingUpdate: " + percent);
     }
 
     @Override

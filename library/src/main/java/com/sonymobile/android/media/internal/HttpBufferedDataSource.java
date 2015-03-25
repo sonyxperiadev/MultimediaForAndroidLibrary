@@ -27,9 +27,8 @@ import android.os.Handler;
 import android.util.Log;
 
 import com.sonymobile.android.media.BandwidthEstimator;
-import com.sonymobile.android.media.internal.BufferedStream.ThresholdListener;
 
-public class HttpBufferedDataSource extends BufferedDataSource implements ThresholdListener {
+public class HttpBufferedDataSource extends BufferedDataSource {
 
     /**
      * Buffer handling Logic:
@@ -63,8 +62,6 @@ public class HttpBufferedDataSource extends BufferedDataSource implements Thresh
     private static final boolean LOGS_ENABLED = Configuration.DEBUG || false;
 
     private static final String TAG = "HttpBufferedDataSource";
-
-    private BufferingUpdateThread mBufferingThread;
 
     /*
      * (non-Javadoc) Protected to force use of DataSource.create(....)
@@ -169,42 +166,16 @@ public class HttpBufferedDataSource extends BufferedDataSource implements Thresh
             throws FileNotFoundException, IOException {
         super.openConnectionsAndStreams();
 
-        if (mBis != null) {
-            mBis.setThresholdListener(this);
-
-            // start thread for buffering callbacks
-            if (mBufferingThread != null && !mBufferingThread.isAlive()) {
-                mBufferingThread = null;
-            }
-            if (mBufferingThread == null) {
-                mBufferingThread = new BufferingUpdateThread();
-                mBufferingThread.start();
-            }
-        }
+        sendMessage(SOURCE_BUFFERING_UPDATE);
     }
 
     @Override
     protected void doReconnect() throws IOException {
         super.doReconnect();
-
-        // start thread for buffering callbacks.
-        // It's safe to do so here since super.doReconnect will throw an IO if
-        // we fail to reconnect.
-        if (mBufferingThread != null && !mBufferingThread.isAlive()) {
-            mBufferingThread = null;
-        }
-        if (mBufferingThread == null) {
-            mBufferingThread = new BufferingUpdateThread();
-            mBufferingThread.start();
-        }
     }
 
     protected void doCloseAsync() {
         super.doCloseAsync();
-
-        if (mBufferingThread != null && mBufferingThread.isAlive()) {
-            mBufferingThread.interrupt();
-        }
     }
 
     @Override
@@ -231,55 +202,26 @@ public class HttpBufferedDataSource extends BufferedDataSource implements Thresh
         return toReturn;
     }
 
-    @Override
-    public void onLowThreshold() {
-        // Running low start thread for buffering callbacks
-        if (mBufferingThread != null && !mBufferingThread.isAlive()) {
-            mBufferingThread = null;
+    public int getBuffering() {
+        int percentage = 0;
+        try {
+            int numBytesAvailable = mBis.available();
+            percentage = (int)(100 * (double)(mCurrentOffset + numBytesAvailable)
+                    / mContentLength);
+            if (percentage > 100) {
+                percentage = 100;
+            } else if (percentage < 0) {
+                percentage = 0;
+            }
+        } catch (IOException e) {
+        } finally {
+            return percentage;
         }
-        if (mBufferingThread == null) {
-            mBufferingThread = new BufferingUpdateThread();
-            mBufferingThread.start();
-        }
-    }
-
-    @Override
-    public void onHighThreshold() {
-        // Not used.
     }
 
     private void sendMessage(int what) {
         if (mNotify != null) {
             mNotify.sendEmptyMessage(what);
-        }
-    }
-
-    private class BufferingUpdateThread extends Thread {
-
-        public void run() {
-            if (mNotify != null) {
-                int percentage = 0;
-                while (mBis != null && percentage < 100 && percentage >= 0
-                        && !isInterrupted()) {
-                    try {
-                        int numBytesAvailable = mBis.available();
-                        percentage = (int)(100 * (double)(mCurrentOffset + numBytesAvailable)
-                                / mContentLength);
-                        if (percentage > 100) {
-                            percentage = 100;
-                        } else if (percentage < 0) {
-                            percentage = 0;
-                        }
-                        mNotify.obtainMessage(SOURCE_BUFFERING_UPDATE, percentage, 0)
-                                .sendToTarget();
-                        sleep(1000);
-                    } catch (IOException e) {
-                        break;
-                    } catch (InterruptedException e) {
-                        break;
-                    }
-                }
-            }
         }
     }
 }

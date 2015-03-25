@@ -34,12 +34,6 @@ import com.sonymobile.android.media.BandwidthEstimator;
 
 public class BufferedStream extends InputStream {
 
-    public static interface ThresholdListener {
-        public void onLowThreshold();
-
-        public void onHighThreshold();
-    }
-
     public static final int MSG_RECONNECT = 1;
 
     private static final boolean LOGS_ENABLED = Configuration.DEBUG || false;
@@ -61,8 +55,6 @@ public class BufferedStream extends InputStream {
     private DownloaderThread mDownloaderThread;
 
     private BandwidthEstimator mBandwidthEstimator;
-
-    private ThresholdListener mThresholdListener;
 
     private boolean mClosed = false;
 
@@ -131,7 +123,6 @@ public class BufferedStream extends InputStream {
         mDataBuffer = null;
         mCallback = null;
         mBandwidthEstimator = null;
-        mThresholdListener = null;
     }
 
     @Override
@@ -205,10 +196,6 @@ public class BufferedStream extends InputStream {
         }
 
         return skipped;
-    }
-
-    public void setThresholdListener(ThresholdListener listener) {
-        mThresholdListener = listener;
     }
 
     protected synchronized boolean rewind(long rewindBytes) {
@@ -376,7 +363,6 @@ public class BufferedStream extends InputStream {
                                 }
                             }
                         } while (!mClosed && totalSaved < read);
-                        checkAndPostThresholdCallback();
                     } else {
                         synchronized (mPausedLock) {
                             try {
@@ -421,55 +407,6 @@ public class BufferedStream extends InputStream {
 
             if (LOGS_ENABLED)
                 Log.v(TAG, "DownloaderThread will now exit, stream should be closed by now.");
-        }
-
-        private void checkAndPostThresholdCallback() {
-            if (mThresholdListener != null && !mEos) {
-                try {
-                    int bytesAvailble = mDataBuffer.available();
-                    int totalBuffer = mDataBuffer.getBufferSize();
-
-                    double percent = ((double)bytesAvailble / (double)totalBuffer) * 100;
-
-                    if (percent > LOW_THRESHOLD_PERCENT) {
-                        mHasPassedLowThreshold = true;
-                    }
-
-                    Runnable post = null;
-
-                    if (percent > HIGH_THRESHOLD_PERCENT) {
-                        post = new HighThreshold();
-                    } else if (mHasPassedLowThreshold && percent < LOW_THRESHOLD_PERCENT) {
-                        post = new LowThreshold();
-                        mHasPassedLowThreshold = false;
-                    }
-
-                    if (post != null) {
-                        Thread t = new Thread(post);
-                        t.start();
-                    }
-                } catch (IOException e) {
-                    if (LOGS_ENABLED) Log.w(TAG, "IOException occured during threshold check.");
-                }
-            }
-        }
-    }
-
-    private class HighThreshold implements Runnable {
-        @Override
-        public void run() {
-            if (mThresholdListener != null) {
-                mThresholdListener.onHighThreshold();
-            }
-        }
-    }
-
-    private class LowThreshold implements Runnable {
-        @Override
-        public void run() {
-            if (mThresholdListener != null) {
-                mThresholdListener.onLowThreshold();
-            }
         }
     }
 }

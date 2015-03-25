@@ -27,6 +27,7 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
 import android.os.Message;
+import android.os.SystemClock;
 import android.util.Log;
 
 import com.sonymobile.android.media.BandwidthEstimator;
@@ -48,6 +49,8 @@ public final class SimpleSource extends MediaSource {
 
     private static final int MSG_SEEKTO = 12;
 
+    private static final int MSG_CHECK_BUFFERING = 13;
+
     MediaParser mMediaParser;
 
     private boolean mBuffering = false;
@@ -65,6 +68,8 @@ public final class SimpleSource extends MediaSource {
     private EventHandler mEventHandler;
 
     private boolean mIsHttp = false;
+
+    private boolean mPrepared = false;
 
     public SimpleSource(String path, long offset, long length, Handler notify, int maxBufferSize) {
         super(notify);
@@ -238,6 +243,10 @@ public final class SimpleSource extends MediaSource {
 
         if (mMediaParser != null) {
             notifyPrepared();
+            mPrepared = true;
+            if (mIsHttp) {
+                mEventHandler.sendEmptyMessage(MSG_CHECK_BUFFERING);
+            }
         } else {
             notifyPrepareFailed(MediaError.UNSUPPORTED);
         }
@@ -245,6 +254,17 @@ public final class SimpleSource extends MediaSource {
 
     private void onSeek(long timeUs) {
         mMediaParser.seekTo(timeUs);
+    }
+
+    private void onCheckBuffering() {
+        int percentage = ((HttpBufferedDataSource)mMediaParser.mDataSource).getBuffering();
+
+        notify(SOURCE_BUFFERING_UPDATE, percentage);
+
+        if (percentage < 100) {
+            mEventHandler.sendEmptyMessageAtTime(MSG_CHECK_BUFFERING,
+                    SystemClock.uptimeMillis() + 1000);
+        }
     }
 
     private static class EventHandler extends Handler {
@@ -268,7 +288,9 @@ public final class SimpleSource extends MediaSource {
                     thiz.onSeek(((Long)(msg.obj)).longValue());
                     break;
                 case SOURCE_BUFFERING_UPDATE:
-                    thiz.notify(SOURCE_BUFFERING_UPDATE, msg.arg1);
+                    if (thiz.mPrepared && !thiz.mEventHandler.hasMessages(MSG_CHECK_BUFFERING)) {
+                        thiz.onCheckBuffering();
+                    }
                     break;
                 case SOURCE_BUFFERING_START:
                     if (!thiz.mBuffering) {
@@ -282,6 +304,9 @@ public final class SimpleSource extends MediaSource {
                     break;
                 case SOURCE_ERROR:
                     thiz.notify(SOURCE_ERROR);
+                    break;
+                case MSG_CHECK_BUFFERING:
+                    thiz.onCheckBuffering();
                     break;
                 default:
                     if (LOGS_ENABLED) Log.w(TAG, "Unknown message");
