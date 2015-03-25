@@ -16,8 +16,6 @@
 
 package com.sonymobile.android.media.internal;
 
-import static com.sonymobile.android.media.internal.HandlerHelper.sendMessageAndAwaitResponse;
-
 import java.io.FileDescriptor;
 import java.lang.ref.WeakReference;
 import java.util.HashMap;
@@ -211,6 +209,8 @@ public final class Player {
 
     private Message mPendingSeekMessage;
 
+    private HandlerHelper mHandlerHelper;
+
     public Player(Handler callbackListener, Context context, int audioSessionId) {
         mContext = context;
 
@@ -225,9 +225,12 @@ public final class Player {
         mEventThread = new HandlerThread("Player");
         mEventThread.start();
 
-        mEventHandler = new EventHandler(new WeakReference<Player>(this), mEventThread.getLooper());
+        mEventHandler = new EventHandler(new WeakReference<Player>(this),
+                mEventThread.getLooper());
 
         mCallbacks = callbackListener;
+
+        mHandlerHelper = new HandlerHelper();
     }
 
     public void setSurface(Surface surface) {
@@ -266,9 +269,10 @@ public final class Player {
     }
 
     public boolean prepare() {
-        boolean reply = (Boolean)sendMessageAndAwaitResponse(mEventHandler
+        Object reply = mHandlerHelper.sendMessageAndAwaitResponse(mEventHandler
                 .obtainMessage(MSG_PREPARE));
-        return reply;
+
+        return reply != null ? (Boolean)reply : false;
     }
 
     public void prepareAsync() {
@@ -318,7 +322,9 @@ public final class Player {
     }
 
     public TrackInfo[] getTrackInfo() {
-        Object reply = sendMessageAndAwaitResponse(mEventHandler.obtainMessage(MSG_GET_TRACK_INFO));
+        Object reply = mHandlerHelper.sendMessageAndAwaitResponse(mEventHandler.obtainMessage
+                (MSG_GET_TRACK_INFO));
+
         return (TrackInfo[])reply;
     }
 
@@ -334,9 +340,10 @@ public final class Player {
     }
 
     public MetaData getMediaMetaData() {
-        Object reply = sendMessageAndAwaitResponse(mEventHandler
+        Object reply = mHandlerHelper.sendMessageAndAwaitResponse(mEventHandler
                 .obtainMessage(MSG_GET_MEDIA_META_DATA));
-        return (MetaData)reply;
+
+        return reply != null ? (MetaData)reply : new MetaDataImpl();
     }
 
     private void onSeek(int msec, boolean internal) {
@@ -431,15 +438,17 @@ public final class Player {
     }
 
     public int getVideoHeight() {
-        Object reply = sendMessageAndAwaitResponse(mEventHandler
+        Object reply = mHandlerHelper.sendMessageAndAwaitResponse(mEventHandler
                 .obtainMessage(MSG_GET_VIDEO_HEIGHT));
-        return (Integer)reply;
+
+        return reply != null ? (Integer)reply : 0;
     }
 
     public int getVideoWidth() {
-        Object reply = sendMessageAndAwaitResponse(mEventHandler
+        Object reply = mHandlerHelper.sendMessageAndAwaitResponse(mEventHandler
                 .obtainMessage(MSG_GET_VIDEO_WIDTH));
-        return (Integer)reply;
+
+        return reply != null ? (Integer)reply : 0;
     }
 
     public void setBandwidthEstimator(BandwidthEstimator estimator) {
@@ -451,9 +460,10 @@ public final class Player {
     }
 
     public int getAudioSessionId() {
-        Object reply = sendMessageAndAwaitResponse(mEventHandler
+        Object reply = mHandlerHelper.sendMessageAndAwaitResponse(mEventHandler
                 .obtainMessage(MSG_GET_AUDIO_SESSION_ID));
-        return (Integer)reply;
+
+        return reply != null ? (Integer)reply : -1;
     }
 
     public void setSpeed(float speed) {
@@ -466,7 +476,7 @@ public final class Player {
     }
 
     public Statistics getStatistics() {
-        Object reply = sendMessageAndAwaitResponse(mEventHandler
+        Object reply = mHandlerHelper.sendMessageAndAwaitResponse(mEventHandler
                 .obtainMessage(MSG_GET_STATISTICS));
         if (reply instanceof Statistics) {
             return (Statistics)reply;
@@ -828,6 +838,7 @@ public final class Player {
                         thiz.mEventHandler = null;
                         thiz.mEventThread = null;
                     }
+                    thiz.mHandlerHelper.releaseAllLocks();
                     break;
                 case MSG_SEEK:
                     thiz.mExecutingSeekMessage = msg;

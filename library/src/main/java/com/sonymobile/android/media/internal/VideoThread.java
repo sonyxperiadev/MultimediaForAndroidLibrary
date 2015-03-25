@@ -16,7 +16,6 @@
 
 package com.sonymobile.android.media.internal;
 
-import static com.sonymobile.android.media.internal.HandlerHelper.sendMessageAndAwaitResponse;
 import static com.sonymobile.android.media.internal.Player.MSG_CODEC_NOTIFY;
 
 import java.io.IOException;
@@ -145,6 +144,8 @@ public final class VideoThread extends VideoCodecThread {
 
     private long mLastAudioTimeUs = 0;
 
+    private HandlerHelper mHandlerHelper;
+
     public VideoThread(MediaFormat format, MediaSource source, Surface surface, Clock clock,
             Handler callback, DrmSession drmSession, int videoScalingMode,
             HashMap<String, Integer> customMediaFormatParams) {
@@ -172,6 +173,8 @@ public final class VideoThread extends VideoCodecThread {
         mVideoScalingMode = videoScalingMode;
 
         mCustomMediaFormatParams = customMediaFormatParams;
+
+        mHandlerHelper = new HandlerHelper();
     }
 
     @Override
@@ -206,19 +209,20 @@ public final class VideoThread extends VideoCodecThread {
 
     @Override
     public void pause() {
-        sendMessageAndAwaitResponse(mEventHandler.obtainMessage(MSG_PAUSE));
+        mHandlerHelper.sendMessageAndAwaitResponse(mEventHandler.obtainMessage(MSG_PAUSE));
     }
 
     @Override
     public void flush() {
-        sendMessageAndAwaitResponse(mEventHandler.obtainMessage(MSG_FLUSH));
+        mHandlerHelper.sendMessageAndAwaitResponse(mEventHandler.obtainMessage(MSG_FLUSH));
     }
 
     @Override
     public void stop() {
-        sendMessageAndAwaitResponse(mEventHandler.obtainMessage(MSG_STOP));
+        mHandlerHelper.sendMessageAndAwaitResponse(mEventHandler.obtainMessage(MSG_STOP));
         mEventThread.quit();
         mRenderingThread.quit();
+        mHandlerHelper.releaseAllLocks();
         mEventThread = null;
         mEventHandler = null;
         mRenderingHandler = null;

@@ -24,7 +24,6 @@
 package com.sonymobile.android.media.internal;
 
 import static com.sonymobile.android.media.internal.Configuration.DO_COMPENSATE_AUDIO_TIMESTAMP_LATENCY;
-import static com.sonymobile.android.media.internal.HandlerHelper.sendMessageAndAwaitResponse;
 import static com.sonymobile.android.media.internal.Player.MSG_CODEC_NOTIFY;
 
 import java.io.IOException;
@@ -139,6 +138,8 @@ public final class AudioThread extends CodecThread implements Clock {
 
     private Method mSetAudioTrackMethod;
 
+    private HandlerHelper mHandlerHelper;
+
     public AudioThread(MediaFormat format, MediaSource source, int audioSessionId,
             Handler callback, DrmSession drmSession) {
         mEventThread = new HandlerThread("Audio", Process.THREAD_PRIORITY_MORE_FAVORABLE);
@@ -170,6 +171,8 @@ public final class AudioThread extends CodecThread implements Clock {
         }
 
         mDrmSession = drmSession;
+
+        mHandlerHelper = new HandlerHelper();
     }
 
     public void start() {
@@ -177,11 +180,11 @@ public final class AudioThread extends CodecThread implements Clock {
     }
 
     public void pause() {
-        sendMessageAndAwaitResponse(mEventHandler.obtainMessage(MSG_PAUSE));
+        mHandlerHelper.sendMessageAndAwaitResponse(mEventHandler.obtainMessage(MSG_PAUSE));
     }
 
     public void flush() {
-        sendMessageAndAwaitResponse(mEventHandler.obtainMessage(MSG_FLUSH));
+        mHandlerHelper.sendMessageAndAwaitResponse(mEventHandler.obtainMessage(MSG_FLUSH));
     }
 
     protected void setVolume(float leftVolume, float rightVolume) {
@@ -193,8 +196,9 @@ public final class AudioThread extends CodecThread implements Clock {
     }
 
     public void stop() {
-        sendMessageAndAwaitResponse(mEventHandler.obtainMessage(MSG_STOP));
+        mHandlerHelper.sendMessageAndAwaitResponse(mEventHandler.obtainMessage(MSG_STOP));
         mEventThread.quit();
+        mHandlerHelper.releaseAllLocks();
         mEventHandler = null;
         mEventThread = null;
         mRenderingThread.quit();

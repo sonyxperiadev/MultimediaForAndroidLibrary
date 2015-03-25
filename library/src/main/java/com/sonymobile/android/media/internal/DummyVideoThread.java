@@ -16,7 +16,6 @@
 
 package com.sonymobile.android.media.internal;
 
-import static com.sonymobile.android.media.internal.HandlerHelper.sendMessageAndAwaitResponse;
 import static com.sonymobile.android.media.internal.Player.MSG_CODEC_NOTIFY;
 
 import android.annotation.SuppressLint;
@@ -58,6 +57,8 @@ public final class DummyVideoThread extends VideoCodecThread {
 
     private float mCurrentSpeed = 1.0f;
 
+    private HandlerHelper mHandlerHelper;
+
     public DummyVideoThread(MediaFormat format, MediaSource source, Clock clock,
             Handler callback) {
         super();
@@ -71,6 +72,8 @@ public final class DummyVideoThread extends VideoCodecThread {
 
         mClock = clock;
         mCallback = callback;
+
+        mHandlerHelper = new HandlerHelper();
     }
 
     @Override
@@ -88,18 +91,19 @@ public final class DummyVideoThread extends VideoCodecThread {
 
     @Override
     public void pause() {
-        sendMessageAndAwaitResponse(mEventHandler.obtainMessage(MSG_PAUSE));
+        mHandlerHelper.sendMessageAndAwaitResponse(mEventHandler.obtainMessage(MSG_PAUSE));
     }
 
     @Override
     public void flush() {
-        sendMessageAndAwaitResponse(mEventHandler.obtainMessage(MSG_FLUSH));
+        mHandlerHelper.sendMessageAndAwaitResponse(mEventHandler.obtainMessage(MSG_FLUSH));
     }
 
     @Override
     public void stop() {
-        sendMessageAndAwaitResponse(mEventHandler.obtainMessage(MSG_STOP));
+        mHandlerHelper.sendMessageAndAwaitResponse(mEventHandler.obtainMessage(MSG_STOP));
         mEventThread.quit();
+        mHandlerHelper.releaseAllLocks();
         mEventThread = null;
         mEventHandler = null;
     }

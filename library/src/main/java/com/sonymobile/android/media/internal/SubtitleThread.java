@@ -16,8 +16,6 @@
 
 package com.sonymobile.android.media.internal;
 
-import static com.sonymobile.android.media.internal.HandlerHelper.sendMessageAndAwaitResponse;
-
 import android.annotation.SuppressLint;
 import android.media.MediaDrm;
 import android.media.MediaDrm.CryptoSession;
@@ -79,6 +77,8 @@ public final class SubtitleThread implements Codec {
 
     private boolean mEos = false;
 
+    private HandlerHelper mHandlerHelper;
+
     public SubtitleThread(MediaSource source, Clock clock,
             Handler callback) {
         if (LOGS_ENABLED) Log.v(TAG, "Creating Subtitle thread");
@@ -92,6 +92,8 @@ public final class SubtitleThread implements Codec {
         mEventHandler = new EventHandler(mEventThread.getLooper());
 
         mEventHandler.obtainMessage(MSG_SET_SOURCE, source).sendToTarget();
+
+        mHandlerHelper = new HandlerHelper();
     }
 
     public void start() {
@@ -103,12 +105,13 @@ public final class SubtitleThread implements Codec {
     }
 
     public void flush() {
-        sendMessageAndAwaitResponse(mEventHandler.obtainMessage(MSG_FLUSH));
+        mHandlerHelper.sendMessageAndAwaitResponse(mEventHandler.obtainMessage(MSG_FLUSH));
     }
 
     public void stop() {
-        sendMessageAndAwaitResponse(mEventHandler.obtainMessage(MSG_STOP));
+        mHandlerHelper.sendMessageAndAwaitResponse(mEventHandler.obtainMessage(MSG_STOP));
         mEventThread.quit();
+        mHandlerHelper.releaseAllLocks();
         mEventThread = null;
         mEventHandler = null;
         mCurrentSubtitle = null;

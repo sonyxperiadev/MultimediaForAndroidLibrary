@@ -21,6 +21,9 @@ import android.os.HandlerThread;
 import android.os.Looper;
 import android.os.Message;
 
+import java.lang.reflect.Array;
+import java.util.ArrayList;
+
 public class HandlerHelper {
 
     private static class WaitHandler extends Handler {
@@ -28,6 +31,8 @@ public class HandlerHelper {
         private final Object lock;
 
         public Object reply;
+
+        public boolean releaseLock;
 
         private WaitHandler(Looper looper, Object lock) {
             super(looper);
@@ -43,20 +48,27 @@ public class HandlerHelper {
         }
     }
 
-    public static Object sendMessageAndAwaitResponse(Message msg) {
+    private ArrayList<WaitHandler> mMessageList = new ArrayList<>();
+
+    private Object mListLock = new Object();
+
+    public Object sendMessageAndAwaitResponse(Message msg) {
         HandlerThread waitThread = new HandlerThread("sendMessageAndAwaitResponse");
         final Object lock = new Object();
         waitThread.start();
 
         WaitHandler handler = new WaitHandler(waitThread.getLooper(), lock);
+        synchronized (mListLock) {
+            mMessageList.add(handler);
+        }
 
         msg.obj = handler;
         msg.sendToTarget();
 
         Object reply = null;
 
-        while (reply == null) {
-            synchronized (lock) {
+        synchronized (lock) {
+            while (reply == null && !handler.releaseLock) {
                 try {
                     lock.wait(10);
                     reply = handler.reply;
@@ -67,6 +79,21 @@ public class HandlerHelper {
 
         waitThread.quit();
 
+        synchronized (mListLock) {
+            mMessageList.remove(handler);
+        }
+
         return reply;
+    }
+
+    public void releaseAllLocks() {
+        synchronized (mListLock) {
+            for (WaitHandler handler : mMessageList) {
+                synchronized (handler.lock) {
+                    handler.releaseLock = true;
+                    handler.lock.notifyAll();
+                }
+            }
+        }
     }
 }
