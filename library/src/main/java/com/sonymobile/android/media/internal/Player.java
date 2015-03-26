@@ -193,6 +193,8 @@ public final class Player {
 
     private int mVideoHeight = 0;
 
+    private int mRotation = 0;
+
     public float mPlaybackSpeed = 1.0f;
 
     private boolean mStarted = false;
@@ -992,6 +994,12 @@ public final class Player {
                             thiz.mVideoWidth = msg.getData().getInt(MetaData.KEY_WIDTH);
                             thiz.mVideoHeight = msg.getData().getInt(MetaData.KEY_HEIGHT);
 
+                            if (thiz.mRotation == 90 || thiz.mRotation == 270) {
+                                int temp = thiz.mVideoWidth;
+                                thiz.mVideoWidth = thiz.mVideoHeight;
+                                thiz.mVideoHeight = temp;
+                            }
+
                             if (thiz.mCallbacks != null) {
                                 thiz.mCallbacks.obtainMessage(NOTIFY_VIDEO_SIZE_CHANGED,
                                         thiz.mVideoWidth, thiz.mVideoHeight).sendToTarget();
@@ -1193,6 +1201,16 @@ public final class Player {
             if (format.containsKey(MetaData.KEY_HEIGHT)) {
                 mVideoHeight = format.getInteger(MetaData.KEY_HEIGHT);
                 hasVideoSize = true;
+            }
+
+            if (format.containsKey(MetaData.KEY_ROTATION_DEGREES)) {
+                mRotation = format.getInteger(MetaData.KEY_ROTATION_DEGREES);
+            }
+
+            if (mRotation == 90 || mRotation == 270) {
+                int temp = mVideoWidth;
+                mVideoWidth = mVideoHeight;
+                mVideoHeight = temp;
             }
 
             if (hasVideoSize) {
