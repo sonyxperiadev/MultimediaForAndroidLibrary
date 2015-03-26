@@ -439,6 +439,11 @@ public final class VideoThread extends VideoCodecThread {
 
             mEventHandler.removeCallbacksAndMessages(null);
             mRenderingHandler.removeCallbacksAndMessages(null);
+
+            if (mSeeking) {
+                mCallback.obtainMessage(MSG_CODEC_NOTIFY, CODEC_VIDEO_SEEK_COMPLETED,
+                        (int)(mClock.getCurrentTimeUs() / 1000) + 1).sendToTarget();
+            }
         }
     }
 

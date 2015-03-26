@@ -302,18 +302,11 @@ public final class Player {
 
     public synchronized void seekTo(int msec) {
         Message msg = mEventHandler.obtainMessage(MSG_SEEK, msec, -1);
-        if (mEventHandler.hasMessages(MSG_SEEK)) {
-            // Queue the last seek made
-            if (mExecutingSeekMessage == null || mExecutingSeekMessage.arg1 != msec) {
-                mPendingSeekMessage = msg;
-            }
+        if (mSource.supportsPreview()) {
+            msg.sendToTarget();
         } else {
-            if (mSource.supportsPreview()) {
-                msg.sendToTarget();
-            } else {
-                mEventHandler
-                        .sendMessageAtTime(msg, SystemClock.uptimeMillis() + DEFAULT_SEEK_DELAY_MS);
-            }
+            mEventHandler
+                    .sendMessageAtTime(msg, SystemClock.uptimeMillis() + DEFAULT_SEEK_DELAY_MS);
         }
     }
 
@@ -353,22 +346,6 @@ public final class Player {
             mExecutingSeekMessage = null;
             mPendingSeekMessage = null;
             return;
-        }
-
-        if (mPendingSeekMessage != null) {
-            // We have some queued seeks.
-            if (mVideoThread == null && mSource.getSelectedTrackIndex(TrackType.VIDEO) == -1) {
-                // Audio Only perform the seek now
-                mEventHandler.sendMessageAtTime(mPendingSeekMessage, SystemClock.uptimeMillis());
-                mPendingSeekMessage = null;
-                return;
-            } else if (!mSource.supportsPreview()) {
-                // Probably streaming, send the event delayed.
-                mEventHandler.sendMessageAtTime(mPendingSeekMessage,
-                        SystemClock.uptimeMillis() + DEFAULT_SEEK_DELAY_MS);
-                mPendingSeekMessage = null;
-                return;
-            }
         }
 
         mInternalSeekTriggered = internal;
@@ -711,10 +688,6 @@ public final class Player {
                                     }
                                     thiz.mClockSource.start();
                                 }
-                            } else if (thiz.mExecutingSeekMessage != null) {
-                                thiz.mCallbacks.obtainMessage(NOTIFY_SEEK_COMPLETE)
-                                        .sendToTarget();
-                                thiz.mExecutingSeekMessage = null;
                             }
                         }
                     } else {
@@ -841,8 +814,24 @@ public final class Player {
                     thiz.mHandlerHelper.releaseAllLocks();
                     break;
                 case MSG_SEEK:
-                    thiz.mExecutingSeekMessage = msg;
-                    thiz.onSeek(msg.arg1, false);
+                    if (thiz.mExecutingSeekMessage == null) {
+                        if (hasMessages(MSG_SEEK)) {
+                            break;
+                        }
+                        // No seek in progress.
+                        thiz.mExecutingSeekMessage = msg;
+                        thiz.onSeek(msg.arg1, false);
+                    } else if (hasMessages(MSG_SEEK)) {
+                        // There are more incoming seeks, ignore this one!
+                        break;
+                    } else if (msg.arg1 == thiz.mSeekPositionMs) {
+                        // No need to seek to same position as the running seek.
+                        break;
+                    } else {
+                        // Seek in progress, queue it will be picked up when seek is complete.
+                        thiz.mPendingSeekMessage =
+                                thiz.mEventHandler.obtainMessage(MSG_SEEK, msg.arg1, -1);
+                    }
                     break;
                 case MSG_ERROR:
                     if (LOGS_ENABLED)
@@ -1031,8 +1020,8 @@ public final class Player {
                                     thiz.mCurrentPositionMs = msg.arg2;
                                 }
                                 thiz.mInternalSeekTriggered = false;
-                                thiz.mExecutingSeekMessage = null;
                             }
+                            thiz.mExecutingSeekMessage = null;
                             thiz.mVideoSeekPending = false;
                             thiz.mSeekPositionMs = -1;
                             break;
