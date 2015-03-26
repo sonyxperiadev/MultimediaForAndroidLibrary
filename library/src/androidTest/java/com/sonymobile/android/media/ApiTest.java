@@ -16,6 +16,7 @@
 
 package com.sonymobile.android.media;
 
+import static com.sonymobile.android.media.Configuration.ALLOWED_TIME_DISCREPANCY_MS;
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertNotNull;
@@ -481,7 +482,7 @@ public class ApiTest {
             assertEquals("Wrong number of seekComplete callbacks sent", 2, sCompletedCounter);
 
             assertTrue("Wrong current position after seek",
-                    sMediaPlayer.getCurrentPosition() < 100);
+                    sMediaPlayer.getCurrentPosition() < ALLOWED_TIME_DISCREPANCY_MS);
 
             pos = sMediaPlayer.getCurrentPosition();
             while (pos == 0) {
@@ -493,7 +494,7 @@ public class ApiTest {
                 }
             }
 
-            assertTrue("Seek to 0 did not work", pos < 150);
+            assertTrue("Seek to 0 did not work", pos < ALLOWED_TIME_DISCREPANCY_MS);
 
             sMediaPlayer.pause();
 
@@ -778,10 +779,10 @@ public class ApiTest {
                 }
             }
             SystemClock.sleep(2000); // play for approx 2s
-            int delta = 250; // delay or ahead of 250ms accepted here
             int current = sMediaPlayer.getCurrentPosition();
             assertTrue("Position after playing for 2 seconds is outside of valid delta",
-                    current > 2000 - delta && current < 2000 + delta);
+                    current > 2000 - ALLOWED_TIME_DISCREPANCY_MS && current < 2000 +
+                            ALLOWED_TIME_DISCREPANCY_MS);
 
             sCompleted = false;
             sMediaPlayer.setOnCompletionListener(new OnCompletionListener() {
@@ -986,7 +987,6 @@ public class ApiTest {
         assertTrue("Testcontent has too short duration", tc.getDuration() > 5000);
 
         try {
-            int allowedDiff = 200;
             initMediaPlayer();
             sMediaPlayer.setDataSource(tc.getContentUri());
             sMediaPlayer.setDisplay(sh);
@@ -1005,9 +1005,10 @@ public class ApiTest {
             int pos = sMediaPlayer.getCurrentPosition();
             int diff = (int)((endTime - startTime) * 2);
             assertTrue(
-                    "Position should be between " + (diff - allowedDiff) + " and " + (diff +
-                            allowedDiff) + ", pos = " + pos,
-                    pos > (diff - allowedDiff) && pos < (diff + allowedDiff));
+                    "Position should be between " + (diff - ALLOWED_TIME_DISCREPANCY_MS) + " and" +
+                            " " + (diff + ALLOWED_TIME_DISCREPANCY_MS) + ", pos = " + pos,
+                    pos > (diff - ALLOWED_TIME_DISCREPANCY_MS) && pos < (diff +
+                            ALLOWED_TIME_DISCREPANCY_MS));
             shutDown();
 
             initMediaPlayer();
@@ -1026,9 +1027,10 @@ public class ApiTest {
             pos = sMediaPlayer.getCurrentPosition();
             diff = (int)((endTime - startTime) * 0.5);
             assertTrue(
-                    "Position should be between " + (diff - allowedDiff) + " and " + (diff +
-                            allowedDiff) + ", pos = " + pos,
-                    pos > (diff - allowedDiff) && pos < (diff + allowedDiff));
+                    "Position should be between " + (diff - ALLOWED_TIME_DISCREPANCY_MS) + " and" +
+                            " " + (diff + ALLOWED_TIME_DISCREPANCY_MS) + ", pos = " + pos,
+                    pos > (diff - ALLOWED_TIME_DISCREPANCY_MS) && pos < (diff +
+                            ALLOWED_TIME_DISCREPANCY_MS));
             shutDown();
 
             initMediaPlayer();
