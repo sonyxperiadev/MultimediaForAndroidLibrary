@@ -180,6 +180,10 @@ public abstract class DataSource implements Closeable {
         return DataAvailability.AVAILABLE;
     }
 
+    public void requestReadPosition(long offset) throws IOException {
+        // Empty implementation, interested subclasses should override.
+    }
+
     public abstract void seek(long offset) throws IOException;
 
     protected long peekLong(byte[] src, int offset) {

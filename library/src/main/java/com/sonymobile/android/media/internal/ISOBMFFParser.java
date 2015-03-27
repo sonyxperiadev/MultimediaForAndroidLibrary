@@ -403,20 +403,45 @@ public class ISOBMFFParser extends MediaParser {
         mMetaDataValues.put(MetaData.KEY_SEEK_AVAILABLE, 1);
         mMetaDataValues.put(MetaData.KEY_NUM_TRACKS, mTracks.size());
 
-        updateAspectRatio();
+        if (parseOK) {
+            updateAspectRatio();
 
-        updateRotation();
+            updateRotation();
 
-        if (mCurrentAudioTrack != null) {
-            mCurrentAudioTrack.buildSampleTable();
-        }
+            if (mCurrentAudioTrack != null) {
+                mCurrentAudioTrack.buildSampleTable();
+            }
 
-        if (mCurrentVideoTrack != null) {
-            mCurrentVideoTrack.buildSampleTable();
-        }
+            if (mCurrentVideoTrack != null) {
+                mCurrentVideoTrack.buildSampleTable();
+            }
 
-        if (mCurrentSubtitleTrack != null) {
-            mCurrentSubtitleTrack.buildSampleTable();
+            if (mCurrentSubtitleTrack != null) {
+                mCurrentSubtitleTrack.buildSampleTable();
+            }
+
+            long firstOffset = 0;
+            if (mIsFragmented) {
+                firstOffset = mFirstMoofOffset;
+            } else {
+                if (mCurrentVideoTrack != null) {
+                    firstOffset = mCurrentVideoTrack.getSampleTable().getOffset(0);
+                }
+
+                if (mCurrentAudioTrack != null) {
+                    long audioOffset = mCurrentAudioTrack.getSampleTable().getOffset(0);
+                    if (firstOffset == 0 || audioOffset < firstOffset) {
+                        firstOffset = audioOffset;
+                    }
+                }
+            }
+
+            if (mDataSource.hasDataAvailable(firstOffset, 1) == DataAvailability.NOT_AVAILABLE) {
+                try {
+                    mDataSource.requestReadPosition(firstOffset);
+                } catch (IOException e) {
+                }
+            }
         }
 
         return parseOK;

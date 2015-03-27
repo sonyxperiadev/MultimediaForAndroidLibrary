@@ -486,6 +486,11 @@ public abstract class BufferedDataSource extends DataSource {
     @Override
     public abstract int readAt(long offset, byte[] buffer, int size) throws IOException;
 
+    @Override
+    public void requestReadPosition(long offset) throws IOException {
+        // Empty implementation, interested subclasses should override.
+    }
+
     class ReconnectHandler extends Handler {
 
         private int mPreviousAvailable = 0;

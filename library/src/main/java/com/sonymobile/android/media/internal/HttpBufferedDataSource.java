@@ -202,6 +202,18 @@ public class HttpBufferedDataSource extends BufferedDataSource {
         return toReturn;
     }
 
+    @Override
+    public synchronized void requestReadPosition(long offset) throws IOException {
+        if (LOGS_ENABLED)
+            Log.d(TAG, "Request reconnect now at " + offset);
+
+        mCurrentOffset = offset;
+        mOffset = offset;
+
+        doCloseSync();
+        openConnectionsAndStreams();
+    }
+
     public int getBuffering() {
         int percentage = 0;
         try {
