@@ -18,6 +18,7 @@ package com.sonymobile.android.media.internal;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.SocketTimeoutException;
 
 import android.os.Handler;
 import android.os.SystemClock;
@@ -35,6 +36,8 @@ import com.sonymobile.android.media.BandwidthEstimator;
 public class BufferedStream extends InputStream {
 
     public static final int MSG_RECONNECT = 1;
+
+    public static final int MSG_SOCKET_TIMEOUT = 2;
 
     private static final boolean LOGS_ENABLED = Configuration.DEBUG || false;
 
@@ -371,6 +374,21 @@ public class BufferedStream extends InputStream {
                             } catch (Exception e) {
                             }
                         }
+                    }
+                } catch (SocketTimeoutException e) {
+                    if (LOGS_ENABLED) Log.e(TAG, "SocketTimeoutException during read!", e);
+                    if (mInputStream != null) {
+                        try {
+                            mInputStream.close();
+                        } catch (IOException e1) {
+                        } finally {
+                            mInputStream = null;
+                        }
+                    }
+                    if (mCallback != null) {
+                        mCallback.sendEmptyMessage(MSG_SOCKET_TIMEOUT);
+                    } else {
+                        mEos = true;
                     }
                 } catch (IOException e) {
                     if (LOGS_ENABLED) Log.e(TAG, "IOException during read!", e);

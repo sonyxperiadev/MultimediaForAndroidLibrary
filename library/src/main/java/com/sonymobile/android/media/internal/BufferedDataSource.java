@@ -16,6 +16,7 @@
 
 package com.sonymobile.android.media.internal;
 
+import static com.sonymobile.android.media.internal.BufferedStream.MSG_SOCKET_TIMEOUT;
 import static com.sonymobile.android.media.internal.MediaSource.SOURCE_ERROR;
 import static com.sonymobile.android.media.internal.BufferedStream.MSG_RECONNECT;
 
@@ -337,6 +338,7 @@ public abstract class BufferedDataSource extends DataSource {
             URL url = new URL(http);
             HttpURLConnection httpConnection = (HttpURLConnection)url.openConnection();
             httpConnection.setConnectTimeout(5000); // 5s timeout
+            httpConnection.setReadTimeout(5000); // 5s timeout
             httpConnection.setRequestProperty("Accept-Encoding", "identity");
 
             if (offset > 0 || length != -1) {
@@ -510,6 +512,17 @@ public abstract class BufferedDataSource extends DataSource {
                     } catch (IOException e) {
                         mReconnectHandler.sendEmptyMessageAtTime(MSG_RECONNECT,
                                 SystemClock.uptimeMillis() + 1000);
+                    }
+                    break;
+                case MSG_SOCKET_TIMEOUT:
+                    try {
+                        if (mBis != null) {
+                            mBis.close();
+                        }
+                    } catch (IOException e) {
+                        // Ignored.
+                    } finally {
+                        mNotify.sendEmptyMessage(SOURCE_ERROR);
                     }
                     break;
             }
