@@ -730,6 +730,8 @@ public final class MediaPlayer {
 
     private AssetFileDescriptor mAssetFileDescriptor;
 
+    private boolean mSeekFromCompleted;
+
     private static class CallbackDispatcher extends Handler {
 
         private WeakReference<MediaPlayer> mMediaPlayer;
@@ -772,6 +774,10 @@ public final class MediaPlayer {
                         }
                         break;
                     case Player.NOTIFY_SEEK_COMPLETE:
+                        if (thiz.mSeekFromCompleted) {
+                            thiz.mSeekFromCompleted = false;
+                            break;
+                        }
                         if (thiz.mOnSeekCompleteListener != null) {
                             thiz.mOnSeekCompleteListener.onSeekComplete(thiz);
                         }
@@ -1335,8 +1341,8 @@ public final class MediaPlayer {
                 if (mPlayer.getCurrentPosition() < 0
                         || mPlayer.getCurrentPosition() >= mPlayer.getDurationMs()) {
                     seekTo(0); // Seek to start first
+                    mSeekFromCompleted = true;
                 }
-                mPlayer.resume();
                 mState = State.PLAYING;
             } else if (mState == State.PLAYING) {
                 // No-op
