@@ -46,6 +46,8 @@ public class TestContentProvider {
 
     public static final String KEY_HEIGHT = "Height";
 
+    public static final String KEY_ROTATION = "Rotation";
+
     public static final String KEY_DURATION = "Duration";
 
     public static final String KEY_FRAMERATE = "Framerate";
@@ -229,6 +231,13 @@ public class TestContentProvider {
                                 obj.setWidth(Integer.parseInt(parser.getText()));
                             }
                         } // done with width
+                        else if (KEY_ROTATION.equals(parser.getName()) &&
+                                parser.getEventType() == XmlPullParser.START_TAG) {
+                            parser.next();
+                            if (parser.getEventType() == XmlPullParser.TEXT) {
+                                obj.setRotation(Integer.parseInt(parser.getText()));
+                            }
+                        } // done with rotation
                         else if (KEY_DURATION.equals(parser.getName()) &&
                                 parser.getEventType() == XmlPullParser.START_TAG) {
                             parser.next();

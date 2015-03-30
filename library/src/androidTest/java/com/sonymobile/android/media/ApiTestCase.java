@@ -487,6 +487,17 @@ public class ApiTestCase extends
                 mSurfaceView.getSurfaceView2().getHolder());
     }
 
+    @Protocol(types = "Local")
+    @Content(types = "Video")
+    @MetaInfo(fields = "Rotation")
+    public void testRotation() throws IOException {
+        setDefaultTestContent(TestContent.ID_TYPE_LOCAL_WITH_ROTATION);
+        ApiTest.getVideoWidth(mTestContent);
+        ApiTest.getVideoHeight(mTestContent);
+        ApiTest.getMetaData(mTestContent);
+        ApiTest.getPlayerMetaData(mTestContent);
+    }
+
     /**
      * Calls to this function will update to use the Default Test Content if a content has not
      * already been set.

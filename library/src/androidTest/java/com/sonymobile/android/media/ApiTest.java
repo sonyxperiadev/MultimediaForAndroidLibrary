@@ -565,6 +565,9 @@ public class ApiTest {
                 }
             }
 
+            assertEquals("Incorrect video width in playing state", tc.getWidth(),
+                    sMediaPlayer.getVideoWidth());
+
             assertEquals("Unexpected width in callback", tc.getWidth(), sVideoWidth);
         } finally {
             shutDown();
@@ -607,6 +610,9 @@ public class ApiTest {
                     fail("Timed out waiting for onVideoSizeChanged");
                 }
             }
+
+            assertEquals("Incorrect video height in playing state", tc.getHeight(),
+                    sMediaPlayer.getVideoHeight());
 
             assertEquals("Unexpected height in callback", tc.getHeight(), sVideoHeight);
         } finally {
@@ -1617,6 +1623,7 @@ public class ApiTest {
         assertNotNull("No test content", tc);
         assertNotNull("No content uri", tc.getContentUri());
         assertNotNull("No mime type", tc.getMimeType());
+        assertNotNull("No content type", tc.getContentType());
         assertTrue("Duration equal or less than zero", tc.getDuration() > 0);
 
         MetaDataParser parser = null;
@@ -1637,6 +1644,11 @@ public class ApiTest {
                     duration > tc.getDuration() - delta);
             assertTrue("Duration differs too much from expected.",
                     duration < tc.getDuration() + delta);
+
+            if (metaData.containsKey(MetaData.KEY_ROTATION_DEGREES)) {
+                assertEquals("Rotation not equal to expected", tc.getRotation(),
+                        metaData.getInteger(MetaData.KEY_ROTATION_DEGREES));
+            }
         } finally {
             if (parser != null) {
                 parser.release();
@@ -1699,6 +1711,46 @@ public class ApiTest {
             if (parser != null) {
                 parser.release();
             }
+        }
+    }
+
+    public static void getPlayerMetaData(TestContent tc) throws IOException {
+        assertNotNull("No test content", tc);
+        assertNotNull("No content uri", tc.getContentUri());
+        assertNotNull("No mime type", tc.getMimeType());
+        assertTrue("Duration equal or less than zero", tc.getDuration() > 0);
+
+        try {
+            initMediaPlayer();
+
+            sMediaPlayer
+                    .setDataSource(tc.getContentUri());
+
+            assertTrue("Prepare failed", sMediaPlayer.prepare());
+
+            MetaData metaData = sMediaPlayer.getMediaMetaData();
+
+            assertTrue("KEY_MIME_TYPE not found, should always exist",
+                    metaData.containsKey(MetaData.KEY_MIME_TYPE));
+            String mime = metaData.getString(MetaData.KEY_MIME_TYPE);
+            assertEquals("Mimetype not equal to expected", tc.getMimeType(), mime);
+
+            assertTrue("KEY_FILE_DURATION not found, should always exist",
+                    metaData.containsKey(MetaData.KEY_DURATION));
+            long duration = metaData.getLong(MetaData.KEY_DURATION);
+            long delta = 999;
+            assertTrue("Duration differs too much from expected.",
+                    duration > tc.getDuration() - delta);
+            assertTrue("Duration differs too much from expected.",
+                    duration < tc.getDuration() + delta);
+
+
+            if (metaData.containsKey(MetaData.KEY_ROTATION_DEGREES)) {
+                assertEquals("Rotation not equal to expected", tc.getRotation(),
+                        metaData.getInteger(MetaData.KEY_ROTATION_DEGREES));
+            }
+        } finally {
+            shutDown();
         }
     }
 

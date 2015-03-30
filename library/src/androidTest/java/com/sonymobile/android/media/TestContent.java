@@ -30,6 +30,8 @@ public class TestContent {
 
     private int mHeight = -1;
 
+    private int mRotation = -1;
+
     private int mBitrate = -1;
 
     private int mSubtitleDataLength = -1;
@@ -85,6 +87,8 @@ public class TestContent {
 
     public final static String ID_TYPE_LOCAL_WITH_METADATA = "LOCAL_WITH_METADATA";
 
+    public final static String ID_TYPE_LOCAL_WITH_ROTATION = "LOCAL_WITH_ROTATION";
+
     public final static String ID_TYPE_LOCAL_NO_MFRA = "LOCAL_NO_MFRA";
 
     public TestContent() {
@@ -113,6 +117,14 @@ public class TestContent {
 
     public void setHeight(int height) {
         this.mHeight = height;
+    }
+
+    public void setRotation(int rotation) {
+        mRotation = rotation;
+    }
+
+    public int getRotation() {
+        return mRotation;
     }
 
     public float getFramerate() {
