@@ -126,7 +126,12 @@ public class Util {
 
     public static byte[] hexToBytes(String hexString) {
         byte[] signed = new BigInteger(hexString, 16).toByteArray();
-        byte[] unsigned = new byte[hexString.length()/2];
+
+        if (signed.length == 16) {
+            return signed;
+        }
+
+        byte[] unsigned = new byte[hexString.length() / 2];
         //BigInteger returns a signed byte array so we need to get rid of the signing.
         System.arraycopy(signed, 1, unsigned, 0, unsigned.length);
         return unsigned;
