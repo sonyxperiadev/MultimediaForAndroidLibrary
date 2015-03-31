@@ -25,7 +25,11 @@ import android.app.Activity;
 import android.content.DialogInterface;
 import android.content.res.Configuration;
 import android.content.res.Resources;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Paint;
 import android.graphics.PixelFormat;
 import android.os.Bundle;
 import android.os.Handler;
@@ -65,6 +69,7 @@ import com.sonymobile.android.media.MediaPlayer.OnSeekCompleteListener;
 import com.sonymobile.android.media.MediaPlayer.OnSubtitleDataListener;
 import com.sonymobile.android.media.MediaPlayer.OutputBlockedInfo;
 import com.sonymobile.android.media.MediaPlayer.OutputControlInfo;
+import com.sonymobile.android.media.MetaData;
 import com.sonymobile.android.media.testmediaplayer.R;
 import com.sonymobile.android.media.SubtitleData;
 import com.sonymobile.android.media.TrackInfo;
@@ -779,6 +784,22 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback,
         mDrawerLayout.closeDrawer(Gravity.START);
         onPlayPauseClicked(null);
         mIsPrepared = true;
+        MetaData metadata = mMediaPlayer.getMediaMetaData();
+        int videoHeight = mMediaPlayer.getVideoHeight();
+        if (videoHeight == 0) {
+            // audio only
+            if (metadata.containsKey(MetaData.KEY_ALBUM_ART)) {
+                byte[] imageData = metadata.getByteBuffer(MetaData.KEY_ALBUM_ART);
+                Canvas canvas = mHolder.lockCanvas();
+                Bitmap bitmap = BitmapFactory.decodeByteArray(imageData, 0, imageData.length);
+                int newHeight = canvas.getHeight();
+                int newWidth = bitmap.getWidth() * newHeight / bitmap.getHeight();
+                bitmap = Bitmap.createScaledBitmap(bitmap, newWidth, newHeight, false);
+                canvas.drawBitmap(bitmap, (canvas.getWidth() - bitmap.getWidth()) / 2, 0,
+                        new Paint());
+                mHolder.unlockCanvasAndPost(canvas);
+            }
+        }
     }
 
     @Override

@@ -166,6 +166,11 @@ public interface MetaData {
     public static final String KEY_DISC_NUMBER = "dnum";
 
     /**
+     * Key for album art
+     */
+    public static final String KEY_ALBUM_ART = "albA";
+
+    /**
      * Key for mpd file.
      */
     public static final String KEY_MPD = "mpd";

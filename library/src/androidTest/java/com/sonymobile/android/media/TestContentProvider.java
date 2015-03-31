@@ -106,6 +106,8 @@ public class TestContentProvider {
 
     public static final String KEY_METADATA_YEAR = "Year";
 
+    public static final String KEY_METADATA_ALBUMART = "AlbumArt";
+
     private static final String PATH_TO_TESTFILE = Environment.getExternalStorageDirectory()
             .getAbsolutePath() + "/testcontent.xml";
 
@@ -448,6 +450,46 @@ public class TestContentProvider {
                                 obj.setProtocolType(parser.getText());
                             }
                         } // done with protocol type
+                        else if (KEY_METADATA_ALBUMART.equals(parser.getName()) &&
+                                parser.getEventType() == XmlPullParser.START_TAG) {
+                            parser.next();
+                            if (parser.getEventType() == XmlPullParser.TEXT) {
+                                boolean albumArtDataParsed = true;
+                                String text = parser.getText();
+                                int albumArtSize = 0;
+                                int albumArtWidth = 0;
+                                int albumArtHeight = 0;
+                                if (text.startsWith("s")) {
+                                    int widthIndex = text.indexOf("w");
+                                    if (widthIndex > -1) {
+                                        albumArtSize = Integer.parseInt(text.substring(1,
+                                                widthIndex));
+                                        int heightIndex = text.indexOf("h");
+                                        if (heightIndex > -1) {
+                                            albumArtWidth = Integer.parseInt(text.substring
+                                                    (widthIndex + 1, heightIndex));
+                                            albumArtHeight = Integer.parseInt(text.substring
+                                                    (heightIndex + 1));
+                                        } else {
+                                            albumArtDataParsed = false;
+                                        }
+
+                                    } else {
+                                        albumArtDataParsed = false;
+                                    }
+                                } else {
+                                    albumArtDataParsed = false;
+                                }
+                                if (albumArtDataParsed) {
+                                    obj.setAlbumArtSize(albumArtSize);
+                                    obj.setAlbumArtWidth(albumArtWidth);
+                                    obj.setAlbumArtHeight(albumArtHeight);
+                                } else {
+                                    Log.d(TAG, "No valid albumart data provided: \"" +
+                                            text + "\". Use format s[0-9]+w[0-9]+h[0-9]+");
+                                }
+                            }
+                        } // done with album art
                         else {
                             // No match for tags, do nothing
                         }

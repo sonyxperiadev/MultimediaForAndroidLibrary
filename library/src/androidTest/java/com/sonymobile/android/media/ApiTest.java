@@ -33,6 +33,8 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Looper;
 import android.os.SystemClock;
@@ -1675,9 +1677,40 @@ public class ApiTest {
             for (String key : keys) {
                 assertTrue(key + " not found", metaData.containsKey(key));
                 String metadataEntry = metaData.getString(key);
-                String expectedEntry = tc.getMetaDataValue(key);
+                String expectedEntry = (String) tc.getMetaDataValue(key);
                 assertEquals("MetaData " + key + " did not match", expectedEntry, metadataEntry);
             }
+        } finally {
+            if (parser != null) {
+                parser.release();
+            }
+        }
+    }
+
+    public static void getMetaDataAlbumArt(TestContent tc) {
+        assertNotNull("No test content", tc);
+        assertNotNull("No content uri", tc.getContentUri());
+
+        MetaDataParser parser = null;
+        try {
+            parser = MetaDataParserFactory.create(tc.getContentUri());
+            assertNotNull("Parserfactory returned null parser", parser);
+            MetaData metaData = parser.getMetaData();
+
+            String key = MetaData.KEY_ALBUM_ART;
+
+            assertTrue(key + " not found", metaData.containsKey(key));
+            byte[] metadataEntry = metaData.getByteBuffer(key);
+            int expectedSize = tc.getAlbumArtSize();
+            assertEquals("MetaData " + key + " did not match", expectedSize,
+                    metadataEntry.length);
+            Bitmap albumArtBitmap = BitmapFactory
+                    .decodeByteArray(metadataEntry, 0, metadataEntry.length);
+            assertNotNull("Could not create album art bitmap", albumArtBitmap);
+            assertEquals("Album art width did not match", tc.getAlbumArtWidth(),
+                    albumArtBitmap.getWidth());
+            assertEquals("Album art height did not match", tc.getAlbumArtHeight(),
+                    albumArtBitmap.getHeight());
         } finally {
             if (parser != null) {
                 parser.release();

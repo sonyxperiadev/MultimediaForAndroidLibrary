@@ -195,6 +195,8 @@ public class ISOBMFFParser extends MediaParser {
 
     protected static final int BOX_ID_DISK = fourCC('d', 'i', 's', 'k'); // disknumber
 
+    protected static final int BOX_ID_COVR = fourCC('c', 'o', 'v', 'r'); // cover art
+
     protected static final int BOX_ID_DATA = fourCC('d', 'a', 't', 'a');
 
     // 3GPP metadata
@@ -1383,6 +1385,15 @@ public class ISOBMFFParser extends MediaParser {
                 }
                 mCurrentMetaDataKey = null;
             }
+        } else if (header.boxType == BOX_ID_COVR) {
+            if (boxIsUnder(BOX_ID_ILST)) {
+                mCurrentMetaDataKey = KEY_ALBUM_ART;
+                while (mCurrentOffset < boxEndOffset && parseOK) {
+                    BoxHeader nextBoxHeader = getNextBoxHeader();
+                    parseOK = parseBox(nextBoxHeader);
+                }
+                mCurrentMetaDataKey = null;
+            }
         } else if (header.boxType == BOX_ID_DATA) {
             parseOK = parseDataBox(header);
         } else if (header.boxType == BOX_ID_ID32) {
@@ -2456,7 +2467,7 @@ public class ISOBMFFParser extends MediaParser {
     private boolean parseDataBox(BoxHeader header) {
         try {
             if (mCurrentMetaDataKey != null) {
-                String metaDataValue;
+                Object metaDataValue;
                 if (mCurrentMetaDataKey == KEY_DISC_NUMBER) {
                     mDataSource.skipBytes(4); // skip type
                     mDataSource.skipBytes(4); // skip locale
@@ -2465,6 +2476,12 @@ public class ISOBMFFParser extends MediaParser {
                     int diskNumber = mDataSource.readShort();
                     mDataSource.skipBytes(2); // skip total number of disks
                     metaDataValue = Integer.toString(diskNumber);
+                } else if (mCurrentMetaDataKey == KEY_ALBUM_ART) {
+                    mDataSource.skipBytes(4); // skip type
+                    mDataSource.skipBytes(4); // skip locale
+                    byte[] albumart = new byte[(int)header.boxDataSize - 8];
+                    mDataSource.read(albumart);
+                    metaDataValue = albumart;
                 } else {
                     byte[] typefield = new byte[4];
                     mDataSource.read(typefield);

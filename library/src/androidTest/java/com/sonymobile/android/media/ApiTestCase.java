@@ -416,6 +416,14 @@ public class ApiTestCase extends
 
     @Protocol(types = "Local")
     @Content(types = "Audio||Video")
+    @MetaInfo(fields = "AlbumArt")
+    public void testGetMetaDataAlbumArt() {
+        setDefaultTestContent(TestContent.ID_TYPE_LOCAL_WITH_ALBUMART);
+        ApiTest.getMetaDataAlbumArt(mTestContent);
+    }
+
+    @Protocol(types = "Local")
+    @Content(types = "Audio||Video")
     @MetaInfo(fields = "TrackMimeTypeVideo&&TrackMimeTypeAudio")
     public void testGetTrackMetaData() {
         setDefaultTestContent(TestContent.ID_TYPE_LOCAL);

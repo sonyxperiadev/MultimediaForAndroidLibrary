@@ -165,6 +165,7 @@ public class MediaBrowser {
                     if (tmpStrArr[tmpStrArr.length - 1].toUpperCase().equals("M4V")
                             || tmpStrArr[tmpStrArr.length - 1].toUpperCase().equals("MNV")
                             || tmpStrArr[tmpStrArr.length - 1].toUpperCase().equals("ISMV")
+                            || tmpStrArr[tmpStrArr.length - 1].toUpperCase().equals("M4A")
                             || tmpStrArr[tmpStrArr.length - 1].toUpperCase().equals("MP4")) {
                         String titleWithFiletype = cursor.getString(3).substring(
                                 cursor.getString(3).lastIndexOf("/") + 1);
@@ -204,6 +205,8 @@ public class MediaBrowser {
                     || mFiles[i].getName().contains(".ISMA")
                     || mFiles[i].getName().contains(".m4v")
                     || mFiles[i].getName().contains(".M4V")
+                    || mFiles[i].getName().contains(".m4a")
+                    || mFiles[i].getName().contains(".M4A")
                     || mFiles[i].getName().contains(".MNV")
                     || mFiles[i].getName().contains(".mnv")
                     || mFiles[i].isDirectory()) {
@@ -272,6 +275,8 @@ public class MediaBrowser {
                     || mFiles[i].getName().contains(".ISMA")
                     || mFiles[i].getName().contains(".m4v")
                     || mFiles[i].getName().contains(".M4V")
+                    || mFiles[i].getName().contains(".m4a")
+                    || mFiles[i].getName().contains(".M4A")
                     || mFiles[i].getName().contains(".MNV")
                     || mFiles[i].getName().contains(".mnv")
                     || mFiles[i].isDirectory()) {
