@@ -174,6 +174,8 @@ public class ISOBMFFParser extends MediaParser {
 
     protected static final int BOX_ID_SAWB = fourCC('s', 'a', 'w', 'b');
 
+    protected static final int BOX_ID_SIDX = fourCC('s', 'i', 'd', 'x');
+
     // iTunes metadata
     protected static final int BOX_ID_ILST = fourCC('i', 'l', 's', 't');
 
@@ -1511,6 +1513,8 @@ public class ISOBMFFParser extends MediaParser {
                 if (LOGS_ENABLED) Log.e(TAG, "IOException parsing 'yrrc' box", e);
                 parseOK = false;
             }
+        } else if (header.boxType == BOX_ID_SIDX) {
+            parseOK = parseSidx(header);
         } else if (header.boxType == BOX_ID_MDAT) {
             if (mTracks.size() > 0 && !mIsFragmented) {
                 mInitDone = true;
@@ -2481,6 +2485,91 @@ public class ISOBMFFParser extends MediaParser {
         return true;
     }
 
+    private boolean parseSidx(BoxHeader header) {
+        try {
+            long boxEndOffset = mCurrentOffset + header.boxDataSize;
+            int versionFlags = mDataSource.readInt();
+            int version = (versionFlags >> 24) & 0xFF;
+            int referenceId = mDataSource.readInt();
+            IsoTrack sidxTrack = null;
+            for (Track t : mTracks) {
+                if (((IsoTrack)t).getTrackId() == referenceId) {
+                    sidxTrack = (IsoTrack) t;
+                    break;
+                }
+            }
+            if (sidxTrack == null) {
+                if (LOGS_ENABLED) Log.w(TAG, "we did not find a matching track for sidx box");
+                // return true so parsing can continue
+                return true;
+            }
+
+            int sidxTimescale = mDataSource.readInt();
+            sidxTrack.setSidxTimescale(sidxTimescale);
+
+            // the following 8-16 bytes are only relevant for sub-sidx boxes,
+            // which we don't support
+            if (version == 0) {
+                mDataSource.skipBytes(8);
+            } else {
+                mDataSource.skipBytes(16);
+            }
+            mDataSource.skipBytes(2); // reserved
+            short referenceCount = mDataSource.readShort();
+
+            ArrayList<SidxEntry> sidxList = new ArrayList<SidxEntry>(referenceCount);
+            long sidxTotalDurationUs = 0;
+            long sidxTotalOffset = boxEndOffset;
+
+            for (int i = 0; i < referenceCount; i++) {
+                SidxEntry sidxEntry = new SidxEntry();
+
+                int referencedSize = mDataSource.readInt();
+                if (referencedSize < 0) {
+                    // reference type 1 (sub-sidx box) not supported
+                    // return true so parsing can continue
+                    return true;
+                }
+                referencedSize &= 0x7FFFFFFF;
+
+                sidxEntry.startOffset = sidxTotalOffset;
+                sidxTotalOffset += referencedSize;
+
+                long subsegmentDurationTicks = ((long)mDataSource.readByte() & 0xFF) << 24
+                        | ((long)mDataSource.readByte() & 0xFF) << 16
+                        | ((long)mDataSource.readByte() & 0xFF) << 8
+                        | (long)mDataSource.readByte() & 0xFF;
+
+                sidxEntry.startTimeUs = sidxTotalDurationUs;
+
+                sidxTotalDurationUs += subsegmentDurationTicks * 1000000 / sidxTimescale;
+
+                // Assume all segments start with SAP, so skip this info
+                mDataSource.skipBytes(4);
+
+                sidxList.add(sidxEntry);
+            }
+
+            sidxTrack.setSidxList(sidxList);
+
+            long mediaDuration = 0;
+            if (mMetaDataValues.containsKey(KEY_DURATION)) {
+                mediaDuration = (long) mMetaDataValues.get(KEY_DURATION);
+            }
+
+            if (sidxTotalDurationUs > 0 && mediaDuration == 0) {
+                addMetaDataValue(KEY_DURATION, sidxTotalDurationUs / 1000);
+            }
+
+        } catch (IOException e) {
+            if (LOGS_ENABLED) Log.e(TAG, "IOException while parsing sidx box", e);
+            mCurrentBoxSequence.removeLast();
+            return false;
+        }
+
+        return true;
+    }
+
     private boolean parseDataBox(BoxHeader header) {
         try {
             if (mCurrentMetaDataKey != null) {
@@ -2559,6 +2648,12 @@ public class ISOBMFFParser extends MediaParser {
         ByteBuffer ppsBuffer;
     }
 
+    protected static class SidxEntry {
+        long startTimeUs;
+
+        long startOffset;
+    }
+
     public class IsoTrack implements Track {
         protected MetaDataImpl mMetaData;
 
@@ -2603,6 +2698,10 @@ public class ISOBMFFParser extends MediaParser {
         protected long mNextMoofOffset = 0;
 
         protected long mLastTimestampUs = 0;
+
+        protected long mSidxTimescale = 0;
+
+        protected ArrayList<SidxEntry> mSidxList = null;
 
         public IsoTrack() {
             mMetaData = new MetaDataImpl();
@@ -2991,10 +3090,28 @@ public class ISOBMFFParser extends MediaParser {
                 return mSampleTable.getTimeOfSample(mCurrentSampleIndex);
             } else {
                 if (mTfraList == null) {
-                    mCurrentFragmentSampleQueue = null;
-                    mNextMoofOffset = 0;
-                    mTimeTicks = 0;
-                    return 0;
+                    if (mSidxList != null) {
+                        int sidxListLength = mSidxList.size();
+                        for (int i = 0; i < sidxListLength; i++) {
+                            SidxEntry sidxEntry = mSidxList.get(i);
+                            SidxEntry nextEntry = null;
+                            if (i + 1 < sidxListLength) {
+                                nextEntry = mSidxList.get(i + 1);
+                            }
+                            if (sidxEntry.startTimeUs < seekTimeUs && (nextEntry == null ||
+                                    nextEntry.startTimeUs > seekTimeUs)) {
+                                mCurrentFragmentSampleQueue = null;
+                                mNextMoofOffset = sidxEntry.startOffset;
+                                mTimeTicks = sidxEntry.startTimeUs * mSidxTimescale / 1000000;
+                                return sidxEntry.startTimeUs;
+                            }
+                        }
+                    } else {
+                        mCurrentFragmentSampleQueue = null;
+                        mNextMoofOffset = 0;
+                        mTimeTicks = 0;
+                        return 0;
+                    }
                 }
 
                 // need to set this so we actually get into
@@ -3200,6 +3317,18 @@ public class ISOBMFFParser extends MediaParser {
                 mNextMoofOffset = findNextMoofForTrack(mTrackId);
             }
             return true;
+        }
+
+        public void setSidxTimescale(long timescale) {
+            mSidxTimescale = timescale;
+        }
+
+        public long getSidxTimeScale() {
+            return mSidxTimescale;
+        }
+
+        public void setSidxList(ArrayList<SidxEntry> list) {
+            mSidxList = list;
         }
     }
 
