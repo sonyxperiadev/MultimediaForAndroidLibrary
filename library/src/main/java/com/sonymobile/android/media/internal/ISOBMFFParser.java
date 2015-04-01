@@ -178,6 +178,8 @@ public class ISOBMFFParser extends MediaParser {
 
     protected static final int BOX_ID_S263 = fourCC('s', '2', '6', '3');
 
+    protected static final int BOX_ID_DOTMP3 = fourCC('.', 'm', 'p', '3');
+
     // iTunes metadata
     protected static final int BOX_ID_ILST = fourCC('i', 'l', 's', 't');
 
@@ -932,6 +934,29 @@ public class ISOBMFFParser extends MediaParser {
                 BoxHeader nextBoxHeader = getNextBoxHeader();
                 parseOK = parseBox(nextBoxHeader);
             }
+            mCurrentTrack.addSampleDescriptionEntry(mCurrentMediaFormat);
+        } else if (header.boxType == BOX_ID_DOTMP3) {
+            byte[] data = new byte[28];
+            try {
+                if (mDataSource.readAt(mCurrentOffset, data, data.length) != data.length) {
+                    mCurrentBoxSequence.removeLast();
+                    return false;
+                }
+            } catch (IOException e) {
+                if (LOGS_ENABLED) Log.e(TAG, "IOException while parsing '.mp3' box", e);
+
+                mCurrentBoxSequence.removeLast();
+                return false;
+            }
+
+            mCurrentMediaFormat = new MediaFormat();
+
+            parseAudioSampleEntry(data);
+
+            mCurrentMediaFormat.setString(MediaFormat.KEY_MIME, MimeType.MP3);
+            mCurrentTrack.getMetaData().addValue(KEY_MIME_TYPE, MimeType.MP3);
+
+            // no need to parse subboxes for mp3 format
             mCurrentTrack.addSampleDescriptionEntry(mCurrentMediaFormat);
         } else if (header.boxType == BOX_ID_ESDS) {
             // skip 4 for version and flags
