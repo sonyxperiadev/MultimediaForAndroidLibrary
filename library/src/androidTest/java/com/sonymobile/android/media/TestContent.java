@@ -99,6 +99,10 @@ public class TestContent {
 
     public final static String ID_TYPE_LOCAL_NO_MFRA = "LOCAL_NO_MFRA";
 
+    public static final String ID_TYPE_LOCAL_AMR_NB = "LOCAL_AMR_NB";
+
+    public static final String ID_TYPE_LOCAL_AMR_WB = "LOCAL_AMR_WB";
+
     public TestContent() {
         mMetaDataValues = new HashMap<String, Object>();
     }

@@ -170,6 +170,10 @@ public class ISOBMFFParser extends MediaParser {
 
     protected static final int BOX_ID_META = fourCC('m', 'e', 't', 'a');
 
+    protected static final int BOX_ID_SAMR = fourCC('s', 'a', 'm', 'r');
+
+    protected static final int BOX_ID_SAWB = fourCC('s', 'a', 'w', 'b');
+
     // iTunes metadata
     protected static final int BOX_ID_ILST = fourCC('i', 'l', 's', 't');
 
@@ -888,7 +892,8 @@ public class ISOBMFFParser extends MediaParser {
                 parseOK = parseBox(nextBoxHeader);
             }
             mCurrentTrack.addSampleDescriptionEntry(mCurrentMediaFormat);
-        } else if (header.boxType == BOX_ID_MP4A) {
+        } else if (header.boxType == BOX_ID_MP4A || header.boxType == BOX_ID_SAMR
+                || header.boxType == BOX_ID_SAWB) {
             byte[] data = new byte[28];
             try {
                 if (mDataSource.readAt(mCurrentOffset, data, data.length) != data.length) {
@@ -905,6 +910,18 @@ public class ISOBMFFParser extends MediaParser {
             mCurrentMediaFormat = new MediaFormat();
 
             parseAudioSampleEntry(data);
+
+            String mime = null;
+            if (header.boxType == BOX_ID_SAMR) {
+                mime = MimeType.AMR_NB;
+            } else if (header.boxType == BOX_ID_SAWB) {
+                mime = MimeType.AMR_WB;
+            }
+
+            if (mime != null) {
+                mCurrentMediaFormat.setString(MediaFormat.KEY_MIME, mime);
+                mCurrentTrack.getMetaData().addValue(KEY_MIME_TYPE, mime);
+            }
 
             while (mCurrentOffset < boxEndOffset && parseOK) {
                 BoxHeader nextBoxHeader = getNextBoxHeader();

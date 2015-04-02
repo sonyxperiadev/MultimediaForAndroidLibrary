@@ -43,4 +43,8 @@ public class MimeType {
     public static final String MPEG_DASH = "application/dash+xml";
 
     public static final String OCTET_STREAM = "application/octet-stream";
+
+    public static final String AMR_NB = "audio/3gpp";
+
+    public static final String AMR_WB = "audio/amr-wb";
 }
