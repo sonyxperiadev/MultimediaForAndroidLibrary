@@ -180,6 +180,8 @@ public class ISOBMFFParser extends MediaParser {
 
     protected static final int BOX_ID_DOTMP3 = fourCC('.', 'm', 'p', '3');
 
+    protected static final int BOX_ID_ALAC = fourCC('a', 'l', 'a', 'c');
+
     // iTunes metadata
     protected static final int BOX_ID_ILST = fourCC('i', 'l', 's', 't');
 
@@ -1570,6 +1572,40 @@ public class ISOBMFFParser extends MediaParser {
                 BoxHeader nextBoxHeader = getNextBoxHeader();
                 parseOK = parseBox(nextBoxHeader);
             }
+            mCurrentTrack.addSampleDescriptionEntry(mCurrentMediaFormat);
+        } else if (header.boxType == BOX_ID_ALAC) {
+            byte[] data = new byte[28];
+            try {
+                if (mDataSource.readAt(mCurrentOffset, data, data.length) != data.length) {
+                    mCurrentBoxSequence.removeLast();
+                    return false;
+                }
+                mCurrentMediaFormat = new MediaFormat();
+
+                parseAudioSampleEntry(data);
+
+                // parse alac magic cookie
+                int magicCookieSize = mDataSource.readInt();
+                int magicCookieType = mDataSource.readInt();
+                if (magicCookieType != BOX_ID_ALAC) {
+                    if (LOGS_ENABLED) Log.e(TAG, "malformed alac magic cookie");
+                    mCurrentBoxSequence.removeLast();
+                    return false;
+                }
+                mDataSource.skipBytes(4); // version and flags
+                byte[] magicCookie = new byte[magicCookieSize - 12];
+                mDataSource.read(magicCookie);
+                mCurrentMediaFormat.setByteBuffer("csd-0", ByteBuffer.wrap(magicCookie));
+            } catch (IOException e) {
+                if (LOGS_ENABLED) Log.e(TAG, "IOException while parsing 'alac' box", e);
+
+                mCurrentBoxSequence.removeLast();
+                return false;
+            }
+
+            mCurrentMediaFormat.setString(MediaFormat.KEY_MIME, MimeType.ALAC);
+            mCurrentTrack.getMetaData().addValue(KEY_MIME_TYPE, MimeType.ALAC);
+
             mCurrentTrack.addSampleDescriptionEntry(mCurrentMediaFormat);
         } else if (header.boxType == BOX_ID_MDAT) {
             if (mTracks.size() > 0 && !mIsFragmented) {

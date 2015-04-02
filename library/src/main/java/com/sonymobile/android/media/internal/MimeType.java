@@ -51,4 +51,6 @@ public class MimeType {
     public static final String H263 = "video/3gpp";
 
     public static final String MP3 = "audio/mpeg";
+
+    public static final String ALAC = "audio/alac";
 }
