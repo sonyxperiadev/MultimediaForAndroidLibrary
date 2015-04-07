@@ -25,6 +25,8 @@ public class DefaultDASHBandwidthEstimator implements BandwidthEstimator {
 
     private ArrayList<BandWidthMeasureItem> mBandWidthMeasure;
 
+    private Object mBandWidthMeasureLock = new Object();
+
     private long mOnDataTransferStartedTimeUs = -1;
 
     private long mAccumulatedTransferredData = -1;
@@ -56,17 +58,19 @@ public class DefaultDASHBandwidthEstimator implements BandwidthEstimator {
     }
 
     void addBandWidthMeasure(long durationUs, long bytes) {
-        mBandWidthMeasure.add(new BandWidthMeasureItem(durationUs, bytes, System
-                .currentTimeMillis()));
+        synchronized (mBandWidthMeasureLock) {
+            mBandWidthMeasure.add(new BandWidthMeasureItem(durationUs, bytes, System
+                    .currentTimeMillis()));
 
-        int itemsToRemove = mBandWidthMeasure.size() - 20;
-        if (itemsToRemove > 0) {
-            Iterator<BandWidthMeasureItem> iter = mBandWidthMeasure.iterator();
-            int j = 0;
-            while (j < itemsToRemove && iter.hasNext()) {
-                iter.next();
-                iter.remove();
-                j++;
+            int itemsToRemove = mBandWidthMeasure.size() - 20;
+            if (itemsToRemove > 0) {
+                Iterator<BandWidthMeasureItem> iter = mBandWidthMeasure.iterator();
+                int j = 0;
+                while (j < itemsToRemove && iter.hasNext()) {
+                    iter.next();
+                    iter.remove();
+                    j++;
+                }
             }
         }
     }
@@ -92,22 +96,24 @@ public class DefaultDASHBandwidthEstimator implements BandwidthEstimator {
         // implementation.
         long totWeighting = 0;
         long totbandwidth = 0;
-        int length = mBandWidthMeasure.size();
-        if (length == 0) {
-            // No data yet!
-            return 0;
-        }
-
-        for (int i = 0; i < length; i++) {
-            BandWidthMeasureItem item = mBandWidthMeasure.get(i);
-            long weighting = (item.mWallTimeMs - mBandWidthMeasure.get(0).mWallTimeMs) / 20000;
-            if (weighting == 0) {
-                weighting = 1;
-            } else if (weighting > 20) {
-                weighting = 20;
+        synchronized (mBandWidthMeasureLock) {
+            int length = mBandWidthMeasure.size();
+            if (length == 0) {
+                // No data yet!
+                return 0;
             }
-            totbandwidth += weighting * (double)item.mBytes * 8E6 / item.mDownloadDurationUs;
-            totWeighting += weighting;
+
+            for (int i = 0; i < length; i++) {
+                BandWidthMeasureItem item = mBandWidthMeasure.get(i);
+                long weighting = (item.mWallTimeMs - mBandWidthMeasure.get(0).mWallTimeMs) / 20000;
+                if (weighting == 0) {
+                    weighting = 1;
+                } else if (weighting > 20) {
+                    weighting = 20;
+                }
+                totbandwidth += weighting * (double) item.mBytes * 8E6 / item.mDownloadDurationUs;
+                totWeighting += weighting;
+            }
         }
 
         double bandwidthBps = ((double)totbandwidth / (double)totWeighting) * 0.95;
