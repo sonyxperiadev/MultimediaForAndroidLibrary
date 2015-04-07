@@ -62,7 +62,7 @@ public class DefaultDASHBandwidthEstimator implements BandwidthEstimator {
             mBandWidthMeasure.add(new BandWidthMeasureItem(durationUs, bytes, System
                     .currentTimeMillis()));
 
-            int itemsToRemove = mBandWidthMeasure.size() - 20;
+            int itemsToRemove = mBandWidthMeasure.size() - 5;
             if (itemsToRemove > 0) {
                 Iterator<BandWidthMeasureItem> iter = mBandWidthMeasure.iterator();
                 int j = 0;
@@ -111,12 +111,13 @@ public class DefaultDASHBandwidthEstimator implements BandwidthEstimator {
                 } else if (weighting > 20) {
                     weighting = 20;
                 }
-                totbandwidth += weighting * (double) item.mBytes * 8E6 / item.mDownloadDurationUs;
+
+                totbandwidth += weighting * ((double)item.mBytes * 8E6 / item.mDownloadDurationUs);
                 totWeighting += weighting;
             }
         }
 
-        double bandwidthBps = ((double)totbandwidth / (double)totWeighting) * 0.95;
+        double bandwidthBps = ((double)totbandwidth / (double)totWeighting);
 
         return (long)bandwidthBps;
     }
