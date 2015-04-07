@@ -16,6 +16,8 @@
 
 package com.sonymobile.android.media.internal.mpegdash;
 
+import java.util.ArrayList;
+
 import com.sonymobile.android.media.RepresentationSelector;
 import com.sonymobile.android.media.TrackInfo;
 import com.sonymobile.android.media.TrackInfo.TrackType;
@@ -36,6 +38,10 @@ public class DefaultDASHRepresentationSelector implements RepresentationSelector
     private MPDParser mMPDParser;
 
     private int mMaxBufferSize;
+
+    private int mSwitchUpCounter = 0;
+
+    private int mSwitchUpRepresentation = -1;
 
     public DefaultDASHRepresentationSelector(MPDParser parser, int maxBufferSize) {
         mMPDParser = parser;
@@ -153,6 +159,33 @@ public class DefaultDASHRepresentationSelector implements RepresentationSelector
             AdaptationSet videoAdaptationSet = period.adaptationSets
                     .get(period.currentAdaptationSet[TrackType.VIDEO.ordinal()]);
 
+            int videoRepresentations = videoAdaptationSet.representations.size();
+            ArrayList<Integer> sortedRepresentations = new ArrayList<>(videoRepresentations);
+            for (int i = 0; i < videoRepresentations; i++) {
+                if (!videoAdaptationSet.representations.get(i).selected) {
+                    continue;
+                }
+                if (sortedRepresentations.size() == 0) {
+                    sortedRepresentations.add(0);
+                } else {
+                    int representationBandwidth =
+                            videoAdaptationSet.representations.get(i).bandwidth;
+                    boolean inserted = false;
+                    for (int j = 0; j < sortedRepresentations.size(); j++) {
+                        int currentRepresentation = sortedRepresentations.get(j);
+                        if (representationBandwidth < videoAdaptationSet.
+                                representations.get(currentRepresentation).bandwidth) {
+                            sortedRepresentations.add(j, i);
+                            inserted = true;
+                            break;
+                        }
+                    }
+                    if (!inserted) {
+                        sortedRepresentations.add(i);
+                    }
+                }
+            }
+
             int currentVideoRepresentation = selectedRepresentations[TrackType.VIDEO.ordinal()];
             int currentSelectedBandwidth = 0;
             if (currentVideoRepresentation > -1) {
@@ -161,40 +194,45 @@ public class DefaultDASHRepresentationSelector implements RepresentationSelector
             }
 
             int videoRepresentation = -1;
-            int bestBandwidth = 0;
-            for (int i = videoAdaptationSet.representations.size() - 1; i >= 0; i--) {
-                Representation representation = videoAdaptationSet.representations.get(i);
+            for (int i = sortedRepresentations.size() - 1; i >= 0; i--) {
+                Representation representation =
+                        videoAdaptationSet.representations.get(sortedRepresentations.get(i));
 
-                if (representation.selected && availableBandwidth > representation.bandwidth) {
+                if (availableBandwidth > representation.bandwidth) {
                     if (representation.bandwidth > currentSelectedBandwidth
                             && availableBandwidth < (float)representation.bandwidth * 1.3) {
-                        continue;
+                        if (availableBandwidth > (float)representation.bandwidth * 1.1) {
+                            if (mSwitchUpRepresentation == sortedRepresentations.get(i)) {
+                                if (mSwitchUpCounter < 3) {
+                                    mSwitchUpCounter++;
+                                    continue;
+                                }
+                            } else {
+                                mSwitchUpCounter = 1;
+                                mSwitchUpRepresentation = sortedRepresentations.get(i);
+                                continue;
+                            }
+                        } else {
+                            mSwitchUpRepresentation = -1;
+                            mSwitchUpCounter = 0;
+                            continue;
+                        }
                     }
 
-                    if (representation.bandwidth > bestBandwidth) {
-                        videoRepresentation = i;
-                        bestBandwidth = representation.bandwidth;
-                    }
+                    videoRepresentation = sortedRepresentations.get(i);
+                    break;
                 }
             }
 
             if (videoRepresentation == -1) {
-                int worstBandwidth = -1;
-                for (int i = 0; i < videoAdaptationSet.representations.size(); i++) {
-                    Representation representation = videoAdaptationSet.representations.get(i);
-
-                    if (representation.selected
-                            && (worstBandwidth == -1
-                            || representation.bandwidth < worstBandwidth)) {
-                        worstBandwidth = representation.bandwidth;
-                        videoRepresentation = i;
-                    }
-                }
+                videoRepresentation = sortedRepresentations.get(0);
             }
 
             if (videoRepresentation != currentVideoRepresentation) {
                 selectedRepresentations[TrackType.VIDEO.ordinal()] = videoRepresentation;
                 representationsChanged = true;
+                mSwitchUpRepresentation = -1;
+                mSwitchUpCounter = 0;
             }
         }
 
