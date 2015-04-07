@@ -43,6 +43,10 @@ public class DefaultDASHRepresentationSelector implements RepresentationSelector
 
     private int mSwitchUpRepresentation = -1;
 
+    private int mSwitchDownCounter = 0;
+
+    private int mSwitchDownRepresentation = -1;
+
     public DefaultDASHRepresentationSelector(MPDParser parser, int maxBufferSize) {
         mMPDParser = parser;
         mMaxBufferSize = maxBufferSize;
@@ -219,8 +223,24 @@ public class DefaultDASHRepresentationSelector implements RepresentationSelector
                         }
                     }
 
+                    mSwitchDownCounter = 0;
+                    mSwitchDownRepresentation = -1;
                     videoRepresentation = sortedRepresentations.get(i);
                     break;
+                } else if (availableBandwidth > representation.bandwidth * 0.9 &&
+                        sortedRepresentations.get(i) == currentVideoRepresentation) {
+                    if (mSwitchDownRepresentation == sortedRepresentations.get(i)) {
+                        if (mSwitchDownCounter < 3) {
+                            mSwitchDownCounter++;
+                            videoRepresentation = sortedRepresentations.get(i);
+                            break;
+                        }
+                    } else {
+                        mSwitchDownRepresentation = sortedRepresentations.get(i);
+                        mSwitchDownCounter = 1;
+                        videoRepresentation = sortedRepresentations.get(i);
+                        break;
+                    }
                 }
             }
 
