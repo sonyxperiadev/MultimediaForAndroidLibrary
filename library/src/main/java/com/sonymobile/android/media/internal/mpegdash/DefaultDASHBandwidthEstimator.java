@@ -19,9 +19,16 @@ package com.sonymobile.android.media.internal.mpegdash;
 import java.util.ArrayList;
 import java.util.Iterator;
 
+import android.util.Log;
+
 import com.sonymobile.android.media.BandwidthEstimator;
+import com.sonymobile.android.media.internal.Configuration;
 
 public class DefaultDASHBandwidthEstimator implements BandwidthEstimator {
+
+    private static final boolean LOGS_ENABLED = Configuration.DEBUG || false;
+
+    private static final String TAG = "DefaultDASHBandwidthEstimator";
 
     private ArrayList<BandWidthMeasureItem> mBandWidthMeasure;
 
@@ -30,6 +37,10 @@ public class DefaultDASHBandwidthEstimator implements BandwidthEstimator {
     private long mOnDataTransferStartedTimeUs = -1;
 
     private long mAccumulatedTransferredData = -1;
+
+    private double mEstimatedBandwidth = 0;
+
+    private double mLatestBandwidthEntry1, mLatestBandwidthEntry2;
 
     public DefaultDASHBandwidthEstimator() {
         mBandWidthMeasure = new ArrayList<DefaultDASHBandwidthEstimator.BandWidthMeasureItem>();
@@ -43,6 +54,7 @@ public class DefaultDASHBandwidthEstimator implements BandwidthEstimator {
 
     @Override
     public void onDataTransferEnded() {
+        checkBandwidthDrop();
         if (mOnDataTransferStartedTimeUs > 0 && mAccumulatedTransferredData > 0) {
             long endTimeUs = System.nanoTime() / 1000;
             addBandWidthMeasure(endTimeUs - mOnDataTransferStartedTimeUs,
@@ -117,9 +129,39 @@ public class DefaultDASHBandwidthEstimator implements BandwidthEstimator {
             }
         }
 
-        double bandwidthBps = ((double)totbandwidth / (double)totWeighting);
+        mEstimatedBandwidth = ((double)totbandwidth / (double)totWeighting);
 
-        return (long)bandwidthBps;
+        return (long)mEstimatedBandwidth;
     }
 
+
+    private void checkBandwidthDrop() {
+
+        double currentBps = mAccumulatedTransferredData * 8E6 /
+                ((System.nanoTime() / 1000) - mOnDataTransferStartedTimeUs);
+
+        mLatestBandwidthEntry2 = mLatestBandwidthEntry1;
+        mLatestBandwidthEntry1 = currentBps;
+
+        if ((mEstimatedBandwidth / 4) > mLatestBandwidthEntry1) {
+
+            if (LOGS_ENABLED) Log.i(TAG,
+                    "Bandwidth dropped by over 75%, clearing earlier measurements");
+            synchronized (mBandWidthMeasureLock) {
+                while (mBandWidthMeasure.size() > 1) {
+                    mBandWidthMeasure.remove(0);
+                }
+            }
+        } else if ((mEstimatedBandwidth / 3) >
+                ((mLatestBandwidthEntry1 + mLatestBandwidthEntry2) / 2)) {
+            if (LOGS_ENABLED) Log.i(TAG,
+                    "Last two bandwidth measurements dropped by over 67%, clearing "
+                            + "earlier measurements");
+            synchronized (mBandWidthMeasureLock) {
+                while (mBandWidthMeasure.size() > 1) {
+                    mBandWidthMeasure.remove(0);
+                }
+            }
+        }
+    }
 }
