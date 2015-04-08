@@ -84,6 +84,8 @@ public final class DASHSession {
 
     public static final String KEY_VIDEO_URI = "videoURI";
 
+    private static final int MAX_BUFFER_DURATION_US = 10000000;
+
     private HandlerThread mEventThread;
 
     private EventHandler mEventHandler;
@@ -460,7 +462,6 @@ public final class DASHSession {
             return;
         }
 
-        long minBufferTimeUs = mMPDParser.getMinBufferTimeUs();
         RepresentationFetcher selectedFetcher = null;
         for (Map.Entry<TrackType, RepresentationFetcher> item : mFetchers.entrySet()) {
             RepresentationFetcher fetcher = item.getValue();
@@ -468,10 +469,10 @@ public final class DASHSession {
             int maxBufferSize = mMaxBufferSizes[type.ordinal()];
 
             if (selectedFetcher == null) {
-                if (!fetcher.isBufferFull(minBufferTimeUs * 3, maxBufferSize)) {
+                if (!fetcher.isBufferFull(MAX_BUFFER_DURATION_US, maxBufferSize)) {
                     selectedFetcher = fetcher;
                 }
-            } else if (!fetcher.isBufferFull(minBufferTimeUs * 3, maxBufferSize) &&
+            } else if (!fetcher.isBufferFull(MAX_BUFFER_DURATION_US, maxBufferSize) &&
                     (fetcher.getNextTimeUs() < selectedFetcher.getNextTimeUs() ||
                     (fetcher.getNextTimeUs() == selectedFetcher.getNextTimeUs() &&
                     fetcher.getState() < selectedFetcher.getState()))) {
