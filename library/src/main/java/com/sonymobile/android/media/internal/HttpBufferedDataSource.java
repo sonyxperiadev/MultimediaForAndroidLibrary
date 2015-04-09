@@ -180,6 +180,9 @@ public class HttpBufferedDataSource extends BufferedDataSource {
 
     @Override
     public synchronized DataAvailability hasDataAvailable(long offset, int size) {
+        if (mBis == null) {
+            return DataAvailability.NOT_AVAILABLE;
+        }
         if (mBis.isStreamClosed()) {
             return DataAvailability.IN_FUTURE;
         }

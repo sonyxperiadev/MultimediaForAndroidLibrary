@@ -279,6 +279,7 @@ public abstract class BufferedDataSource extends DataSource {
 
     @Override
     public void seek(long offset) throws IOException {
+        checkConnectionAndStream();
         if (!mBis.isStreamClosed()) {
             mCurrentOffset = offset;
             mOffset = offset;
