@@ -43,7 +43,10 @@ public class MetaDataParserFactory {
      */
     public static MetaDataParser create(String path, Long offset, Long length) {
         try {
-            return MediaParserFactory.createParser(path, offset, length, -1, null);
+            MetaDataParser parser = MediaParserFactory.createParser(path, offset, length, -1,
+                    null);
+            releaseParser(parser);
+            return parser;
         } catch (IOException e) {
             return null;
         }
@@ -61,7 +64,10 @@ public class MetaDataParserFactory {
      */
     public static MetaDataParser create(String path, Long offset, Long length, int maxBufferSize) {
         try {
-            return MediaParserFactory.createParser(path, offset, length, maxBufferSize, null);
+            MetaDataParser parser = MediaParserFactory.createParser(path, offset, length,
+                    maxBufferSize, null);
+            releaseParser(parser);
+            return parser;
         } catch (IOException e) {
             return null;
         }
@@ -82,7 +88,10 @@ public class MetaDataParserFactory {
     public static MetaDataParser create(String path, Long offset, Long length, int maxBufferSize,
             Handler notify) {
         try {
-            return MediaParserFactory.createParser(path, offset, length, maxBufferSize, notify);
+            MetaDataParser parser = MediaParserFactory.createParser(path, offset, length,
+                    maxBufferSize, notify);
+            releaseParser(parser);
+            return parser;
         } catch (IOException e) {
             return null;
         }
@@ -97,7 +106,10 @@ public class MetaDataParserFactory {
      */
     public static MetaDataParser create(String path) {
         try {
-            return MediaParserFactory.createParser(path, 0l, Long.MAX_VALUE, -1, null);
+            MetaDataParser parser = MediaParserFactory.createParser(path, 0l, Long.MAX_VALUE,
+                    -1, null);
+            releaseParser(parser);
+            return parser;
         } catch (IOException e) {
             return null;
         }
@@ -113,9 +125,18 @@ public class MetaDataParserFactory {
      */
     public static MetaDataParser create(String path, int maxBufferSize) {
         try {
-            return MediaParserFactory.createParser(path, 0l, Long.MAX_VALUE, maxBufferSize, null);
+            MetaDataParser parser = MediaParserFactory.createParser(path, 0l, Long.MAX_VALUE,
+                    maxBufferSize, null);
+            releaseParser(parser);
+            return parser;
         } catch (IOException e) {
             return null;
+        }
+    }
+
+    private static void releaseParser(MetaDataParser parser) {
+        if (parser != null) {
+            parser.release();
         }
     }
 }
