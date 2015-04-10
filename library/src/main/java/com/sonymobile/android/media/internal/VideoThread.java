@@ -758,9 +758,10 @@ public final class VideoThread extends VideoCodecThread {
 
                     if (mCheckAudioClockAfterResume) {
                         long systemTimeUs = System.nanoTime() / 1000;
-                        delayMs = (frame.info.presentationTimeUs - (mLastAudioTimeUs +
-                                (systemTimeUs -mResumeTimeUs))) / 1000;
-
+                        if (mLastAudioTimeUs > 0 && mDelayCounter < 20) {
+                            delayMs = (frame.info.presentationTimeUs - (mLastAudioTimeUs +
+                                    (systemTimeUs - mResumeTimeUs))) / 1000;
+                        }
                     }
                     if (delayMs > MAX_EARLY_FRAME_TIME_ALLOWED_MS) {
                         if (mDelayCounter++ < 20 && delayMs > 100) {
