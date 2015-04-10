@@ -80,6 +80,15 @@ public class PacketSource {
         return mBuffer.getLast().timeUs - mBuffer.getFirst().timeUs;
     }
 
+    public synchronized long getLastEnqueuedTimeUs() {
+        if (mBuffer != null) {
+            if (mBuffer.peekLast() != null) {
+                return mBuffer.peekLast().timeUs;
+            }
+        }
+        return -1;
+    }
+
     public synchronized void clear() {
         mBuffer.clear();
         mBufferDataSize = 0;

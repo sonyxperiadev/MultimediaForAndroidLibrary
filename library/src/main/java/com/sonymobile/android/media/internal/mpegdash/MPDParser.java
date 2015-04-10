@@ -350,12 +350,6 @@ public class MPDParser {
             template.durationTicks = Integer.parseInt(duration);
         }
 
-        if (template.durationTicks > 0) {
-            double noSegments = Math.ceil((float)mCurrentPeriod.durationUs
-                    / ((float)template.durationTicks * 1000000L / template.timescale));
-            template.noSegments = (int)noSegments;
-        }
-
         if (mCurrentRepresentation != null) {
             mCurrentRepresentation.segmentTemplate = template;
         } else if (mCurrentAdaptationSet != null) {
@@ -1081,8 +1075,6 @@ public class MPDParser {
     }
 
     public static class SegmentTemplate {
-        public int noSegments = -1;
-
         String initialization;
 
         String media;

@@ -307,6 +307,17 @@ public class RepresentationFetcher {
                             break;
                         }
                     }
+                    if (mRepresentation.segmentTemplate != null &&
+                            mRepresentation.segmentTemplate.segmentTimeline == null &&
+                            (mPacketSource.getLastEnqueuedTimeUs() >
+                                    mSession.getActivePeriodEndTime() ||
+                            (mNextTimeUs + mTimeOffset) >= mSession.getActivePeriodEndTime()) &&
+                            !mEOS) {
+                        Message callback = mSession.getFetcherCallbackMessage(mType);
+                        callback.arg1 = DASHSession.FETCHER_EOS;
+                        callback.sendToTarget();
+                        mEOS = true;
+                    }
 
                     if (mType == TrackType.VIDEO) {
                         Message callback = mSession.getFetcherCallbackMessage(mType);
@@ -391,7 +402,6 @@ public class RepresentationFetcher {
     }
 
     private DataSource createFragmentDataSource() {
-
         DataSource source = null;
         BandwidthEstimator bandwidthEstimator = null;
 
@@ -458,17 +468,6 @@ public class RepresentationFetcher {
                 mCurrentTimeUs = segmentTimelineTemplateTicks * 1000000L
                         / mRepresentation.segmentTemplate.timescale;
             } else {
-                if (mRepresentation.segmentTemplate.noSegments > -1) {
-                    if (mSegmentNumber >= mRepresentation.segmentTemplate.startNumber
-                            + mRepresentation.segmentTemplate.noSegments) {
-                        Message callback = mSession.getFetcherCallbackMessage(mType);
-                        callback.arg1 = DASHSession.FETCHER_EOS;
-                        callback.sendToTarget();
-                        mEOS = true;
-                        return null;
-                    }
-                }
-
                 mLastFragmentUri = getTemplatedUri(mRepresentation.segmentTemplate.media);
                 try {
                     source = DataSource.create(getTemplatedUri(
@@ -668,17 +667,6 @@ public class RepresentationFetcher {
                     return null;
                 }
             } else {
-                if (mRepresentation.segmentTemplate.noSegments > -1) {
-                    if (mSegmentNumber >= mRepresentation.segmentTemplate.startNumber
-                            + mRepresentation.segmentTemplate.noSegments) {
-                        Message callback = mSession.getFetcherCallbackMessage(mType);
-                        callback.arg1 = DASHSession.FETCHER_EOS;
-                        callback.sendToTarget();
-                        mEOS = true;
-                        return null;
-                    }
-                }
-
                 try {
                     return DataSource.create(getTemplatedUri(mRepresentation.segmentTemplate.media),
                             0, SIDX_HEADER_SNIFF_SIZE, true);

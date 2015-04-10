@@ -46,6 +46,7 @@ import com.sonymobile.android.media.internal.Configuration;
 import com.sonymobile.android.media.internal.MetaDataImpl;
 import com.sonymobile.android.media.internal.MimeType;
 import com.sonymobile.android.media.internal.mpegdash.MPDParser.ContentProtection;
+import com.sonymobile.android.media.internal.mpegdash.MPDParser.Period;
 import com.sonymobile.android.media.internal.mpegdash.MPDParser.Representation;
 
 public final class DASHSession {
@@ -654,6 +655,11 @@ public final class DASHSession {
 
     public long getDurationUs() {
         return mMPDParser.getDurationUs();
+    }
+
+    public long getActivePeriodEndTime() {
+        Period period = mMPDParser.getActivePeriod();
+        return period.durationUs + period.startTimeUs;
     }
 
     public DASHTrackInfo[] getTrackInfo() {
