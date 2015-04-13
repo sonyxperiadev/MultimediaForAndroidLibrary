@@ -182,6 +182,8 @@ public class ISOBMFFParser extends MediaParser {
 
     protected static final int BOX_ID_ALAC = fourCC('a', 'l', 'a', 'c');
 
+    protected static final int BOX_ID_PASP = fourCC('p', 'a', 's', 'p');
+
     // iTunes metadata
     protected static final int BOX_ID_ILST = fourCC('i', 'l', 's', 't');
 
@@ -464,7 +466,19 @@ public class ISOBMFFParser extends MediaParser {
     protected void updateAspectRatio() {
         if (mCurrentVideoTrack != null) {
             MediaFormat videoFormat = mCurrentVideoTrack.getMediaFormat();
-            if (videoFormat.containsKey(MetaData.KEY_SAR_WIDTH)
+            // pasp information has higher priority than sample aspect ratio
+            if (videoFormat.containsKey(MetaData.KEY_PASP_HORIZONTAL_SPACING)
+                    && videoFormat.containsKey(MetaData.KEY_PASP_VERTICAL_SPACING)) {
+                int paspHSpacing = videoFormat.getInteger(MetaData.KEY_PASP_HORIZONTAL_SPACING);
+                int paspVSpacing = videoFormat.getInteger(MetaData.KEY_PASP_VERTICAL_SPACING);
+
+                int adjustedWidth = (int)Math.round(((double)videoFormat
+                        .getInteger(MediaFormat.KEY_WIDTH) * paspHSpacing)
+                        / paspVSpacing);
+
+                addMetaDataValue(KEY_WIDTH, adjustedWidth);
+                mCurrentVideoTrack.getMetaData().addValue(KEY_WIDTH, adjustedWidth);
+            } else if (videoFormat.containsKey(MetaData.KEY_SAR_WIDTH)
                     && videoFormat.containsKey(MetaData.KEY_SAR_HEIGHT)) {
                 int sarWidth = videoFormat.getInteger(MetaData.KEY_SAR_WIDTH);
                 int sarHeight = videoFormat.getInteger(MetaData.KEY_SAR_HEIGHT);
@@ -1607,6 +1621,8 @@ public class ISOBMFFParser extends MediaParser {
             mCurrentTrack.getMetaData().addValue(KEY_MIME_TYPE, MimeType.ALAC);
 
             mCurrentTrack.addSampleDescriptionEntry(mCurrentMediaFormat);
+        } else if (header.boxType == BOX_ID_PASP) {
+            parseOK = parsePasp(header);
         } else if (header.boxType == BOX_ID_MDAT) {
             if (mTracks.size() > 0 && !mIsFragmented) {
                 mInitDone = true;
@@ -2727,6 +2743,20 @@ public class ISOBMFFParser extends MediaParser {
         } catch (IOException e) {
             if (LOGS_ENABLED) Log.e(TAG, "could not read data", e);
 
+            return false;
+        }
+        return true;
+    }
+
+    private boolean parsePasp(BoxHeader header) {
+        try {
+            int hSpacing = mDataSource.readInt();
+            int vSpacing = mDataSource.readInt();
+            mCurrentMediaFormat.setInteger(KEY_PASP_HORIZONTAL_SPACING, hSpacing);
+            mCurrentMediaFormat.setInteger(KEY_PASP_VERTICAL_SPACING, vSpacing);
+        } catch (IOException e) {
+            if (LOGS_ENABLED) Log.e(TAG, "IOException while parsing pasp box", e);
+            mCurrentBoxSequence.removeLast();
             return false;
         }
         return true;

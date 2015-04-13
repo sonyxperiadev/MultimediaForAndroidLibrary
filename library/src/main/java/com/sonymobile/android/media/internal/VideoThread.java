@@ -258,7 +258,11 @@ public final class VideoThread extends VideoCodecThread {
         mSampleAspectRatioWidth = 1;
         mSampleAspectRatioHeight = 1;
 
-        if (mediaFormat.containsKey(MetaData.KEY_SAR_WIDTH)
+        if (mediaFormat.containsKey(MetaData.KEY_PASP_VERTICAL_SPACING) && mediaFormat
+                .containsKey(MetaData.KEY_PASP_HORIZONTAL_SPACING)) {
+            mSampleAspectRatioWidth = mediaFormat.getInteger(MetaData.KEY_PASP_HORIZONTAL_SPACING);
+            mSampleAspectRatioHeight = mediaFormat.getInteger(MetaData.KEY_PASP_VERTICAL_SPACING);
+        } else if (mediaFormat.containsKey(MetaData.KEY_SAR_WIDTH)
                 && mediaFormat.containsKey(MetaData.KEY_SAR_HEIGHT)) {
             mSampleAspectRatioWidth = mediaFormat.getInteger(MetaData.KEY_SAR_WIDTH);
             mSampleAspectRatioHeight = mediaFormat.getInteger(MetaData.KEY_SAR_HEIGHT);

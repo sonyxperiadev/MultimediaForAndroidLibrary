@@ -211,6 +211,16 @@ public interface MetaData {
     /*package*/ static final String KEY_SAR_HEIGHT = "sar_height";
 
     /**
+     * Key for Pixel Aspect horizontal spacing
+     */
+    public static final String KEY_PASP_HORIZONTAL_SPACING = "paspHSpacing";
+
+    /**
+     * Key for Pixel Aspect vertical spacing
+     */
+    public static final String KEY_PASP_VERTICAL_SPACING = "paspVSpacing";
+
+    /**
      * Key for rotation degrees.
      */
     public static final String KEY_ROTATION_DEGREES = "rotation-degrees";
