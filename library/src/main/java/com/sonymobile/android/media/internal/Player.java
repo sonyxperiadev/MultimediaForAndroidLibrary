@@ -39,6 +39,7 @@ import com.sonymobile.android.media.MediaError;
 import com.sonymobile.android.media.MediaPlayer.Statistics;
 import com.sonymobile.android.media.MetaData;
 import com.sonymobile.android.media.RepresentationSelector;
+import com.sonymobile.android.media.SubtitleData;
 import com.sonymobile.android.media.TrackInfo;
 import com.sonymobile.android.media.TrackInfo.TrackType;
 import com.sonymobile.android.media.internal.drm.DrmSession;
@@ -987,8 +988,14 @@ public final class Player {
                             break;
                         case Codec.CODEC_SUBTITLE_DATA:
                             if (LOGS_ENABLED) Log.v(TAG, "Got Subtitle data");
-                            thiz.mCallbacks.obtainMessage(NOTIFY_SUBTITLE_DATA, msg.obj)
-                                    .sendToTarget();
+                            int index = thiz.mSource.getSelectedTrackIndex(TrackType.SUBTITLE);
+                            if (((SubtitleData) msg.obj).getTrackIndex() == index) {
+                                thiz.mCallbacks.obtainMessage(NOTIFY_SUBTITLE_DATA, msg.obj)
+                                        .sendToTarget();
+                            } else {
+                                if (LOGS_ENABLED) Log.w(TAG, "Wrong subtitle source:" + index +
+                                        " data:" + ((SubtitleData) msg.obj).getTrackIndex());
+                            }
                             break;
                         case Codec.CODEC_VIDEO_FORMAT_CHANGED:
                             thiz.mVideoWidth = msg.getData().getInt(MetaData.KEY_WIDTH);

@@ -2722,6 +2722,7 @@ public class ISOBMFFParser extends MediaParser {
             }
             FragmentSample sample = mCurrentFragmentSampleQueue.removeFirst();
             accessUnit.status = AccessUnit.OK;
+            accessUnit.trackIndex = mTrackIndex;
             accessUnit.timeUs = (mTimeTicks
                     + sample.compositionTimeOffset - mEditMediaTimeTicks) * 1000000 / mTimeScale;
             accessUnit.timeUs += mSampleTable.getDurationUs();
