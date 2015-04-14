@@ -902,6 +902,16 @@ public final class MediaPlayer {
                         }
                     }
                     break;
+                case Player.NOTIFY_OUTPUTCONTROL:
+                    synchronized (thiz.mStateLock) {
+                        if (msg.arg1 == OutputControllerUpdateListener.OUTPUT_BLOCKED &&
+                                (thiz.mState == State.PREPARED ||
+                                 thiz.mState == State.PREPARING)) {
+                            // Don't send callbacks for OnOutputBlocked when in preparing or
+                            // prepared state.
+                            return;
+                        }
+                    }
             }
 
             if (thiz.mCallbackDispatcher != null) {
