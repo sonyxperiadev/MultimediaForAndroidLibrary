@@ -27,6 +27,7 @@ import android.content.Context;
 import android.hardware.display.DisplayManager;
 import android.os.Handler;
 import android.os.Message;
+import android.os.SystemClock;
 import android.util.Log;
 import android.view.Display;
 import com.sonymobile.android.media.MediaPlayer.OutputControlInfo;
@@ -40,6 +41,8 @@ public class OutputController {
     private static final int MSG_UPDATE = 1;
 
     private static final int MSG_RELEASE = 2;
+
+    private static final int HDCP_DELAY = 1000;
 
     private final static String TAG = "OutputController";
 
@@ -162,7 +165,9 @@ public class OutputController {
      * @param displayId Id of the display that needs update.
      */
     private void updateDisplay(int displayId) {
-        mEventHandler.obtainMessage(MSG_UPDATE, displayId).sendToTarget();
+        Message msg = mEventHandler.obtainMessage(MSG_UPDATE, displayId, 0);
+        //Delay message to ensure that hdcp flag is set.
+        mEventHandler.sendMessageAtTime(msg, SystemClock.uptimeMillis() + HDCP_DELAY);
     }
 
     private void setRestrictions(LicenseInfo licenseInfo) {
