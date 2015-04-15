@@ -103,6 +103,9 @@ public class TestContent {
 
     public static final String ID_TYPE_LOCAL_AMR_WB = "LOCAL_AMR_WB";
 
+    public static final String ID_TYPE_LOCAL_WITH_SONY_MOBILE_FLAGS =
+            "LOCAL_WITH_SONY_MOBILE_FLAGS";
+
     public TestContent() {
         mMetaDataValues = new HashMap<String, Object>();
     }

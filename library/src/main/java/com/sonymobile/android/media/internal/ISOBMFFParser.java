@@ -184,6 +184,8 @@ public class ISOBMFFParser extends MediaParser {
 
     protected static final int BOX_ID_PASP = fourCC('p', 'a', 's', 'p');
 
+    protected static final int BOX_ID_FLGS = fourCC('f', 'l', 'g', 's');
+
     // iTunes metadata
     protected static final int BOX_ID_ILST = fourCC('i', 'l', 's', 't');
 
@@ -259,6 +261,8 @@ public class ISOBMFFParser extends MediaParser {
     protected static final int HEVC_NAL_UNIT_TYPE_IDR_PICTURE_N_LP = 20;
 
     protected static final int HEVC_NAL_UNIT_TYPE_CRA_PICTURE = 21;
+
+    protected static final String UUID_SOMD = "736F6D6489094E5DBE807CA58018263B";
 
     protected IsoTrack mCurrentAudioTrack;
 
@@ -1623,14 +1627,23 @@ public class ISOBMFFParser extends MediaParser {
             mCurrentTrack.addSampleDescriptionEntry(mCurrentMediaFormat);
         } else if (header.boxType == BOX_ID_PASP) {
             parseOK = parsePasp(header);
-        } else if (header.boxType == BOX_ID_MDAT) {
-            if (mTracks.size() > 0 && !mIsFragmented) {
-                mInitDone = true;
-            } else if (mIsFragmented && mFirstMoofOffset != -1) {
-                mInitDone = true;
-            } else {
-                mMdatFound = true;
+        } else if (header.boxType == BOX_ID_UUID) {
+            byte[] userType = new byte[16];
+            try {
+                mDataSource.read(userType);
+                mCurrentOffset += 16;
+                String uuidUserType = Util.bytesToHex(userType);
+                if (uuidUserType.equals(UUID_SOMD)) {
+                    parseOK = parseUuidSomd(header);
+                }
+            } catch (IOException e) {
+                if (LOGS_ENABLED) Log.e(TAG, "IOException while parsing 'uuid' box", e);
+
+                mCurrentBoxSequence.removeLast();
+                return false;
             }
+        } else if (header.boxType == BOX_ID_MDAT) {
+            mMdatFound = true;
         } else {
             long skipSize = header.boxDataSize;
             try {
@@ -2760,6 +2773,33 @@ public class ISOBMFFParser extends MediaParser {
             return false;
         }
         return true;
+    }
+
+    private boolean parseUuidSomd(BoxHeader header) {
+        long boxEndOffset = mCurrentOffset + header.boxDataSize - 16;
+        boolean parseOK = true;
+        try {
+            mDataSource.skipBytes(4); // version
+            mCurrentOffset += 4;
+            while (mCurrentOffset < boxEndOffset && parseOK) {
+                BoxHeader nextBoxHeader = getNextBoxHeader();
+                if (nextBoxHeader.boxType == BOX_ID_FLGS) {
+                    long flagsData = mDataSource.readLong();
+                    long validData = mDataSource.readLong();
+                    // Only last bit is currently used
+                    if ((validData & 0x01) != 0 && (flagsData & 0x01) != 0) {
+                        mCurrentVideoTrack.getMediaFormat().setInteger(
+                                MetaData.KEY_IS_CAMERA_CONTENT, 1);
+                    }
+                    break;
+                }
+                mCurrentOffset += nextBoxHeader.boxDataSize;
+            }
+        } catch (IOException e) {
+            if (LOGS_ENABLED) Log.e(TAG, "IOException while parsing UUID_PROF box", e);
+            parseOK = false;
+        }
+        return parseOK;
     }
 
     protected static class BoxHeader {

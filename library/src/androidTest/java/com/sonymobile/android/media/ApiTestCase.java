@@ -414,6 +414,11 @@ public class ApiTestCase extends
         ApiTest.getMetaDataStrings(mTestContent);
     }
 
+    public void testGetMetaDataSonyMobileFlags() {
+        setDefaultTestContent(TestContent.ID_TYPE_LOCAL_WITH_SONY_MOBILE_FLAGS);
+        ApiTest.getMetaDataSonyMobileFlags(mTestContent);
+    }
+
     @Protocol(types = "Local")
     @Content(types = "Audio||Video")
     @MetaInfo(fields = "AlbumArt")

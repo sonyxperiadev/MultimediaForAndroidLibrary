@@ -1787,6 +1787,37 @@ public class ApiTest {
         }
     }
 
+    public static void getMetaDataSonyMobileFlags(TestContent tc) {
+        assertNotNull("No test content", tc);
+        assertNotNull("No content uri", tc.getContentUri());
+
+        MetaDataParser parser = null;
+        try {
+            parser = MetaDataParserFactory.create(tc.getContentUri());
+            assertNotNull("Parserfactory returned null parser", parser);
+            int tracks = parser.getTrackCount();
+            for (int i = 0; i < tracks; i++) {
+                MetaData trackMeta = parser.getTrackMetaData(i);
+                assertTrue("No track mime found", trackMeta.containsKey(MetaData.KEY_MIME_TYPE));
+                // Don't know if this is Audio track or Video track
+                // so check for both.
+                String mime = trackMeta.getString(MetaData.KEY_MIME_TYPE);
+                if (!mime.startsWith("video")) {
+                    continue;
+                }
+                if (trackMeta.containsKey(MetaData.KEY_IS_CAMERA_CONTENT)) {
+                    int cameraFlags = trackMeta.getInteger(MetaData.KEY_IS_CAMERA_CONTENT);
+                    assertEquals("Camera content flag is not set",
+                            tc.getMetaDataValue(MetaData.KEY_IS_CAMERA_CONTENT), cameraFlags);
+                }
+            }
+        } finally {
+            if (parser != null) {
+                parser.release();
+            }
+        }
+    }
+
     public static void releaseMetaData(TestContent tc) {
         assertNotNull("No test content", tc);
         assertNotNull("No content uri", tc.getContentUri());

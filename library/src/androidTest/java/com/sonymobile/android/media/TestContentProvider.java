@@ -108,6 +108,8 @@ public class TestContentProvider {
 
     public static final String KEY_METADATA_ALBUMART = "AlbumArt";
 
+    public static final String KEY_METADATA_SONY_MOBILE_CAMERA_CONTENT_FLAG = "CameraContent";
+
     private static final String PATH_TO_TESTFILE = Environment.getExternalStorageDirectory()
             .getAbsolutePath() + "/testcontent.xml";
 
@@ -434,6 +436,15 @@ public class TestContentProvider {
                             parser.next();
                             if (parser.getEventType() == XmlPullParser.TEXT) {
                                 obj.setMetaDataValue(MetaData.KEY_YEAR, parser.getText());
+                            }
+                        } // done with KEY_YEAR
+                        else if (KEY_METADATA_SONY_MOBILE_CAMERA_CONTENT_FLAG.equals(
+                                parser.getName()) &&
+                                parser.getEventType() == XmlPullParser.START_TAG) {
+                            parser.next();
+                            if (parser.getEventType() == XmlPullParser.TEXT) {
+                                obj.setMetaDataValue(MetaData.KEY_IS_CAMERA_CONTENT,
+                                        parser.getText());
                             }
                         } // done with KEY_YEAR
                         else if (KEY_CONTENT_TYPE.equals(parser.getName()) &&

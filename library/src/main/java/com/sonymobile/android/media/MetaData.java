@@ -226,6 +226,11 @@ public interface MetaData {
     public static final String KEY_ROTATION_DEGREES = "rotation-degrees";
 
     /**
+     * Key for Sony Mobile camera content flag
+     */
+    public static final String KEY_IS_CAMERA_CONTENT = "camc";
+
+    /**
      * Gets an integer value from the meta data.
      *
      * @param key of the integer value that is wanted. Keys are specified in
