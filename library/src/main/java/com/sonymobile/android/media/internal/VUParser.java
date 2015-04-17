@@ -761,6 +761,7 @@ public class VUParser extends ISOBMFFParser {
                 // TODO Send new format to codec
             }
             accessUnit.status = AccessUnit.OK;
+            accessUnit.trackIndex = mTrackIndex;
             accessUnit.timeUs =
                     mSampleTable.getTimestampUs(mCurrentSampleIndex) + mEditMediaTimeTicks;
             accessUnit.durationUs = mSampleTable.getDurationUs(mCurrentSampleIndex);
