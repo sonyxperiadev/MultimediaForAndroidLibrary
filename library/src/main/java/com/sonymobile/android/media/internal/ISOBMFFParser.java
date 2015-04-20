@@ -178,6 +178,10 @@ public class ISOBMFFParser extends MediaParser {
 
     protected static final int BOX_ID_S263 = fourCC('s', '2', '6', '3');
 
+    protected static final int BOX_ID_H263 = fourCC('H', '2', '6', '3');
+
+    protected static final int BOX_ID_H263_2 = fourCC('h', '2', '6', '3');
+
     protected static final int BOX_ID_DOTMP3 = fourCC('.', 'm', 'p', '3');
 
     protected static final int BOX_ID_ALAC = fourCC('a', 'l', 'a', 'c');
@@ -1168,7 +1172,8 @@ public class ISOBMFFParser extends MediaParser {
                 } else if (dataFormat == BOX_ID_MP4V) {
                     mCurrentMediaFormat.setString(MediaFormat.KEY_MIME, MimeType.MPEG4_VISUAL);
                     mCurrentTrack.getMetaData().addValue(KEY_MIME_TYPE, MimeType.MPEG4_VISUAL);
-                } else if (dataFormat == BOX_ID_S263) {
+                } else if (dataFormat == BOX_ID_S263 || dataFormat == BOX_ID_H263 ||
+                        dataFormat == BOX_ID_H263_2) {
                     mCurrentMediaFormat.setString(MediaFormat.KEY_MIME, MimeType.H263);
                     mCurrentTrack.getMetaData().addValue(KEY_MIME_TYPE, MimeType.H263);
                 }
@@ -1570,7 +1575,8 @@ public class ISOBMFFParser extends MediaParser {
             }
         } else if (header.boxType == BOX_ID_SIDX) {
             parseOK = parseSidx(header);
-        } else if (header.boxType == BOX_ID_S263) {
+        } else if (header.boxType == BOX_ID_S263 || header.boxType == BOX_ID_H263 ||
+                header.boxType == BOX_ID_H263_2) {
             byte[] data = new byte[78];
             try {
                 if (mDataSource.readAt(mCurrentOffset, data, data.length) != data.length) {
@@ -1578,7 +1584,7 @@ public class ISOBMFFParser extends MediaParser {
                     return false;
                 }
             } catch (IOException e) {
-                if (LOGS_ENABLED) Log.e(TAG, "Error while parsing 's263' box", e);
+                if (LOGS_ENABLED) Log.e(TAG, "Error while parsing h263 visual entry box", e);
                 mCurrentBoxSequence.removeLast();
                 return false;
             }
