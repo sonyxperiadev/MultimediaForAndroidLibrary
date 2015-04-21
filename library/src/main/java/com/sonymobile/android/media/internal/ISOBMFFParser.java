@@ -186,6 +186,8 @@ public class ISOBMFFParser extends MediaParser {
 
     protected static final int BOX_ID_FLGS = fourCC('f', 'l', 'g', 's');
 
+    protected static final int BOX_ID_MFHD = fourCC('m', 'f', 'h', 'd');
+
     // iTunes metadata
     protected static final int BOX_ID_ILST = fourCC('i', 'l', 's', 't');
 
@@ -317,6 +319,8 @@ public class ISOBMFFParser extends MediaParser {
     protected boolean mParsedSencData = false;
 
     protected int mNALLengthSize;
+
+    protected int mCurrentMoofSequenceNumber = -1;
 
     private static final int[] ISOBMFF_COMPATIBLE_BRANDS = {
             fourCC('i', 's', 'o', 'm'), fourCC('m', 'p', '4', '1'), fourCC('m', 'p', '4', '2'),
@@ -1638,6 +1642,23 @@ public class ISOBMFFParser extends MediaParser {
                 }
             } catch (IOException e) {
                 if (LOGS_ENABLED) Log.e(TAG, "IOException while parsing 'uuid' box", e);
+
+                mCurrentBoxSequence.removeLast();
+                return false;
+            }
+        } else if (header.boxType == BOX_ID_MFHD) {
+            try {
+                int sequenceNumber = mDataSource.readInt();
+                if (sequenceNumber <= mCurrentMoofSequenceNumber) {
+                    if (LOGS_ENABLED) Log.e(TAG, "Current moof sequence number " +
+                            sequenceNumber + " is not higher than previous moof sequence number " +
+                            mCurrentMoofSequenceNumber);
+                    mCurrentBoxSequence.removeLast();
+                    return false;
+                }
+                mCurrentMoofSequenceNumber = sequenceNumber;
+            } catch (IOException e) {
+                if (LOGS_ENABLED) Log.e(TAG, "IOException while parsing 'mfhd' box", e);
 
                 mCurrentBoxSequence.removeLast();
                 return false;
@@ -3630,6 +3651,7 @@ public class ISOBMFFParser extends MediaParser {
                 mCurrentSubtitleTrack.seekTo(timeUs, mIsFragmented);
             }
         }
+        mCurrentMoofSequenceNumber = -1;
     }
 
     @Override
