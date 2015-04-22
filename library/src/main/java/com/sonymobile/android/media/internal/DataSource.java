@@ -176,6 +176,10 @@ public abstract class DataSource implements Closeable {
 
     public abstract String getRemoteIP();
 
+    public long readUint() throws IOException, EOFException {
+        return 0xFFFFFFFFL & readInt();
+    }
+
     public DataAvailability hasDataAvailable(long offset, int size) {
         return DataAvailability.AVAILABLE;
     }

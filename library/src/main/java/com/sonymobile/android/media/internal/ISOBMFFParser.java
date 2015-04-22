@@ -1800,8 +1800,8 @@ public class ISOBMFFParser extends MediaParser {
                     timeTicks = mDataSource.readLong();
                     moofOffset = mDataSource.readLong();
                 } else {
-                    timeTicks = mDataSource.readInt();
-                    moofOffset = mDataSource.readInt();
+                    timeTicks = mDataSource.readUint();
+                    moofOffset = mDataSource.readUint();
                 }
                 byte[] lengthsData = new byte[lengthSizeOfTrafNum + lengthSizeOfTrunNum
                         + lengthSizeOfSampleNum];
