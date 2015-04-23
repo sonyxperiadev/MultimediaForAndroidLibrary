@@ -26,6 +26,8 @@ public class MimeType {
 
     public static final String AAC = "audio/mp4a-latm";
 
+    public static final String MPEG_AUDIO = "audio/mpeg";
+
     public static final String TTML = "application/ttml+xml";
 
     public static final String MP4_VIDEO = "video/mp4";

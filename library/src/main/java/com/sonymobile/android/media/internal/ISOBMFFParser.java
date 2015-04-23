@@ -904,9 +904,6 @@ public class ISOBMFFParser extends MediaParser {
 
             parseAudioSampleEntry(data);
 
-            mCurrentMediaFormat.setString(MediaFormat.KEY_MIME, MimeType.AAC);
-            mCurrentTrack.getMetaData().addValue(KEY_MIME_TYPE, MimeType.AAC);
-
             while (mCurrentOffset < boxEndOffset && parseOK) {
                 BoxHeader nextBoxHeader = getNextBoxHeader();
                 parseOK = parseBox(nextBoxHeader);
@@ -1098,9 +1095,6 @@ public class ISOBMFFParser extends MediaParser {
                 } else if (dataFormat == BOX_ID_MP4V) {
                     mCurrentMediaFormat.setString(MediaFormat.KEY_MIME, MimeType.MPEG4_VISUAL);
                     mCurrentTrack.getMetaData().addValue(KEY_MIME_TYPE, MimeType.MPEG4_VISUAL);
-                } else if (dataFormat == BOX_ID_MP4A) {
-                    mCurrentMediaFormat.setString(MediaFormat.KEY_MIME, MimeType.AAC);
-                    mCurrentTrack.getMetaData().addValue(KEY_MIME_TYPE, MimeType.AAC);
                 }
             } catch (IOException e) {
                 if (LOGS_ENABLED) Log.e(TAG, "Exception while parsing 'frma' box", e);
@@ -2423,6 +2417,15 @@ public class ISOBMFFParser extends MediaParser {
         if (offset + dataSize > esds.length) {
             if (LOGS_ENABLED) Log.e(TAG, "buffer too small");
             return false;
+        }
+
+        if (esds[offset] == 0x6B) {
+            mCurrentMediaFormat.setString(MediaFormat.KEY_MIME, MimeType.MPEG_AUDIO);
+            mCurrentTrack.getMetaData().addValue(KEY_MIME_TYPE, MimeType.MPEG_AUDIO);
+            return true;
+        } else {
+            mCurrentMediaFormat.setString(MediaFormat.KEY_MIME, MimeType.AAC);
+            mCurrentTrack.getMetaData().addValue(KEY_MIME_TYPE, MimeType.AAC);
         }
 
         offset += 13;
