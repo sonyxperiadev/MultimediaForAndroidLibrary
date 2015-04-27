@@ -2419,13 +2419,15 @@ public class ISOBMFFParser extends MediaParser {
             return false;
         }
 
-        if (esds[offset] == 0x6B) {
-            mCurrentMediaFormat.setString(MediaFormat.KEY_MIME, MimeType.MPEG_AUDIO);
-            mCurrentTrack.getMetaData().addValue(KEY_MIME_TYPE, MimeType.MPEG_AUDIO);
-            return true;
-        } else {
-            mCurrentMediaFormat.setString(MediaFormat.KEY_MIME, MimeType.AAC);
-            mCurrentTrack.getMetaData().addValue(KEY_MIME_TYPE, MimeType.AAC);
+        if (boxIsUnder(BOX_ID_MP4A)) {
+            if (esds[offset] == 0x6B) {
+                mCurrentMediaFormat.setString(MediaFormat.KEY_MIME, MimeType.MPEG_AUDIO);
+                mCurrentTrack.getMetaData().addValue(KEY_MIME_TYPE, MimeType.MPEG_AUDIO);
+                return true;
+            } else {
+                mCurrentMediaFormat.setString(MediaFormat.KEY_MIME, MimeType.AAC);
+                mCurrentTrack.getMetaData().addValue(KEY_MIME_TYPE, MimeType.AAC);
+            }
         }
 
         offset += 13;
