@@ -463,10 +463,10 @@ public abstract class BufferedDataSource extends DataSource {
                 if (mHttpURLConnection != null) {
                     try {
                         mHttpURLConnection.disconnect();
-                    } catch (NullPointerException e) {
-                        if (LOGS_ENABLED)
-                            Log.e(TAG, "NullPointerException from mHttpURLConnection.disconnect()"
-                                    , e);
+                    } catch (Exception e) {
+                        if (LOGS_ENABLED) {
+                            Log.e(TAG, "Exception from mHttpURLConnection.disconnect()", e);
+                        }
                     }
                     mHttpURLConnection = null;
                 }
