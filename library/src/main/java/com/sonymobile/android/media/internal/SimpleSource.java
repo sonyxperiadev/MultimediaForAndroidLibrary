@@ -136,16 +136,20 @@ public final class SimpleSource extends MediaSource {
     @Override
     public AccessUnit dequeueAccessUnit(TrackType type) {
         if (mIsHttp) {
-            AccessUnit accessUnit;
             try {
                 if (mMediaParser.hasDataAvailable(type)) {
-                    accessUnit = mMediaParser.dequeueAccessUnit(type);
                     if (mBuffering) {
+                        if (((HttpBufferedDataSource)mMediaParser.mDataSource).getBufferedSize() <
+                                (((double)((HttpBufferedDataSource)mMediaParser.mDataSource).
+                                        length() * 8 / mMediaParser.getDurationUs()) *
+                                        Configuration.HTTP_MIN_BUFFERING_DURATION_US)) {
+                            return AccessUnit.ACCESS_UNIT_NO_DATA_AVAILABLE;
+                        }
                         mBuffering = false;
                         notify(SOURCE_BUFFERING_END);
                     }
 
-                    return accessUnit;
+                    return mMediaParser.dequeueAccessUnit(type);
                 } else {
                     if (!mBuffering) {
                         mBuffering = true;
@@ -264,6 +268,9 @@ public final class SimpleSource extends MediaSource {
         if (percentage < 100) {
             mEventHandler.sendEmptyMessageAtTime(MSG_CHECK_BUFFERING,
                     SystemClock.uptimeMillis() + 1000);
+        } else if (mBuffering) {
+            mBuffering = false;
+            notify(SOURCE_BUFFERING_END);
         }
     }
 
@@ -291,16 +298,6 @@ public final class SimpleSource extends MediaSource {
                     if (thiz.mPrepared && !thiz.mEventHandler.hasMessages(MSG_CHECK_BUFFERING)) {
                         thiz.onCheckBuffering();
                     }
-                    break;
-                case SOURCE_BUFFERING_START:
-                    if (!thiz.mBuffering) {
-                        thiz.mBuffering = true;
-                        thiz.notify(SOURCE_BUFFERING_START);
-                    }
-                    break;
-                case SOURCE_BUFFERING_END:
-                    thiz.mBuffering = false;
-                    thiz.notify(SOURCE_BUFFERING_END);
                     break;
                 case SOURCE_ERROR:
                     thiz.notify(SOURCE_ERROR);

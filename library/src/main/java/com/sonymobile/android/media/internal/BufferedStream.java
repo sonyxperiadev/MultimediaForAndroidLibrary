@@ -356,8 +356,13 @@ public class BufferedStream extends InputStream {
                         int totalSaved = 0;
                         do {
                             if (mDataBuffer != null) {
-                                totalSaved += mDataBuffer.put(data, totalSaved, read - totalSaved);
+                                int put = mDataBuffer.put(data, totalSaved, read - totalSaved);
+                                totalSaved += put;
                                 if (totalSaved < read) {
+                                    if (put == 0 && freeSpace() < (mBufferSize / 200) &&
+                                            available() < mBufferSize / 10) {
+                                        compact((mBufferSize / 10));
+                                    }
                                     try {
                                         // Let the system take a breath.
                                         Thread.sleep(1);

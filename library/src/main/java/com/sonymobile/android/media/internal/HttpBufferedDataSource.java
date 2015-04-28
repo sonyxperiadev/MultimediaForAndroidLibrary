@@ -108,22 +108,19 @@ public class HttpBufferedDataSource extends BufferedDataSource {
                 if (mBis.canDataFit((offset - mCurrentOffset) + size) &&
                         offset - mCurrentOffset < mBufferSize / 3) {
                     // Data will fit in the buffer and we need to wait for a buffer smaller than
-                    // 1/3 of the length. Send buffering start and wait here...
-                    sendMessage(SOURCE_BUFFERING_START);
+                    // 1/3 of the length.
                     Object waiterLock = new Object();
                     while (!mBis.canFastForward(offset - mCurrentOffset)) {
                         synchronized (waiterLock) {
                             try {
                                 waiterLock.wait(50);
                                 if (mBis.isStreamClosed()) {
-                                    sendMessage(SOURCE_BUFFERING_END);
                                     return -1;
                                 }
                             } catch (InterruptedException e) {
                             }
                         }
                     }
-                    sendMessage(SOURCE_BUFFERING_END);
                     mBis.fastForward(offset - mCurrentOffset);
                 } else {
                     mCurrentOffset = offset;
@@ -232,6 +229,14 @@ public class HttpBufferedDataSource extends BufferedDataSource {
         } finally {
             return percentage;
         }
+    }
+
+    public int getBufferedSize() {
+        try {
+            return mBis.available();
+        } catch (IOException e) {
+        }
+        return 0;
     }
 
     private void sendMessage(int what) {
