@@ -2419,7 +2419,7 @@ public class ISOBMFFParser extends MediaParser {
             return false;
         }
 
-        if (boxIsUnder(BOX_ID_MP4A)) {
+        if (boxIsUnder(BOX_ID_MP4A) || boxIsUnder(BOX_ID_ENCA)) {
             if (esds[offset] == 0x6B) {
                 mCurrentMediaFormat.setString(MediaFormat.KEY_MIME, MimeType.MPEG_AUDIO);
                 mCurrentTrack.getMetaData().addValue(KEY_MIME_TYPE, MimeType.MPEG_AUDIO);
