@@ -25,6 +25,8 @@ import android.content.Context;
 import android.database.Cursor;
 import android.os.Environment;
 import android.provider.MediaStore;
+import android.provider.MediaStore.Audio;
+import android.provider.MediaStore.Audio.Media;
 import android.support.v4.widget.DrawerLayout;
 import android.util.Log;
 import android.view.Gravity;
@@ -49,6 +51,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
@@ -64,7 +67,9 @@ public class MediaBrowser {
 
     private File mCurrentFile;
 
-    private static final String TAG = "DEMOAPPLICATION_MEDIABROWSER";
+    private static final String TAG = "DEMOAPPLICATION_BROWSER";
+
+    private static final String LOCAL_FILES = "Local files";
 
     private static final String[] SUPPORTED_FILE_EXTENSIONS = {
             "MP4",
@@ -73,7 +78,20 @@ public class MediaBrowser {
             "ISMA",
             "M4V",
             "M4A",
-            "3GP"
+            "3GP",
+            "3GPP",
+            "M4B",
+            "3G2",
+            "3GA"
+    };
+
+    private static final String[] SUPPORTED_MIMETYPES = {
+            "video/mp4",
+            "video/3gpp",
+            "video/ismv",
+            "audio/isma",
+            "video/vnd.sony.mnv",
+            "audio/mp4"
     };
 
     private final ExpandableListView mExpandableListView;
@@ -119,7 +137,8 @@ public class MediaBrowser {
         mListDataHeader = new ArrayList<>();
         mListDataChild = new HashMap<>();
         mAllSources = new HashMap<>();
-        readFromMediaStore();
+        readFromMediaStoreVideo();
+        readFromMediaStoreAudio();
         readFileFromPath(null);
         readFileFromPath(Environment.getExternalStorageDirectory()
                 + "/demoapplication_links.txt");
@@ -152,7 +171,7 @@ public class MediaBrowser {
         });
     }
 
-    private void readFromMediaStore() {
+    private void readFromMediaStoreVideo() {
 
         String columns[] = {
                 MediaStore.Video.VideoColumns.TITLE, MediaStore.Video.VideoColumns._ID,
@@ -164,24 +183,55 @@ public class MediaBrowser {
         String[] tmpStrArr;
         String tmpStr;
         if (cursor.moveToFirst()) {
-            mListDataHeader.add("Local files");
-            mAllSources.put("Local files", new HashMap<String, String>());
+            mListDataHeader.add(LOCAL_FILES);
+            mAllSources.put(LOCAL_FILES, new HashMap<String, String>());
             do {
                 tmpStr = cursor.getString(2);
-                tmpStrArr = tmpStr.split("/");
-                if (tmpStrArr[0].equals("video")
-                        && (tmpStrArr[1].equals("mp4") || tmpStrArr[1].equals("vnd.sony.mnv"))) {
-                    tmpStrArr = cursor.getString(3).split("\\.");
-                    if (isFileExtensionSupported(tmpStrArr[tmpStrArr.length - 1])) {
+                for (String s : SUPPORTED_MIMETYPES) {
+                    if (s.equals(tmpStr)) {
                         String titleWithFiletype = cursor.getString(3).substring(
                                 cursor.getString(3).lastIndexOf("/") + 1);
                         children.add(new MediaSource(titleWithFiletype,
                                 cursor.getString(3)));
-                        mAllSources.get("Local files").put(titleWithFiletype, cursor.getString(3));
+                        mAllSources.get(LOCAL_FILES).put(titleWithFiletype, cursor.getString(3));
                     }
                 }
             } while (cursor.moveToNext());
-            mListDataChild.put("Local files", children);
+            mListDataChild.put(LOCAL_FILES, children);
+        }
+        cursor.close();
+    }
+
+    private void readFromMediaStoreAudio() {
+
+        String columns[] = {
+                MediaStore.Audio.AudioColumns.TITLE, MediaStore.Audio.AudioColumns._ID,
+                MediaStore.Audio.AudioColumns.MIME_TYPE, MediaStore.Audio.AudioColumns.DATA
+        };
+        Cursor cursor = mMainActivity.getContentResolver().query(MediaStore.Audio.Media
+                .EXTERNAL_CONTENT_URI, columns, null, null, null);
+        ArrayList<MediaSource> children = new ArrayList<MediaSource>();
+        String[] tmpStrArr;
+        String tmpStr;
+        if (cursor.moveToFirst()) {
+            do {
+                tmpStr = cursor.getString(2);
+                for (String s : SUPPORTED_MIMETYPES) {
+                    if (s.equals(tmpStr)) {
+                        String titleWithFiletype = cursor.getString(3).substring(
+                                cursor.getString(3).lastIndexOf("/") + 1);
+                        children.add(new MediaSource(titleWithFiletype,
+                                cursor.getString(3)));
+                        mAllSources.get(LOCAL_FILES).put(titleWithFiletype, cursor.getString(3));
+                    }
+                }
+            } while (cursor.moveToNext());
+            ArrayList<MediaSource> localList =
+                    (ArrayList<MediaSource>)mListDataChild.get(LOCAL_FILES);
+            if (localList != null) {
+                children.addAll(localList);
+            }
+            mListDataChild.put(LOCAL_FILES, children);
         }
         cursor.close();
     }
@@ -201,12 +251,14 @@ public class MediaBrowser {
             mStartPath = Environment.getExternalStorageDirectory().toString();
         }
         mFiles = file.listFiles();
-        ArrayList<String> nameList = new ArrayList<>();
-        for (File mFile : mFiles) {
-            if (isFileExtensionSupported(mFile.getName())) {
-                nameList.add(mFile.getName());
+        ArrayList<String> nameList = new ArrayList<String>();
+        for (File tempFile : mFiles) {
+            if (isFileExtensionSupported(tempFile.getName()) || (tempFile.isDirectory())){
+                nameList.add(tempFile.getName());
             }
         }
+        Collections.sort(nameList);
+
         String[] fileNames = new String[nameList.size()];
         for (int i = 0; i < nameList.size(); i++) {
             fileNames[i] = nameList.get(i);
@@ -259,12 +311,13 @@ public class MediaBrowser {
         mCurrentFile = file;
         mCurrentPath = file.getPath();
         mFiles = file.listFiles();
-        ArrayList<String> nameList = new ArrayList<>();
-        for (File mFile : mFiles) {
-            if (isFileExtensionSupported(mFile.getName())) {
-                nameList.add(mFile.getName());
+        ArrayList<String> nameList = new ArrayList<String>();
+        for (File tempFile : mFiles) {
+            if (isFileExtensionSupported(tempFile.getName()) || (tempFile.isDirectory())){
+                nameList.add(tempFile.getName());
             }
         }
+        Collections.sort(nameList);
         String[] fileNames = new String[nameList.size()];
         for (int i = 0; i < nameList.size(); i++) {
             fileNames[i] = nameList.get(i);
