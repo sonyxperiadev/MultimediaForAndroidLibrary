@@ -1655,14 +1655,6 @@ public class ISOBMFFParser extends MediaParser {
         } else if (header.boxType == BOX_ID_MFHD) {
             try {
                 int sequenceNumber = mDataSource.readInt();
-                if (sequenceNumber <= mCurrentMoofSequenceNumber) {
-                    if (LOGS_ENABLED) Log.e(TAG, "Current moof sequence number " +
-                            sequenceNumber + " is not higher than previous moof sequence number " +
-                            mCurrentMoofSequenceNumber);
-                    mCurrentBoxSequence.removeLast();
-                    return false;
-                }
-                mCurrentMoofSequenceNumber = sequenceNumber;
             } catch (IOException e) {
                 if (LOGS_ENABLED) Log.e(TAG, "IOException while parsing 'mfhd' box", e);
 
