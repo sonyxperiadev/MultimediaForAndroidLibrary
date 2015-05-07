@@ -319,7 +319,7 @@ public class MPDParser {
             mContentProtection = new ContentProtection();
             uuid = uuid.substring(compare.length(), uuid.length());
             uuid = uuid.replace("-", "");
-            mContentProtection.uuid = Util.hexToBytes(uuid);
+            mContentProtection.uuid = Util.uuidStringToByteArray(uuid);
         }
     }
 
