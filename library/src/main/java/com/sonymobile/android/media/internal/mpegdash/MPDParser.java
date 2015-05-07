@@ -575,7 +575,7 @@ public class MPDParser {
         while (offset < value.length()) {
             switch (value.charAt(offset)) {
                 case 'Y':
-                    durationUs += Long.parseLong(value.substring(start, offset)) * 12 * 30 * 24
+                    durationUs += Long.parseLong(value.substring(start, offset)) * 365 * 24
                             * 60 * 60 * 1000000L;
                     start = offset + 1;
                     break;
