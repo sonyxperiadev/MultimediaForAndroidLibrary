@@ -101,6 +101,10 @@ public class DASHBufferedDataSource extends BufferedDataSource {
             }
         } while (totalRead < size);
 
+        if (totalRead < size) {
+            throw new IOException("Not enough data read");
+        }
+
         return totalRead;
     }
 }
