@@ -411,6 +411,17 @@ public class BufferedStream extends InputStream {
                     } else {
                         mEos = true;
                     }
+                } catch (RuntimeException e) {
+                    if (LOGS_ENABLED) Log.e(TAG, "Exception during read!", e);
+                    if (mInputStream != null) {
+                        try {
+                            mInputStream.close();
+                        } catch (IOException e1) {
+                        } finally {
+                            mInputStream = null;
+                        }
+                    }
+                    mEos = true;
                 }
             }
 
