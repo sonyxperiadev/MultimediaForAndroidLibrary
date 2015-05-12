@@ -213,6 +213,9 @@ public class DASHISOParser extends ISOBMFFParser {
 
     @Override
     protected boolean parseBox(BoxHeader header) {
+        if (header == null) {
+            return false;
+        }
         if (header.boxType == BOX_ID_SUBS) {
             int boxSize = (int)(header.boxHeaderSize + header.boxDataSize);
             mSubs = new byte[(int)(header.boxHeaderSize + header.boxDataSize)];
