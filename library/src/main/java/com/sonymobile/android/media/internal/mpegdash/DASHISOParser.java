@@ -328,15 +328,17 @@ public class DASHISOParser extends ISOBMFFParser {
                     int err = parseSegmentIndex(boxHeader);
 
                     if (err != OK) {
+                        if (LOGS_ENABLED) Log.e(TAG, "failed to get next sidx at " + mCurrentOffset
+                                + ", err: " + err);
                         return err;
                     }
                 }
             }
 
         } catch (EOFException e) {
-            if (LOGS_ENABLED) Log.e(TAG, "EOFException while parsing 'mvhd' box", e);
+            if (LOGS_ENABLED) Log.e(TAG, "EOFException while parsing 'sidx' box", e);
         } catch (IOException e) {
-            if (LOGS_ENABLED) Log.e(TAG, "IOException while parsing 'mvhd' box", e);
+            if (LOGS_ENABLED) Log.e(TAG, "IOException while parsing 'sidx' box", e);
         }
         mCurrentOffset += header.boxDataSize;
 

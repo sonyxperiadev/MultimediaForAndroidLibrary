@@ -217,6 +217,12 @@ public class RepresentationFetcher {
                 if (err == DASHISOParser.ERROR_BUFFER_TO_SMALL) {
                     // Retry
                     return;
+                } else if (err != DASHISOParser.OK) {
+                    if (LOGS_ENABLED) Log.e(TAG, "Error " + err + " while parsing sidx");
+                    Message callback = mSession.getFetcherCallbackMessage(mType);
+                    callback.arg1 = DASHSession.FETCHER_ERROR;
+                    callback.sendToTarget();
+                    return;
                 }
 
                 mSegmentIndex = mParser.getSegmentIndex();
