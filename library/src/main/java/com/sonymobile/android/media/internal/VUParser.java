@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import android.media.MediaCodec;
 import android.media.MediaCodec.CryptoInfo;
@@ -77,6 +78,8 @@ public class VUParser extends ISOBMFFParser {
 
     private boolean mNeedsMTSD = false;
 
+    private HashMap<String, byte[]> mIconMap;
+
     public VUParser(DataSource source) {
         super(source);
         if (LOGS_ENABLED) Log.v(TAG, "create VUParser from source");
@@ -108,6 +111,7 @@ public class VUParser extends ISOBMFFParser {
 
         updateAspectRatio();
 
+        saveVUThumbnails();
         return parseOK;
     }
 
@@ -585,6 +589,8 @@ public class VUParser extends ISOBMFFParser {
         public int mdstIndex = -1;
 
         public int languageIndex = -1;
+
+        public byte[] iconData = null;
     }
 
     @Override
@@ -634,51 +640,13 @@ public class VUParser extends ISOBMFFParser {
 
     @Override
     public byte[] getByteBuffer(String key1, String key2) {
-        if (key1 == KEY_HMMP_ICON) {
-            String[] iconLanguages = getStringArray(KEY_HMMP_ICON_LANGUAGES);
-            int iconCount = mIconList.size();
-            for (int i = 0; i < iconCount; i++) {
-                IconInfo iconInfo = mIconList.get(i);
-                if (iconLanguages[iconInfo.languageIndex].equals(key2)) {
-                    int mtsmCount = mMtsmList.size();
-                    MtsmEntry mtsmEntry = null;
-                    for (int j = 0; j < mtsmCount; j++) {
-                        MtsmEntry tmpEntry = mMtsmList.get(j);
-                        if (tmpEntry.id == iconInfo.mtsmId) {
-                            mtsmEntry = tmpEntry;
-                            break;
-                        }
-                    }
-                    if (mtsmEntry == null) {
-                        if (LOGS_ENABLED) Log.e(TAG, "mtsmEntry is null");
-                        return null;
-                    }
-                    int mdstCount = mtsmEntry.mMdstList.size();
-                    MdstEntry mdstEntry = null;
-                    for (int j = 0; j < mdstCount; j++) {
-                        MdstEntry tmpEntry = mtsmEntry.mMdstList.get(j);
-                        if (tmpEntry.metadataSampleDescriptionIndex == iconInfo.mdstIndex) {
-                            mdstEntry = tmpEntry;
-                            break;
-                        }
-                    }
-                    if (mdstEntry == null) {
-                        if (LOGS_ENABLED) Log.e(TAG, "mdstEntry is null");
-                        return null;
-                    }
-                    // read icon from file
-                    byte[] data = new byte[mdstEntry.metadataSampleSize];
-                    try {
-                        mDataSource.readAt(mdstEntry.metadataSampleOffset + mMtsdOffset, data,
-                                data.length);
-                    } catch (IOException e) {
-                        if (LOGS_ENABLED) Log.e(TAG, "Error reading icon data from file", e);
-                        return null;
-                    }
-                    return data;
-                }
+        if (key1.equals(KEY_HMMP_ICON)) {
+            byte[] iconData = mIconMap.get(key2);
+            if (iconData != null) {
+                return iconData;
+            } else {
+                return null;
             }
-            return null;
         }
         return super.getByteBuffer(key1, key2);
     }
@@ -722,6 +690,57 @@ public class VUParser extends ISOBMFFParser {
         ByteBuffer csdData = ByteBuffer.wrap(csdArray);
         csdData.limit(csdArrayOffset);
         return csdData;
+    }
+
+    protected void saveVUThumbnails() {
+        if (mIconList == null) {
+            return;
+        }
+        mIconMap = new HashMap<>();
+        String[] iconLanguages = getStringArray(KEY_HMMP_ICON_LANGUAGES);
+        int iconCount = mIconList.size();
+        for (int i = 0; i < iconCount; i++) {
+            IconInfo iconInfo = mIconList.get(i);
+            if (mIconMap.containsKey(iconLanguages[iconInfo.languageIndex])) {
+                continue;
+            }
+            int mtsmCount = mMtsmList.size();
+            MtsmEntry mtsmEntry = null;
+            for (int j = 0; j < mtsmCount; j++) {
+                MtsmEntry tmpEntry = mMtsmList.get(j);
+                if (tmpEntry.id == iconInfo.mtsmId) {
+                    mtsmEntry = tmpEntry;
+                    break;
+                }
+            }
+            if (mtsmEntry == null) {
+                if (LOGS_ENABLED) Log.e(TAG, "mtsmEntry is null");
+                continue;
+            }
+            int mdstCount = mtsmEntry.mMdstList.size();
+            MdstEntry mdstEntry = null;
+            for (int j = 0; j < mdstCount; j++) {
+                MdstEntry tmpEntry = mtsmEntry.mMdstList.get(j);
+                if (tmpEntry.metadataSampleDescriptionIndex == iconInfo.mdstIndex) {
+                    mdstEntry = tmpEntry;
+                    break;
+                }
+            }
+            if (mdstEntry == null) {
+                if (LOGS_ENABLED) Log.e(TAG, "mdstEntry is null");
+                continue;
+            }
+            // read icon from file
+            byte[] data = new byte[mdstEntry.metadataSampleSize];
+            try {
+                mDataSource.readAt(mdstEntry.metadataSampleOffset + mMtsdOffset, data,
+                        data.length);
+            } catch (IOException e) {
+                if (LOGS_ENABLED) Log.e(TAG, "Error reading icon data from file", e);
+                return;
+            }
+            mIconMap.put(iconLanguages[iconInfo.languageIndex], data);
+        }
     }
 
     public class VUIsoTrack extends ISOBMFFParser.IsoTrack {
