@@ -181,6 +181,9 @@ public class MPDParser {
         } catch (IOException e) {
             if (LOGS_ENABLED) Log.e(TAG, "IOException during parse", e);
             return false;
+        } catch (ParseException e) {
+            if (LOGS_ENABLED) Log.e(TAG, "ParseException during parse", e);
+            return false;
         }
 
         return success;
@@ -289,6 +292,13 @@ public class MPDParser {
                 && mCurrentPeriod.currentAdaptationSet[TrackType.VIDEO.ordinal()] == -1) {
             mCurrentPeriod.currentAdaptationSet[TrackType.VIDEO.ordinal()] =
                     mCurrentPeriod.adaptationSets.size();
+        }
+
+        for (Representation representation : mCurrentAdaptationSet.representations) {
+            if (representation.segmentTemplate == null &&
+                    representation.segmentBase == null) {
+                throw new ParseException("No SegmentTemplate or BaseURL found!");
+            }
         }
 
         mCurrentPeriod.adaptationSets.add(mCurrentAdaptationSet);
@@ -507,6 +517,7 @@ public class MPDParser {
 
         if (mCurrentRepresentation.segmentTemplate == null
                 && mCurrentRepresentation.segmentBase == null
+                && mCurrentRepresentation.baseURL != null
                 && mCurrentRepresentation.baseURL.length() > 0) {
             SegmentBase segmentBase = new SegmentBase();
 
