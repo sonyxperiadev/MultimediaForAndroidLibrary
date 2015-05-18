@@ -721,7 +721,9 @@ public final class AudioThread extends CodecThread implements Clock {
                 mAudioTrack.release();
                 mAudioTrack = null;
             }
-            mCodec.release();
+            if (mCodec != null) {
+                mCodec.release();
+            }
             if (mMediaCrypto != null && mDrmSession == null) {
                 // Only release the MediaCrypto object if not handled by a DRMSession.
                 mMediaCrypto.release();
