@@ -678,6 +678,19 @@ public class ISOBMFFParser extends MediaParser {
                 }
                 mParseODSMData = false;
             }
+            if (parseOK) {
+                if (mCurrentTrack.getTrackType() == TrackType.AUDIO
+                        && mCurrentAudioTrack == null) {
+                    if (LOGS_ENABLED) Log.v(TAG,
+                            "Setting audio track to " + mCurrentTrack.getTrackId());
+                    mCurrentAudioTrack = mCurrentTrack;
+                } else if (mCurrentTrack.getTrackType() == TrackType.VIDEO
+                        && mCurrentVideoTrack == null) {
+                    if (LOGS_ENABLED) Log.v(TAG,
+                            "Setting video track to " + mCurrentTrack.getTrackId());
+                    mCurrentVideoTrack = mCurrentTrack;
+                }
+            }
             mIsParsingTrack = false;
         } else if (header.boxType == BOX_ID_TKHD) {
             parseOK = readTkhd(header);
@@ -694,22 +707,6 @@ public class ISOBMFFParser extends MediaParser {
             while (mCurrentOffset < boxEndOffset && parseOK) {
                 BoxHeader nextBoxHeader = getNextBoxHeader();
                 parseOK = parseBox(nextBoxHeader);
-            }
-
-            if (parseOK) {
-                if (mCurrentTrack.getTrackType() == TrackType.AUDIO
-                        && mCurrentAudioTrack == null) {
-                    if (LOGS_ENABLED) Log.v(TAG,
-                            "Setting audio track to " + mCurrentTrack.getTrackId());
-                    mCurrentAudioTrack = mCurrentTrack;
-                } else if (mCurrentTrack.getTrackType() == TrackType.VIDEO
-                        && mCurrentVideoTrack == null) {
-                    if (LOGS_ENABLED) Log.v(TAG,
-                            "Setting video track to " + mCurrentTrack.getTrackId());
-                    mCurrentVideoTrack = mCurrentTrack;
-                }
-            } else {
-                if (LOGS_ENABLED) Log.e(TAG, "Error parsing minf boxes");
             }
         } else if (header.boxType == BOX_ID_STBL) {
             while (mCurrentOffset < boxEndOffset && parseOK) {
