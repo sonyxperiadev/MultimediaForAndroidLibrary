@@ -2417,7 +2417,7 @@ public class ISOBMFFParser extends MediaParser {
         int maxSize;
         // TODO: Move KEY_MAX_INPUT_SIZE setting from here, as we have not set mime
         // in case of protected files
-        if (mime.equals(MimeType.AVC)) {
+        if (MimeType.AVC.equals(mime)) {
             maxSize = ((width + 15) / 16) * ((height + 15) / 16) * 192;
         } else {
             maxSize = width * height * 3 / 2;
