@@ -27,11 +27,11 @@ DASH IF High Definition;Test 4;http://dash.edgesuite.net/dash264/TestCasesHD/2b/
 DASH IF High Definition;Test 5;http://dash.edgesuite.net/dash264/TestCasesHD/2b/qualcomm/1/MultiResMPEG2.mpd
 DASH IF High Definition;Test 6;http://dash.edgesuite.net/dash264/TestCasesHD/2b/qualcomm/2/MultiRes.mpd
 DASH IF High Definition;Test 7;http://dash.edgesuite.net/dash264/TestCasesHD/2c/qualcomm/1/MultiResMPEG2.mpd
-Smoothstreaming / PIFF;Test 17;http://playready.directtaps.net/smoothstreaming/SSWSS720H264/SuperSpeedway_720_230.ismv
-Smoothstreaming / PIFF;Test 18;http://playready.directtaps.net/smoothstreaming/SSWSS720H264/SuperSpeedway_720_331.ismv
-Smoothstreaming / PIFF;Test 19;http://playready.directtaps.net/smoothstreaming/SSWSS720H264/SuperSpeedway_720_477.ismv
-Smoothstreaming / PIFF;Test 20;http://playready.directtaps.net/smoothstreaming/SSWSS720H264/SuperSpeedway_720_688.ismv
-Smoothstreaming / PIFF;Test 21;http://playready.directtaps.net/smoothstreaming/SSWSS720H264/SuperSpeedway_720_991.ismv
-Smoothstreaming / PIFF;Test 22;http://playready.directtaps.net/smoothstreaming/SSWSS720H264/SuperSpeedway_720_1427.ismv
-Smoothstreaming / PIFF;Test 23;http://playready.directtaps.net/smoothstreaming/SSWSS720H264/SuperSpeedway_720_2056.ismv
-Smoothstreaming / PIFF;Test 24;http://playready.directtaps.net/smoothstreaming/SSWSS720H264/SuperSpeedway_720_2962.ismv
+HTTP PIFF;Test 17;http://playready.directtaps.net/smoothstreaming/SSWSS720H264/SuperSpeedway_720_230.ismv
+HTTP PIFF;Test 18;http://playready.directtaps.net/smoothstreaming/SSWSS720H264/SuperSpeedway_720_331.ismv
+HTTP PIFF;Test 19;http://playready.directtaps.net/smoothstreaming/SSWSS720H264/SuperSpeedway_720_477.ismv
+HTTP PIFF;Test 20;http://playready.directtaps.net/smoothstreaming/SSWSS720H264/SuperSpeedway_720_688.ismv
+HTTP PIFF;Test 21;http://playready.directtaps.net/smoothstreaming/SSWSS720H264/SuperSpeedway_720_991.ismv
+HTTP PIFF;Test 22;http://playready.directtaps.net/smoothstreaming/SSWSS720H264/SuperSpeedway_720_1427.ismv
+HTTP PIFF;Test 23;http://playready.directtaps.net/smoothstreaming/SSWSS720H264/SuperSpeedway_720_2056.ismv
+HTTP PIFF;Test 24;http://playready.directtaps.net/smoothstreaming/SSWSS720H264/SuperSpeedway_720_2962.ismv
