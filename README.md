@@ -4,7 +4,7 @@
 Multimedia for Android Library contains an application level media player. It provides a familiar and easy to use way to playback MPEG-DASH streaming content, HTTP and local playback.
 
 # Contents supported
-  * Containers: MPEG4 (not fully supported), PIFF 1.1 and PIFF 1.3.
+  * Containers: MPEG4, PIFF 1.1 and PIFF 1.3.
   * Codecs: H264, H265 (if supported by device) and AAC.
   * Subtitles: SMPTE-TT
   * DRM: Marlin and PlayReady (DRM support is not availble on all devices)
