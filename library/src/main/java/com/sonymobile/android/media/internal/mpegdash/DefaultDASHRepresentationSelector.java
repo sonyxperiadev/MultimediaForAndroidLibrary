@@ -170,7 +170,7 @@ public class DefaultDASHRepresentationSelector implements RepresentationSelector
                     continue;
                 }
                 if (sortedRepresentations.size() == 0) {
-                    sortedRepresentations.add(0);
+                    sortedRepresentations.add(i);
                 } else {
                     int representationBandwidth =
                             videoAdaptationSet.representations.get(i).bandwidth;
