@@ -410,6 +410,17 @@ public final class AudioThread extends CodecThread implements Clock {
                 }
 
                 if (accessUnit.status == AccessUnit.OK) {
+                    if (mInputBuffers[inputBufferIndex].capacity() < accessUnit.size) {
+                        if (LOGS_ENABLED) {
+                            Log.e(TAG, "Input buffer too small " +
+                                    mInputBuffers[inputBufferIndex].capacity() +
+                                    " vs " + accessUnit.size);
+                        }
+                        mCallbacks.obtainMessage(MSG_CODEC_NOTIFY, CODEC_ERROR,
+                                MediaError.UNKNOWN).sendToTarget();
+                        return;
+                    }
+
                     mInputBuffers[inputBufferIndex].position(0);
                     mInputBuffers[inputBufferIndex].put(accessUnit.data, 0, accessUnit.size);
 
