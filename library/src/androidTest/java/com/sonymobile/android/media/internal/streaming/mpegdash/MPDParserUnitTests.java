@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.sonymobile.android.media.internal.mpegdash;
+package com.sonymobile.android.media.internal.streaming.mpegdash;
 
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
@@ -22,9 +22,9 @@ import java.nio.charset.StandardCharsets;
 import junit.framework.TestCase;
 
 import com.sonymobile.android.media.TrackInfo.TrackType;
-import com.sonymobile.android.media.internal.mpegdash.MPDParser.Representation;
-import com.sonymobile.android.media.internal.mpegdash.MPDParser.SegmentBase;
-import com.sonymobile.android.media.internal.mpegdash.MPDParser.SegmentTemplate;
+import com.sonymobile.android.media.internal.streaming.mpegdash.MPDParser.Representation;
+import com.sonymobile.android.media.internal.streaming.mpegdash.MPDParser.SegmentBase;
+import com.sonymobile.android.media.internal.streaming.mpegdash.MPDParser.SegmentTemplate;
 
 public class MPDParserUnitTests extends TestCase {
 

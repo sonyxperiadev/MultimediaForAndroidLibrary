@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.sonymobile.android.media.internal.mpegdash;
+package com.sonymobile.android.media.internal.streaming.mpegdash;
 
 import java.util.ArrayList;
 
@@ -23,9 +23,9 @@ import com.sonymobile.android.media.TrackInfo;
 import com.sonymobile.android.media.TrackInfo.TrackType;
 import com.sonymobile.android.media.TrackRepresentation;
 import com.sonymobile.android.media.internal.Configuration;
-import com.sonymobile.android.media.internal.mpegdash.MPDParser.AdaptationSet;
-import com.sonymobile.android.media.internal.mpegdash.MPDParser.Period;
-import com.sonymobile.android.media.internal.mpegdash.MPDParser.Representation;
+import com.sonymobile.android.media.internal.streaming.mpegdash.MPDParser.AdaptationSet;
+import com.sonymobile.android.media.internal.streaming.mpegdash.MPDParser.Period;
+import com.sonymobile.android.media.internal.streaming.mpegdash.MPDParser.Representation;
 
 import android.util.Log;
 

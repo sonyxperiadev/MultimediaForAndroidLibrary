@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.sonymobile.android.media.internal.mpegdash;
+package com.sonymobile.android.media.internal.streaming.mpegdash;
 
 import android.media.MediaFormat;
 import android.os.Handler;

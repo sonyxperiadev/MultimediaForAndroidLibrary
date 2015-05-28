@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.sonymobile.android.media.internal.mpegdash;
+package com.sonymobile.android.media.internal.streaming.mpegdash;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -32,9 +32,10 @@ import com.sonymobile.android.media.TrackInfo.TrackType;
 import com.sonymobile.android.media.internal.AccessUnit;
 import com.sonymobile.android.media.internal.Configuration;
 import com.sonymobile.android.media.internal.DataSource;
-import com.sonymobile.android.media.internal.mpegdash.DASHISOParser.SubSegment;
-import com.sonymobile.android.media.internal.mpegdash.MPDParser.Representation;
-import com.sonymobile.android.media.internal.mpegdash.MPDParser.SegmentTimelineEntry;
+import com.sonymobile.android.media.internal.streaming.mpegdash.DASHISOParser.SubSegment;
+import com.sonymobile.android.media.internal.streaming.mpegdash.MPDParser.Representation;
+import com.sonymobile.android.media.internal.streaming.mpegdash.MPDParser.SegmentTimelineEntry;
+import com.sonymobile.android.media.internal.streaming.common.PacketSource;
 
 public class RepresentationFetcher {
 

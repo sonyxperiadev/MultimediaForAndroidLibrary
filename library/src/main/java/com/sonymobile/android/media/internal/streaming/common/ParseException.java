@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.sonymobile.android.media.internal.mpegdash;
+package com.sonymobile.android.media.internal.streaming.common;
 
 /**
  * Exception to be thrown if parsing of DASH links fails.

@@ -46,7 +46,7 @@ import com.sonymobile.android.media.internal.drm.DrmSession;
 import com.sonymobile.android.media.internal.drm.DrmSession.DrmLicenseException;
 import com.sonymobile.android.media.internal.drm.DrmSessionFactory;
 import com.sonymobile.android.media.internal.drm.DrmUUID;
-import com.sonymobile.android.media.internal.mpegdash.DASHSource;
+import com.sonymobile.android.media.internal.streaming.mpegdash.DASHSource;
 
 public final class Player {
 

@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.sonymobile.android.media.internal.mpegdash;
+package com.sonymobile.android.media.internal.streaming.common;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -24,11 +24,11 @@ import android.util.Log;
 import com.sonymobile.android.media.BandwidthEstimator;
 import com.sonymobile.android.media.internal.Configuration;
 
-public class DefaultDASHBandwidthEstimator implements BandwidthEstimator {
+public class DefaultBandwidthEstimator implements BandwidthEstimator {
 
     private static final boolean LOGS_ENABLED = Configuration.DEBUG || false;
 
-    private static final String TAG = "DefaultDASHBandwidthEstimator";
+    private static final String TAG = "DefaultBandwidthEstimator";
 
     private ArrayList<BandWidthMeasureItem> mBandWidthMeasure;
 
@@ -42,8 +42,8 @@ public class DefaultDASHBandwidthEstimator implements BandwidthEstimator {
 
     private double mLatestBandwidthEntry1, mLatestBandwidthEntry2;
 
-    public DefaultDASHBandwidthEstimator() {
-        mBandWidthMeasure = new ArrayList<DefaultDASHBandwidthEstimator.BandWidthMeasureItem>();
+    public DefaultBandwidthEstimator() {
+        mBandWidthMeasure = new ArrayList<>();
     }
 
     @Override

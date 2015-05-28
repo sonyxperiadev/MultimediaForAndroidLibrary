@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.sonymobile.android.media.internal.mpegdash;
+package com.sonymobile.android.media.internal.streaming.mpegdash;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -39,6 +39,7 @@ import com.sonymobile.android.media.TrackRepresentation;
 import com.sonymobile.android.media.VideoTrackRepresentation;
 import com.sonymobile.android.media.internal.Configuration;
 import com.sonymobile.android.media.internal.Util;
+import com.sonymobile.android.media.internal.streaming.common.ParseException;
 
 public class MPDParser {
 

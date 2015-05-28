@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.sonymobile.android.media.internal.mpegdash;
+package com.sonymobile.android.media.internal.streaming.mpegdash;
 
 import java.io.IOException;
 import java.lang.ref.WeakReference;
@@ -45,9 +45,11 @@ import com.sonymobile.android.media.internal.AccessUnit;
 import com.sonymobile.android.media.internal.Configuration;
 import com.sonymobile.android.media.internal.MetaDataImpl;
 import com.sonymobile.android.media.internal.MimeType;
-import com.sonymobile.android.media.internal.mpegdash.MPDParser.ContentProtection;
-import com.sonymobile.android.media.internal.mpegdash.MPDParser.Period;
-import com.sonymobile.android.media.internal.mpegdash.MPDParser.Representation;
+import com.sonymobile.android.media.internal.streaming.mpegdash.MPDParser.ContentProtection;
+import com.sonymobile.android.media.internal.streaming.mpegdash.MPDParser.Period;
+import com.sonymobile.android.media.internal.streaming.mpegdash.MPDParser.Representation;
+import com.sonymobile.android.media.internal.streaming.common.DefaultBandwidthEstimator;
+import com.sonymobile.android.media.internal.streaming.common.PacketSource;
 
 public final class DASHSession {
 
@@ -379,7 +381,7 @@ public final class DASHSession {
                 mMPDParser = new MPDParser(uri);
 
                 if (mBandwidthEstimator == null) {
-                    mBandwidthEstimator = new DefaultDASHBandwidthEstimator();
+                    mBandwidthEstimator = new DefaultBandwidthEstimator();
                 }
 
                 if (mRepresentationSelector == null) {
