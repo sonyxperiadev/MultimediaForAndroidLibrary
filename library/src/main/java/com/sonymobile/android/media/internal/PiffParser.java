@@ -42,19 +42,7 @@ public class PiffParser extends ISOBMFFParser {
 
     private static final int SCHEME_TYPE_PIFF = FTYP_BRAND_PIFF;
 
-    // private static final int BOX_ID_TFTD = fourCC('t', 'f', 'd', 't');
-
     private static final int BOX_ID_AVCN = fourCC('a', 'v', 'c', 'n');
-
-    // private static final int BOX_ID_TRIK = fourCC('t', 'r', 'i', 'k');
-
-    // private static final int BOX_ID_STHD = fourCC('s', 't', 'h', 'd');
-
-    // private static final int BOX_ID_CENC = fourCC('c', 'e', 'n', 'c');
-
-    // private static final int BOX_ID_SENC = fourCC('s', 'e', 'n', 'c');
-
-    // private static final int BOX_ID_SEIG = fourCC('s', 'e', 'i', 'g');
 
     protected static final int HANDLER_TYPE_CFF_SUBTITLE = fourCC('s', 'u', 'b', 't');
 
@@ -65,8 +53,6 @@ public class PiffParser extends ISOBMFFParser {
     private static final String UUID_TRACK_ENCRYPTION = "8974DBCE7BE74C5184F97148F9882554";
 
     private static final int UUID_SIZE = 16;
-
-    private int mPiffVersion = 0;
 
     public PiffParser(DataSource source) {
         super(source);
@@ -117,206 +103,147 @@ public class PiffParser extends ISOBMFFParser {
         }
         mCurrentBoxSequence.add(header);
         long boxEndOffset = mCurrentOffset + header.boxDataSize;
-        boolean parseOK = true;
-        if (header.boxType == BOX_ID_UUID) {
-            byte[] userType = new byte[UUID_SIZE];
-            try {
-                mDataSource.read(userType);
-                String uuidUserType = Util.bytesToHex(userType);
-                if (uuidUserType.equals(UUID_PSSH)) {
-                    // uuid in moov box (pssh data)
-                    parseOK = parsePsshDataFromUuid(header);
-                } else if (uuidUserType.equals(UUID_SAMPLE_ENCRYPTION)) {
-                    // uuid in traf box
-                    if (mCurrentMoofTrackId == mCurrentTrackId && !mSkipInsertSamples
-                            && !mParsedSencData) {
-                        mParsedSencData = true;
-                        int versionFlags = mDataSource.readInt();
-                        int ivSize = 0;
-                        byte[] kID = null;
-                        if ((versionFlags & 0x1) != 0) {
-                            mDataSource.skipBytes(3); // Skip Algorithm id
-                            ivSize = mDataSource.readInt();
-                            kID = new byte[16];
-                            mDataSource.read(kID);
-                        } else {
-                            // read default values from track encryption
-                            ivSize = mCurrentTrack.mDefaultIVSize;
-                            kID = mCurrentTrack.mDefaultKID;
-                        }
-                        try {
-                            int sampleCount = mDataSource.readInt();
-
-                            ArrayList<CryptoInfo> cryptoInfos =
-                                    new ArrayList<CryptoInfo>(sampleCount);
-
-                            for (int i = 0; i < sampleCount; i++) {
-                                CryptoInfo info = new CryptoInfo();
-                                info.mode = MediaCodec.CRYPTO_MODE_AES_CTR;
-                                info.iv = new byte[16];
-                                info.key = kID;
-                                if (ivSize == 16) {
-                                    mDataSource.read(info.iv);
-                                } else {
-                                    // pad IV data to 128 bits
-                                    byte[] iv = new byte[8];
-                                    mDataSource.read(iv);
-                                    System.arraycopy(iv, 0, info.iv, 0, 8);
-                                }
-                                if ((versionFlags & 0x00000002) > 0) {
-                                    short subSampleCount = mDataSource.readShort();
-                                    info.numSubSamples = subSampleCount;
-                                    info.numBytesOfClearData = new int[subSampleCount];
-                                    info.numBytesOfEncryptedData = new int[subSampleCount];
-                                    for (int j = 0; j < subSampleCount; j++) {
-                                        info.numBytesOfClearData[j] = mDataSource.readShort();
-                                        info.numBytesOfEncryptedData[j] = mDataSource.readInt();
-                                    }
-                                } else {
-                                    info.numSubSamples = 1;
-                                    info.numBytesOfClearData = new int[1];
-                                    info.numBytesOfClearData[0] = 0;
-                                    info.numBytesOfEncryptedData = new int[1];
-                                    info.numBytesOfEncryptedData[0] = -1;
-                                }
-
-                                if (info.numBytesOfClearData[0] == 0 &&
-                                        mCurrentTrack.getTrackType() == TrackType.VIDEO) {
-                                    info.iv[15] = (byte)mNALLengthSize;
-                                }
-
-                                cryptoInfos.add(info);
-                            }
-                            mCurrentTrack.addCryptoInfos(cryptoInfos);
-
-                        } catch (EOFException e) {
-                            if (LOGS_ENABLED) Log.e(TAG, "Error parsing 'senc' uuid box", e);
-
-                            mCurrentBoxSequence.removeLast();
-                            parseOK = false;
-                        } catch (IOException e) {
-                            if (LOGS_ENABLED) Log.e(TAG, "Error parsing 'senc' uuid box", e);
-
-                            mCurrentBoxSequence.removeLast();
-                            parseOK = false;
-                        }
-                    }
-                } else if (uuidUserType.equals(UUID_TRACK_ENCRYPTION)) {
-                    // uuid in schi box
-                    mDataSource.skipBytes(7); // version, flags and algorithm id
-                    int defaultIVSize = mDataSource.readByte();
-                    byte[] defaultKID = new byte[16];
-                    mDataSource.read(defaultKID);
-                    mCurrentTrack.setDefaultEncryptionData(defaultIVSize,
-                            defaultKID);
-                } else {
-                    mCurrentOffset -= UUID_SIZE;
-                    parseOK = super.parseBox(header);
-                }
-            } catch (IOException e) {
-                if (LOGS_ENABLED) Log.e(TAG, "Error parsing 'uuid' box", e);
-                parseOK = false;
-            }
-        } else if (header.boxType == BOX_ID_SENC) {
-            if (mCurrentMoofTrackId == mCurrentTrackId && !mSkipInsertSamples &&
-                    !mParsedSencData) {
-                mParsedSencData = true;
-                try {
-                    int versionFlags = mDataSource.readInt();
-
-                    int sampleCount = mDataSource.readInt();
-
-                    ArrayList<CryptoInfo> cryptoInfos = new ArrayList<CryptoInfo>(sampleCount);
-
-                    for (int i = 0; i < sampleCount; i++) {
-                        CryptoInfo info = new CryptoInfo();
-                        info.mode = MediaCodec.CRYPTO_MODE_AES_CTR;
-                        info.iv = new byte[16];
-                        if (mCurrentTrack.mDefaultIVSize == 16) {
-                            mDataSource.read(info.iv);
-                        } else {
-                            // pad IV data to 128 bits
-                            byte[] iv = new byte[8];
-                            mDataSource.read(iv);
-                            System.arraycopy(iv, 0, info.iv, 0, 8);
-                        }
-                        if ((versionFlags & 0x00000002) > 0) {
-                            short subSampleCount = mDataSource.readShort();
-                            info.numSubSamples = subSampleCount;
-                            info.numBytesOfClearData = new int[subSampleCount];
-                            info.numBytesOfEncryptedData = new int[subSampleCount];
-                            for (int j = 0; j < subSampleCount; j++) {
-                                info.numBytesOfClearData[j] = mDataSource.readShort();
-                                info.numBytesOfEncryptedData[j] = mDataSource.readInt();
-                            }
-                        } else {
-                            info.numSubSamples = 1;
-                            info.numBytesOfClearData = new int[1];
-                            info.numBytesOfClearData[0] = 0;
-                            info.numBytesOfEncryptedData = new int[1];
-                            info.numBytesOfEncryptedData[0] = -1;
-                        }
-
-                        if (info.numBytesOfClearData[0] == 0 && mCurrentTrack
-                                .getTrackType() == TrackType.VIDEO) {
-                            info.iv[15] = (byte)mNALLengthSize;
-                        }
-
-                        cryptoInfos.add(info);
-                    }
-
-                    mCurrentTrack.addCryptoInfos(cryptoInfos);
-                } catch (EOFException e) {
-                    if (LOGS_ENABLED) {
-                        Log.e(TAG, "Error parsing 'senc' box", e);
-                    }
-
-                    mCurrentBoxSequence.removeLast();
-                    parseOK = false;
-                } catch (IOException e) {
-                    if (LOGS_ENABLED) {
-                        Log.e(TAG, "Error parsing 'senc' box", e);
-                    }
-
-                    mCurrentBoxSequence.removeLast();
-                    parseOK = false;
-                }
-            }
-        } else if (header.boxType == BOX_ID_AVCN) {
+        boolean parseOK;
+        if (header.boxType == BOX_ID_AVCN) {
             return parseAvcn(header);
-        } else if (header.boxType == BOX_ID_SCHM) {
-            try {
-                int versionFlags = mDataSource.readInt();
-                int schemeType = mDataSource.readInt();
-                if (schemeType != SCHEME_TYPE_PIFF && schemeType != SCHEME_TYPE_CENC) {
-                    if (LOGS_ENABLED) Log.e(TAG, "Scheme is not of type 'piff' or 'cenc'");
-                    parseOK = false;
-                } else {
-                    mDataSource.skipBytes(4); // Skip schemaVersion
-                    if ((versionFlags & 0x01) != 0) {
-                        // TODO read scheme_uri if we're interested
-                        // byte[] data = new byte[(int)header.boxDataSize - 12];
-                        // mDataSource.read(data);
-                        mDataSource.skipBytes(header.boxDataSize - 12);
-                    }
-                }
-            } catch (EOFException e) {
-                if (LOGS_ENABLED) Log.e(TAG, "Error parsing 'schm' box", e);
-                mCurrentBoxSequence.removeLast();
-                parseOK = false;
-            } catch (IOException e) {
-                if (LOGS_ENABLED) Log.e(TAG, "Error parsing 'schm' box", e);
-                mCurrentBoxSequence.removeLast();
-                parseOK = false;
-            }
-        } else if (header.boxType == BOX_ID_PSSH) {
-            parseOK = parsePsshData(header);
         } else {
             parseOK = super.parseBox(header);
         }
         mCurrentOffset = boxEndOffset;
         mCurrentBoxSequence.removeLast();
         return parseOK;
+    }
+
+    @Override
+    protected boolean parseUuid(BoxHeader header) {
+        byte[] userType = new byte[UUID_SIZE];
+        try {
+            mDataSource.read(userType);
+            String uuidUserType = Util.bytesToHex(userType);
+            if (uuidUserType.equals(UUID_PSSH)) {
+                // uuid in moov box (pssh data)
+                return parsePsshDataFromUuid(header);
+            } else if (uuidUserType.equals(UUID_SAMPLE_ENCRYPTION)) {
+                // uuid in traf box
+                if (mCurrentMoofTrackId == mCurrentTrackId && !mSkipInsertSamples
+                        && !mParsedSencData) {
+                    mParsedSencData = true;
+                    int versionFlags = mDataSource.readInt();
+                    int ivSize = 0;
+                    byte[] kID = null;
+                    if ((versionFlags & 0x1) != 0) {
+                        mDataSource.skipBytes(3); // Skip Algorithm id
+                        ivSize = mDataSource.readInt();
+                        kID = new byte[16];
+                        mDataSource.read(kID);
+                    } else {
+                        // read default values from track encryption
+                        ivSize = mCurrentTrack.mDefaultIVSize;
+                        kID = mCurrentTrack.mDefaultKID;
+                    }
+                    try {
+                        int sampleCount = mDataSource.readInt();
+
+                        ArrayList<CryptoInfo> cryptoInfos =
+                                new ArrayList<CryptoInfo>(sampleCount);
+
+                        for (int i = 0; i < sampleCount; i++) {
+                            CryptoInfo info = new CryptoInfo();
+                            info.mode = MediaCodec.CRYPTO_MODE_AES_CTR;
+                            info.iv = new byte[16];
+                            info.key = kID;
+                            if (ivSize == 16) {
+                                mDataSource.read(info.iv);
+                            } else {
+                                // pad IV data to 128 bits
+                                byte[] iv = new byte[8];
+                                mDataSource.read(iv);
+                                System.arraycopy(iv, 0, info.iv, 0, 8);
+                            }
+                            if ((versionFlags & 0x00000002) > 0) {
+                                short subSampleCount = mDataSource.readShort();
+                                info.numSubSamples = subSampleCount;
+                                info.numBytesOfClearData = new int[subSampleCount];
+                                info.numBytesOfEncryptedData = new int[subSampleCount];
+                                for (int j = 0; j < subSampleCount; j++) {
+                                    info.numBytesOfClearData[j] = mDataSource.readShort();
+                                    info.numBytesOfEncryptedData[j] = mDataSource.readInt();
+                                }
+                            } else {
+                                info.numSubSamples = 1;
+                                info.numBytesOfClearData = new int[1];
+                                info.numBytesOfClearData[0] = 0;
+                                info.numBytesOfEncryptedData = new int[1];
+                                info.numBytesOfEncryptedData[0] = -1;
+                            }
+
+                            if (info.numBytesOfClearData[0] == 0 &&
+                                    mCurrentTrack.getTrackType() == TrackType.VIDEO) {
+                                info.iv[15] = (byte)mNALLengthSize;
+                            }
+
+                            cryptoInfos.add(info);
+                        }
+                        mCurrentTrack.addCryptoInfos(cryptoInfos);
+
+                    } catch (EOFException e) {
+                        if (LOGS_ENABLED) Log.e(TAG, "Error parsing 'senc' uuid box", e);
+
+                        mCurrentBoxSequence.removeLast();
+                        return false;
+                    } catch (IOException e) {
+                        if (LOGS_ENABLED) Log.e(TAG, "Error parsing 'senc' uuid box", e);
+
+                        mCurrentBoxSequence.removeLast();
+                        return false;
+                    }
+                }
+            } else if (uuidUserType.equals(UUID_TRACK_ENCRYPTION)) {
+                // uuid in schi box
+                mDataSource.skipBytes(7); // version, flags and algorithm id
+                int defaultIVSize = mDataSource.readByte();
+                byte[] defaultKID = new byte[16];
+                mDataSource.read(defaultKID);
+                mCurrentTrack.setDefaultEncryptionData(defaultIVSize,
+                        defaultKID);
+            } else {
+                mCurrentOffset -= UUID_SIZE;
+                return super.parseBox(header);
+            }
+        } catch (IOException e) {
+            if (LOGS_ENABLED) Log.e(TAG, "Error parsing 'uuid' box", e);
+            return false;
+        }
+
+        return true;
+    }
+
+    @Override
+    protected boolean parseSchm(BoxHeader header) {
+        try {
+            int versionFlags = mDataSource.readInt();
+            int schemeType = mDataSource.readInt();
+            if (schemeType != SCHEME_TYPE_PIFF && schemeType != SCHEME_TYPE_CENC) {
+                if (LOGS_ENABLED) Log.e(TAG, "Scheme is not of type 'piff' or 'cenc'");
+                return false;
+            } else {
+                mDataSource.skipBytes(4); // Skip schemaVersion
+                if ((versionFlags & 0x01) != 0) {
+                    // TODO read scheme_uri if we're interested
+                    // byte[] data = new byte[(int)header.boxDataSize - 12];
+                    // mDataSource.read(data);
+                    mDataSource.skipBytes(header.boxDataSize - 12);
+                }
+            }
+        } catch (EOFException e) {
+            if (LOGS_ENABLED) Log.e(TAG, "Error parsing 'schm' box", e);
+            return false;
+        } catch (IOException e) {
+            if (LOGS_ENABLED) Log.e(TAG, "Error parsing 'schm' box", e);
+            return false;
+        }
+
+        return true;
     }
 
     private boolean parseAvcn(BoxHeader header) {
@@ -329,7 +256,7 @@ public class PiffParser extends ISOBMFFParser {
         } catch (IOException e) {
             if (LOGS_ENABLED) Log.e(TAG, "IOException while parsing 'avcc' box", e);
         }
-        AvccData avccData = parseAvcc(data);
+        AvccData avccData = parseAvccData(data);
         if (avccData == null) {
             mCurrentBoxSequence.removeLast();
             return false;
@@ -375,11 +302,8 @@ public class PiffParser extends ISOBMFFParser {
             if (majorBrand == FTYP_BRAND_PIFF) {
                 isMajorBrandPiff = true;
             }
-            int minorVersion = mDataSource.readInt();
+            mDataSource.skipBytes(4); // minor version
             if (isMajorBrandPiff) {
-                if ((minorVersion & 0x000000001) != 0) {
-                    mPiffVersion = 11;
-                }
                 return true;
             }
             int numCompatibilityBrands = (int)((header.boxDataSize - 8) / 4);

@@ -146,9 +146,9 @@ public class VUParser extends ISOBMFFParser {
         long boxEndOffset = mCurrentOffset + header.boxDataSize;
         boolean parseOK = true;
         if (header.boxType == BOX_ID_FTYP) {
-            int majorBrand;
+
             try {
-                majorBrand = mDataSource.readInt();
+                int majorBrand = mDataSource.readInt();
                 if (majorBrand == FTYP_BRAND_MGSV) {
                     mIsMarlinProtected = true;
                 }
@@ -156,32 +156,6 @@ public class VUParser extends ISOBMFFParser {
                 if (LOGS_ENABLED) Log.e(TAG, "Exception parsing 'ftyp' box", e);
             } catch (IOException e) {
                 if (LOGS_ENABLED) Log.e(TAG, "Exception parsing 'ftyp' box", e);
-            }
-        } else if (header.boxType == BOX_ID_UUID) {
-            byte[] userType = new byte[16];
-            try {
-                mDataSource.read(userType);
-                mCurrentOffset += 16;
-                String uuidUserType = Util.bytesToHex(userType);
-                if (uuidUserType.equals(UUID_PROF)) {
-                    parseOK = parseUuidPROF(header);
-                } else if (uuidUserType.equals(UUID_MTSD)) {
-                    // MTSD box
-                    mMtsdOffset = header.startOffset;
-                    mNeedsMTSD = false;
-                } else if (uuidUserType.equals(UUID_USMT)) {
-                    // USMT box
-                    while (mCurrentOffset < boxEndOffset && parseOK) {
-                        BoxHeader nextBoxHeader = getNextBoxHeader();
-                        parseOK = parseBox(nextBoxHeader);
-                    }
-                } else {
-                    mCurrentOffset -= 16;
-                    parseOK = super.parseBox(header);
-                }
-            } catch (IOException e) {
-                if (LOGS_ENABLED) Log.e(TAG, "Error parsing 'uuid' box", e);
-                parseOK = false;
             }
         } else if (header.boxType == BOX_ID_MTDT) {
             parseOK = parseMtdt(header);
@@ -229,53 +203,96 @@ public class VUParser extends ISOBMFFParser {
 
             mCurrentTrack.getMetaData().addValue(KEY_MIME_TYPE,
                     mediaFormat.getString(MediaFormat.KEY_MIME));
-        } else if (header.boxType == BOX_ID_AVCC) {
-            byte[] data = new byte[(int)header.boxDataSize];
-            try {
-                if (mDataSource.readAt(mCurrentOffset, data, data.length) != data.length) {
-                    mCurrentBoxSequence.removeLast();
-                    return false;
-                }
-            } catch (IOException e) {
-                if (LOGS_ENABLED) Log.e(TAG, "Error while parsing 'avcc' box", e);
-                mCurrentBoxSequence.removeLast();
-                return false;
-            }
-
-            if (mIsMarlinProtected) {
-                ByteBuffer buffer = parseAvccForMarlin(data);
-                if (buffer == null) {
-                    return false;
-                }
-                mCurrentMediaFormat.setByteBuffer("csd-0", buffer);
-
-                parseSPS(buffer.array());
-            } else {
-                AvccData avccData = parseAvcc(data);
-                if (avccData == null) {
-                    return false;
-                }
-                ByteBuffer csd0 = ByteBuffer.wrap(avccData.spsBuffer.array());
-                ByteBuffer csd1 = ByteBuffer.wrap(avccData.ppsBuffer.array());
-                mCurrentMediaFormat.setByteBuffer("csd-0", csd0);
-                mCurrentMediaFormat.setByteBuffer("csd-1", csd1);
-
-                parseSPS(avccData.spsBuffer.array());
-            }
-        } else if (header.boxType == BOX_ID_MDAT) {
-            if (mTracks.size() > 0 && !mIsFragmented && !mNeedsMTSD) {
-                mInitDone = true;
-            } else if (mIsFragmented && mFirstMoofOffset != -1) {
-                mInitDone = true;
-            } else {
-                mMdatFound = true;
-            }
         } else {
             parseOK = super.parseBox(header);
         }
         mCurrentOffset = boxEndOffset;
         mCurrentBoxSequence.removeLast();
         return parseOK;
+    }
+
+    @Override
+    protected boolean parseUuid(BoxHeader header) {
+        byte[] userType = new byte[16];
+        try {
+            mDataSource.read(userType);
+            mCurrentOffset += 16;
+            String uuidUserType = Util.bytesToHex(userType);
+            if (uuidUserType.equals(UUID_PROF)) {
+                return parseUuidPROF(header);
+            } else if (uuidUserType.equals(UUID_MTSD)) {
+                // MTSD box
+                mMtsdOffset = header.startOffset;
+                mNeedsMTSD = false;
+            } else if (uuidUserType.equals(UUID_USMT)) {
+                long boxEndOffset = mCurrentOffset + header.boxDataSize;
+                // USMT box
+                while (mCurrentOffset < boxEndOffset) {
+                    BoxHeader nextBoxHeader = getNextBoxHeader();
+                    boolean result = parseBox(nextBoxHeader);
+                    if (!result) {
+                        return false;
+                    }
+                }
+            } else {
+                mCurrentOffset -= 16;
+                return super.parseBox(header);
+            }
+        } catch (IOException e) {
+            if (LOGS_ENABLED) Log.e(TAG, "Error parsing 'uuid' box", e);
+            return false;
+        }
+
+        return true;
+    }
+
+    @Override
+    protected boolean parseAvcc(BoxHeader header) {
+        byte[] data = new byte[(int)header.boxDataSize];
+        try {
+            if (mDataSource.readAt(mCurrentOffset, data, data.length) != data.length) {
+                return false;
+            }
+        } catch (IOException e) {
+            if (LOGS_ENABLED) Log.e(TAG, "Error while parsing 'avcc' box", e);
+            return false;
+        }
+
+        if (mIsMarlinProtected) {
+            ByteBuffer buffer = parseAvccForMarlin(data);
+            if (buffer == null) {
+                return false;
+            }
+            mCurrentMediaFormat.setByteBuffer("csd-0", buffer);
+
+            parseSPS(buffer.array());
+        } else {
+            AvccData avccData = parseAvccData(data);
+            if (avccData == null) {
+                return false;
+            }
+            ByteBuffer csd0 = ByteBuffer.wrap(avccData.spsBuffer.array());
+            ByteBuffer csd1 = ByteBuffer.wrap(avccData.ppsBuffer.array());
+            mCurrentMediaFormat.setByteBuffer("csd-0", csd0);
+            mCurrentMediaFormat.setByteBuffer("csd-1", csd1);
+
+            parseSPS(avccData.spsBuffer.array());
+        }
+
+        return true;
+    }
+
+    @Override
+    protected boolean parseMdat() {
+        if (mTracks.size() > 0 && !mIsFragmented && !mNeedsMTSD) {
+            mInitDone = true;
+        } else if (mIsFragmented && mFirstMoofOffset != -1) {
+            mInitDone = true;
+        } else {
+            mMdatFound = true;
+        }
+
+        return true;
     }
 
     protected boolean parseODSMData(IsoTrack odsmTrack) {

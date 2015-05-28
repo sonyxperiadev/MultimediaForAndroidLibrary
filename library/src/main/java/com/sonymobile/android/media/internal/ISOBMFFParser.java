@@ -624,9 +624,7 @@ public class ISOBMFFParser extends MediaParser {
 
         boolean parseOK = true;
         long boxEndOffset = mCurrentOffset + header.boxDataSize;
-        if (header.boxType == BOX_ID_FTYP) {
-
-        } else if (header.boxType == BOX_ID_MOOV) {
+        if (header.boxType == BOX_ID_MOOV) {
             while (mCurrentOffset < boxEndOffset && parseOK) {
                 BoxHeader nextBoxHeader = getNextBoxHeader();
                 parseOK = parseBox(nextBoxHeader);
@@ -791,29 +789,7 @@ public class ISOBMFFParser extends MediaParser {
             mCurrentTrack.addSampleDescriptionEntry(mCurrentMediaFormat);
 
         } else if (header.boxType == BOX_ID_AVCC) {
-            byte[] data = new byte[(int)header.boxDataSize];
-            try {
-                if (mDataSource.readAt(mCurrentOffset, data, data.length) != data.length) {
-                    mCurrentBoxSequence.removeLast();
-                    return false;
-                }
-            } catch (IOException e) {
-                if (LOGS_ENABLED) Log.e(TAG, "Error while parsing 'avcc' box", e);
-                mCurrentBoxSequence.removeLast();
-                return false;
-            }
-
-            AvccData avccData = parseAvcc(data);
-            if (avccData == null) {
-                return false;
-            }
-            ByteBuffer csd0 = ByteBuffer.wrap(avccData.spsBuffer.array());
-            ByteBuffer csd1 = ByteBuffer.wrap(avccData.ppsBuffer.array());
-            mCurrentMediaFormat.setByteBuffer("csd-0", csd0);
-            mCurrentMediaFormat.setByteBuffer("csd-1", csd1);
-            mCurrentMediaFormat.setInteger("nal-length-size", mNALLengthSize);
-
-            parseSPS(avccData.spsBuffer.array());
+            parseOK = parseAvcc(header);
         } else if (header.boxType == BOX_ID_STTS) {
             byte[] data = new byte[(int)header.boxDataSize];
             try {
@@ -1191,26 +1167,7 @@ public class ISOBMFFParser extends MediaParser {
                 return false;
             }
         } else if (header.boxType == BOX_ID_SCHM) {
-            try {
-                int versionFlags = mDataSource.readInt();
-                mDataSource.skipBytes(8); // scheme_type and scheme_version
-                if ((versionFlags & 0x01) != 0) {
-                    // TODO read scheme_uri if we're interested
-                    // byte[] data = new byte[(int)header.boxDataSize - 12];
-                    // mDataSource.read(data);
-                    mDataSource.skipBytes(header.boxDataSize - 12);
-                }
-            } catch (EOFException e) {
-                if (LOGS_ENABLED) Log.e(TAG, "Error parsing 'schm' box", e);
-
-                mCurrentBoxSequence.removeLast();
-                parseOK = false;
-            } catch (IOException e) {
-                if (LOGS_ENABLED) Log.e(TAG, "Error parsing 'schm' box", e);
-
-                mCurrentBoxSequence.removeLast();
-                parseOK = false;
-            }
+            parseOK = parseSchm(header);
         } else if (header.boxType == BOX_ID_SCHI) {
             while (mCurrentOffset < boxEndOffset && parseOK) {
                 BoxHeader nextBoxHeader = getNextBoxHeader();
@@ -1239,65 +1196,7 @@ public class ISOBMFFParser extends MediaParser {
                 parseOK = false;
             }
         } else if (header.boxType == BOX_ID_SENC) {
-            if (mCurrentMoofTrackId == mCurrentTrackId && !mSkipInsertSamples && !mParsedSencData) {
-                mParsedSencData = true;
-                try {
-                    int versionFlags = mDataSource.readInt();
-
-                    int sampleCount = mDataSource.readInt();
-
-                    ArrayList<CryptoInfo> cryptoInfos = new ArrayList<CryptoInfo>(sampleCount);
-
-                    for (int i = 0; i < sampleCount; i++) {
-                        CryptoInfo info = new CryptoInfo();
-                        info.mode = MediaCodec.CRYPTO_MODE_AES_CTR;
-                        info.iv = new byte[16];
-                        if (mCurrentTrack.mDefaultIVSize == 16) {
-                            mDataSource.read(info.iv);
-                        } else {
-                            // pad IV data to 128 bits
-                            byte[] iv = new byte[8];
-                            mDataSource.read(iv);
-                            System.arraycopy(iv, 0, info.iv, 0, 8);
-                        }
-                        if ((versionFlags & 0x00000002) > 0) {
-                            short subSampleCount = mDataSource.readShort();
-                            info.numSubSamples = subSampleCount;
-                            info.numBytesOfClearData = new int[subSampleCount];
-                            info.numBytesOfEncryptedData = new int[subSampleCount];
-                            for (int j = 0; j < subSampleCount; j++) {
-                                info.numBytesOfClearData[j] = mDataSource.readShort();
-                                info.numBytesOfEncryptedData[j] = mDataSource.readInt();
-                            }
-                        } else {
-                            info.numSubSamples = 1;
-                            info.numBytesOfClearData = new int[1];
-                            info.numBytesOfClearData[0] = 0;
-                            info.numBytesOfEncryptedData = new int[1];
-                            info.numBytesOfEncryptedData[0] = -1;
-                        }
-
-                        if (info.numBytesOfClearData[0] == 0 && mCurrentTrack
-                                .getTrackType() == TrackType.VIDEO) {
-                            info.iv[15] = (byte)mNALLengthSize;
-                        }
-
-                        cryptoInfos.add(info);
-                    }
-
-                    mCurrentTrack.addCryptoInfos(cryptoInfos);
-                } catch (EOFException e) {
-                    if (LOGS_ENABLED) Log.e(TAG, "Error parsing 'senc' box", e);
-
-                    mCurrentBoxSequence.removeLast();
-                    parseOK = false;
-                } catch (IOException e) {
-                    if (LOGS_ENABLED) Log.e(TAG, "Error parsing 'senc' box", e);
-
-                    mCurrentBoxSequence.removeLast();
-                    parseOK = false;
-                }
-            }
+            parseOK = parseSenc();
         } else if (header.boxType == BOX_ID_SINF) {
             while (mCurrentOffset < boxEndOffset && parseOK) {
                 BoxHeader nextBoxHeader = getNextBoxHeader();
@@ -1646,20 +1545,7 @@ public class ISOBMFFParser extends MediaParser {
         } else if (header.boxType == BOX_ID_PASP) {
             parseOK = parsePasp(header);
         } else if (header.boxType == BOX_ID_UUID) {
-            byte[] userType = new byte[16];
-            try {
-                mDataSource.read(userType);
-                mCurrentOffset += 16;
-                String uuidUserType = Util.bytesToHex(userType);
-                if (uuidUserType.equals(UUID_SOMD)) {
-                    parseOK = parseUuidSomd(header);
-                }
-            } catch (IOException e) {
-                if (LOGS_ENABLED) Log.e(TAG, "IOException while parsing 'uuid' box", e);
-
-                mCurrentBoxSequence.removeLast();
-                return false;
-            }
+            parseOK = parseUuid(header);
         } else if (header.boxType == BOX_ID_MFHD) {
             try {
                 int sequenceNumber = mDataSource.readInt();
@@ -1670,7 +1556,7 @@ public class ISOBMFFParser extends MediaParser {
                 return false;
             }
         } else if (header.boxType == BOX_ID_MDAT) {
-            mMdatFound = true;
+            parseOK = parseMdat();
         } else {
             long skipSize = header.boxDataSize;
             try {
@@ -1691,6 +1577,116 @@ public class ISOBMFFParser extends MediaParser {
         mCurrentOffset = boxEndOffset;
         mCurrentBoxSequence.removeLast();
         return parseOK;
+    }
+
+    protected boolean parseMdat() {
+        mMdatFound = true;
+        return true;
+    }
+
+    protected boolean parseAvcc(BoxHeader header) {
+        byte[] data = new byte[(int)header.boxDataSize];
+        try {
+            if (mDataSource.readAt(mCurrentOffset, data, data.length) != data.length) {
+                return false;
+            }
+        } catch (IOException e) {
+            if (LOGS_ENABLED) Log.e(TAG, "Error while parsing 'avcc' box", e);
+            return false;
+        }
+
+        AvccData avccData = parseAvccData(data);
+        if (avccData == null) {
+            return false;
+        }
+        ByteBuffer csd0 = ByteBuffer.wrap(avccData.spsBuffer.array());
+        ByteBuffer csd1 = ByteBuffer.wrap(avccData.ppsBuffer.array());
+        mCurrentMediaFormat.setByteBuffer("csd-0", csd0);
+        mCurrentMediaFormat.setByteBuffer("csd-1", csd1);
+        mCurrentMediaFormat.setInteger("nal-length-size", mNALLengthSize);
+
+        parseSPS(avccData.spsBuffer.array());
+        return true;
+    }
+
+    protected boolean parseSchm(BoxHeader header) {
+        try {
+            int versionFlags = mDataSource.readInt();
+            mDataSource.skipBytes(8); // scheme_type and scheme_version
+            if ((versionFlags & 0x01) != 0) {
+                // TODO read scheme_uri if we're interested
+                // byte[] data = new byte[(int)header.boxDataSize - 12];
+                // mDataSource.read(data);
+                mDataSource.skipBytes(header.boxDataSize - 12);
+            }
+        } catch (EOFException e) {
+            if (LOGS_ENABLED) Log.e(TAG, "Error parsing 'schm' box", e);
+
+            return false;
+        } catch (IOException e) {
+            if (LOGS_ENABLED) Log.e(TAG, "Error parsing 'schm' box", e);
+            return false;
+        }
+        return true;
+    }
+
+    protected boolean parseSenc() {
+        if (mCurrentMoofTrackId == mCurrentTrackId && !mSkipInsertSamples && !mParsedSencData) {
+            mParsedSencData = true;
+            try {
+                int versionFlags = mDataSource.readInt();
+
+                int sampleCount = mDataSource.readInt();
+
+                ArrayList<CryptoInfo> cryptoInfos = new ArrayList<CryptoInfo>(sampleCount);
+
+                for (int i = 0; i < sampleCount; i++) {
+                    CryptoInfo info = new CryptoInfo();
+                    info.mode = MediaCodec.CRYPTO_MODE_AES_CTR;
+                    info.iv = new byte[16];
+                    if (mCurrentTrack.mDefaultIVSize == 16) {
+                        mDataSource.read(info.iv);
+                    } else {
+                        // pad IV data to 128 bits
+                        byte[] iv = new byte[8];
+                        mDataSource.read(iv);
+                        System.arraycopy(iv, 0, info.iv, 0, 8);
+                    }
+                    if ((versionFlags & 0x00000002) > 0) {
+                        short subSampleCount = mDataSource.readShort();
+                        info.numSubSamples = subSampleCount;
+                        info.numBytesOfClearData = new int[subSampleCount];
+                        info.numBytesOfEncryptedData = new int[subSampleCount];
+                        for (int j = 0; j < subSampleCount; j++) {
+                            info.numBytesOfClearData[j] = mDataSource.readShort();
+                            info.numBytesOfEncryptedData[j] = mDataSource.readInt();
+                        }
+                    } else {
+                        info.numSubSamples = 1;
+                        info.numBytesOfClearData = new int[1];
+                        info.numBytesOfClearData[0] = 0;
+                        info.numBytesOfEncryptedData = new int[1];
+                        info.numBytesOfEncryptedData[0] = -1;
+                    }
+
+                    if (info.numBytesOfClearData[0] == 0 && mCurrentTrack
+                            .getTrackType() == TrackType.VIDEO) {
+                        info.iv[15] = (byte)mNALLengthSize;
+                    }
+
+                    cryptoInfos.add(info);
+                }
+
+                mCurrentTrack.addCryptoInfos(cryptoInfos);
+            } catch (EOFException e) {
+                if (LOGS_ENABLED) Log.e(TAG, "Error parsing 'senc' box", e);
+                return false;
+            } catch (IOException e) {
+                if (LOGS_ENABLED) Log.e(TAG, "Error parsing 'senc' box", e);
+                return false;
+            }
+        }
+        return true;
     }
 
     protected boolean boxIsUnder(int boxType) {
@@ -2019,7 +2015,7 @@ public class ISOBMFFParser extends MediaParser {
         return true;
     }
 
-    private boolean parseTrun(BoxHeader header) {
+    protected boolean parseTrun(BoxHeader header) {
         if (mCurrentMoofTrackId != mCurrentTrackId || mSkipInsertSamples) {
             return true;
         }
@@ -2453,7 +2449,7 @@ public class ISOBMFFParser extends MediaParser {
         mCurrentMediaFormat.setInteger(MediaFormat.KEY_MAX_INPUT_SIZE, maxSize);
     }
 
-    protected AvccData parseAvcc(byte[] buffer) {
+    protected AvccData parseAvccData(byte[] buffer) {
         AvccData avccData = new AvccData();
         avccData.spsBuffer = ByteBuffer.allocate(1024);
         avccData.ppsBuffer = ByteBuffer.allocate(1024);
@@ -2802,6 +2798,22 @@ public class ISOBMFFParser extends MediaParser {
         return true;
     }
 
+    protected boolean parseUuid(BoxHeader header) {
+        byte[] userType = new byte[16];
+        try {
+            mDataSource.read(userType);
+            mCurrentOffset += 16;
+            String uuidUserType = Util.bytesToHex(userType);
+            if (uuidUserType.equals(UUID_SOMD)) {
+                return parseUuidSomd(header);
+            }
+        } catch (IOException e) {
+            if (LOGS_ENABLED) Log.e(TAG, "IOException while parsing 'uuid' box", e);
+            return false;
+        }
+        return true;
+    }
+
     private boolean parseUuidSomd(BoxHeader header) {
         long boxEndOffset = mCurrentOffset + header.boxDataSize - 16;
         boolean parseOK = true;
@@ -3104,76 +3116,8 @@ public class ISOBMFFParser extends MediaParser {
             if ((isAVC || isHEVC)
                     && (accessUnit.cryptoInfo == null
                     || accessUnit.cryptoInfo.numBytesOfClearData[0] > 0)) {
-                int srcOffset = 0;
-                int dstOffset = 0;
-                while (srcOffset < dataSize) {
-                    if ((srcOffset + mNALLengthSize) > dataSize) {
-                        if (LOGS_ENABLED) Log.e(TAG, "no room to add nal length");
-                        accessUnit.status = AccessUnit.ERROR;
-                        return accessUnit;
-                    }
-                    int nalLength = 0;
-
-                    if (mNALLengthSize == 1 || mNALLengthSize == 2) {
-                        if (mNALLengthSize == 1) {
-                            nalLength = accessUnit.data[srcOffset];
-                        } else if (mNALLengthSize == 2) {
-                            nalLength = ((accessUnit.data[srcOffset] & 0xff) << 8
-                                    | (accessUnit.data[srcOffset + 1] & 0xff));
-                        }
-                        byte[] tmpData = new byte[dataSize + (sNALHeaderSize -
-                                mNALLengthSize)];
-                        if (srcOffset > 0) {
-                            System.arraycopy(accessUnit.data, 0, tmpData, 0,
-                                    srcOffset);
-                        }
-                        System.arraycopy(accessUnit.data, srcOffset, tmpData,
-                                (sNALHeaderSize - mNALLengthSize) + srcOffset,
-                                accessUnit.data.length - srcOffset);
-                        accessUnit.data = tmpData;
-                        dataSize = accessUnit.data.length;
-                        accessUnit.size = dataSize;
-                    } else if (mNALLengthSize == 4) {
-                        nalLength = ((accessUnit.data[srcOffset] & 0xff) << 24
-                                | (accessUnit.data[srcOffset + 1] & 0xff) << 16
-                                | (accessUnit.data[srcOffset + 2] & 0xff) << 8
-                                | (accessUnit.data[srcOffset + 3] & 0xff));
-                    } else {
-                        if (LOGS_ENABLED)
-                            Log.e(TAG, "unsupported nal length size" + mNALLengthSize);
-                        accessUnit.status = AccessUnit.ERROR;
-                        return accessUnit;
-                    }
-                    srcOffset += sNALHeaderSize;
-                    if (accessUnit.cryptoInfo != null) {
-                        accessUnit.cryptoInfo.numBytesOfClearData[0] +=
-                                (sNALHeaderSize - mNALLengthSize);
-                    }
-                    if (srcOffset + nalLength > dataSize) {
-                        if (LOGS_ENABLED) Log.e(TAG, "error writing nal length");
-                        accessUnit.status = AccessUnit.ERROR;
-                        return accessUnit;
-                    }
-                    accessUnit.data[dstOffset++] = 0;
-                    accessUnit.data[dstOffset++] = 0;
-                    accessUnit.data[dstOffset++] = 0;
-                    accessUnit.data[dstOffset++] = 1;
-
-                    if (isAVC && (accessUnit.data[srcOffset] & 0x1f)
-                            == AVC_NAL_UNIT_TYPE_IDR_PICTURE) {
-                        accessUnit.isSyncSample = true;
-                    } else if (isHEVC) {
-                        int nalType = (accessUnit.data[srcOffset] & 0x7e) >> 1;
-
-                        if (nalType == HEVC_NAL_UNIT_TYPE_IDR_PICTURE_W_RADL
-                                || nalType == HEVC_NAL_UNIT_TYPE_IDR_PICTURE_N_LP
-                                || nalType == HEVC_NAL_UNIT_TYPE_CRA_PICTURE) {
-                            accessUnit.isSyncSample = true;
-                        }
-                    }
-
-                    srcOffset += nalLength;
-                    dstOffset += nalLength;
+                if (!addNALHeader(accessUnit, isAVC, isHEVC)) {
+                    return AccessUnit.ACCESS_UNIT_ERROR;
                 }
             } else if ((isAVC || isHEVC)
                     && accessUnit.cryptoInfo != null
@@ -3529,6 +3473,82 @@ public class ISOBMFFParser extends MediaParser {
         }
     }
 
+    protected boolean addNALHeader(AccessUnit accessUnit, boolean isAVC, boolean isHEVC) {
+        int dataSize = accessUnit.size;
+        int srcOffset = 0;
+        int dstOffset = 0;
+        while (srcOffset < dataSize) {
+            if ((srcOffset + mNALLengthSize) > dataSize) {
+                if (LOGS_ENABLED) Log.e(TAG, "no room to add nal length");
+                accessUnit.status = AccessUnit.ERROR;
+                return false;
+            }
+            int nalLength = 0;
+
+            if (mNALLengthSize == 1 || mNALLengthSize == 2) {
+                if (mNALLengthSize == 1) {
+                    nalLength = accessUnit.data[srcOffset];
+                } else if (mNALLengthSize == 2) {
+                    nalLength = ((accessUnit.data[srcOffset] & 0xff) << 8
+                            | (accessUnit.data[srcOffset + 1] & 0xff));
+                }
+                byte[] tmpData = new byte[dataSize + (sNALHeaderSize -
+                        mNALLengthSize)];
+                if (srcOffset > 0) {
+                    System.arraycopy(accessUnit.data, 0, tmpData, 0,
+                            srcOffset);
+                }
+                System.arraycopy(accessUnit.data, srcOffset, tmpData,
+                        (sNALHeaderSize - mNALLengthSize) + srcOffset,
+                        accessUnit.data.length - srcOffset);
+                accessUnit.data = tmpData;
+                dataSize = accessUnit.data.length;
+                accessUnit.size = dataSize;
+            } else if (mNALLengthSize == 4) {
+                nalLength = ((accessUnit.data[srcOffset] & 0xff) << 24
+                        | (accessUnit.data[srcOffset + 1] & 0xff) << 16
+                        | (accessUnit.data[srcOffset + 2] & 0xff) << 8
+                        | (accessUnit.data[srcOffset + 3] & 0xff));
+            } else {
+                if (LOGS_ENABLED)
+                    Log.e(TAG, "Unsupported nal length size" + mNALLengthSize);
+                accessUnit.status = AccessUnit.ERROR;
+                return false;
+            }
+            srcOffset += sNALHeaderSize;
+            if (accessUnit.cryptoInfo != null) {
+                accessUnit.cryptoInfo.numBytesOfClearData[0] +=
+                        (sNALHeaderSize - mNALLengthSize);
+            }
+            if (srcOffset + nalLength > dataSize) {
+                if (LOGS_ENABLED) Log.e(TAG, "Error writing nal length");
+                accessUnit.status = AccessUnit.ERROR;
+                return false;
+            }
+            accessUnit.data[dstOffset++] = 0;
+            accessUnit.data[dstOffset++] = 0;
+            accessUnit.data[dstOffset++] = 0;
+            accessUnit.data[dstOffset++] = 1;
+
+            if (isAVC && (accessUnit.data[srcOffset] & 0x1f)
+                    == AVC_NAL_UNIT_TYPE_IDR_PICTURE) {
+                accessUnit.isSyncSample = true;
+            } else if (isHEVC) {
+                int nalType = (accessUnit.data[srcOffset] & 0x7e) >> 1;
+
+                if (nalType == HEVC_NAL_UNIT_TYPE_IDR_PICTURE_W_RADL
+                        || nalType == HEVC_NAL_UNIT_TYPE_IDR_PICTURE_N_LP
+                        || nalType == HEVC_NAL_UNIT_TYPE_CRA_PICTURE) {
+                    accessUnit.isSyncSample = true;
+                }
+            }
+
+            srcOffset += nalLength;
+            dstOffset += nalLength;
+        }
+        return true;
+    }
+
     static class Trex {
         public int defaultSampleDuration = 0;
 
@@ -3543,7 +3563,7 @@ public class ISOBMFFParser extends MediaParser {
         public int defaultSampleSize = Integer.MIN_VALUE;
     }
 
-    static class FragmentSample {
+    public static class FragmentSample {
         public int durationTicks = 0;
 
         public int size = 0;
