@@ -338,6 +338,9 @@ public class MediaBrowser {
             while ((line = br.readLine()) != null) {
                 if (line.length() > 2) {
                     infoParameters = line.split(";");
+                    if (infoParameters.length < 3) {
+                        continue;
+                    }
                     if (mListDataHeader.contains(infoParameters[0])) {
                         mListDataChild.get(infoParameters[0])
                                 .add(new MediaSource(infoParameters[1], infoParameters[2]));
