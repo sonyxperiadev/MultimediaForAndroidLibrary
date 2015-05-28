@@ -71,6 +71,11 @@ public class DASHSource extends MediaSource {
 
         mUrl = url;
         mMaxBufferSize = maxBufferSize;
+
+        if (url.startsWith("vuabs://")
+                || url.startsWith("vuabss://")) {
+            mUrl = url.replaceFirst("vuabs", "http");
+        }
     }
 
     @Override
@@ -206,5 +211,12 @@ public class DASHSource extends MediaSource {
     @Override
     public Statistics getStatistics() {
         return mSession.getStatistics();
+    }
+
+    public static boolean canHandle(String uri) {
+        return ((uri.startsWith("http://") || uri.startsWith("https://") ||
+                uri.startsWith("vuabs://") || uri.startsWith("vuabss://")) &&
+                (uri.endsWith(".mpd") || uri.indexOf(".mpd?") > 0) ||
+                uri.endsWith("(format=mpd-time-csf)"));
     }
 }

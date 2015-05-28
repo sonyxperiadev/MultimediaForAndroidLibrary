@@ -539,12 +539,7 @@ public final class Player {
                         thiz.mSource = new SimpleSource(thiz.mDataSourceFd, thiz.mDataSourceOffset,
                                 thiz.mDataSourceLength, thiz.mEventHandler);
                     } else {
-                        if (thiz.mDataSourcePath.startsWith("vuabs://")
-                                || thiz.mDataSourcePath.startsWith("vuabss://")) {
-                            thiz.mDataSourcePath = thiz.mDataSourcePath.replaceFirst("vuabs",
-                                    "http");
-                        }
-                        if (isDASHSource(thiz.mDataSourcePath)) {
+                        if (DASHSource.canHandle(thiz.mDataSourcePath)) {
                             thiz.mSource = new DASHSource(thiz.mDataSourcePath, thiz.mEventHandler,
                                     thiz.mMaxBufferSize);
                         } else {
@@ -1121,12 +1116,6 @@ public final class Player {
                     if (LOGS_ENABLED) Log.v(TAG, "Unknown message");
                     break;
             }
-        }
-
-        private boolean isDASHSource(String path) {
-            return (path.startsWith("http://")
-                    && (path.endsWith(".mpd") || path.indexOf(".mpd?") > 0))
-                    || path.endsWith("(format=mpd-time-csf)");
         }
     }
 
