@@ -785,19 +785,21 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback,
         onPlayPauseClicked(null);
         mIsPrepared = true;
         MetaData metadata = mMediaPlayer.getMediaMetaData();
-        int videoHeight = mMediaPlayer.getVideoHeight();
-        if (videoHeight == 0) {
-            // audio only
-            if (metadata.containsKey(MetaData.KEY_ALBUM_ART)) {
-                byte[] imageData = metadata.getByteBuffer(MetaData.KEY_ALBUM_ART);
-                Canvas canvas = mHolder.lockCanvas();
-                Bitmap bitmap = BitmapFactory.decodeByteArray(imageData, 0, imageData.length);
-                int newHeight = canvas.getHeight();
-                int newWidth = bitmap.getWidth() * newHeight / bitmap.getHeight();
-                bitmap = Bitmap.createScaledBitmap(bitmap, newWidth, newHeight, false);
-                canvas.drawBitmap(bitmap, (canvas.getWidth() - bitmap.getWidth()) / 2, 0,
-                        new Paint());
-                mHolder.unlockCanvasAndPost(canvas);
+        if (metadata != null) {
+            int videoHeight = mMediaPlayer.getVideoHeight();
+            if (videoHeight == 0) {
+                // audio only
+                if (metadata.containsKey(MetaData.KEY_ALBUM_ART)) {
+                    byte[] imageData = metadata.getByteBuffer(MetaData.KEY_ALBUM_ART);
+                    Canvas canvas = mHolder.lockCanvas();
+                    Bitmap bitmap = BitmapFactory.decodeByteArray(imageData, 0, imageData.length);
+                    int newHeight = canvas.getHeight();
+                    int newWidth = bitmap.getWidth() * newHeight / bitmap.getHeight();
+                    bitmap = Bitmap.createScaledBitmap(bitmap, newWidth, newHeight, false);
+                    canvas.drawBitmap(bitmap, (canvas.getWidth() - bitmap.getWidth()) / 2, 0,
+                            new Paint());
+                    mHolder.unlockCanvasAndPost(canvas);
+                }
             }
         }
     }
