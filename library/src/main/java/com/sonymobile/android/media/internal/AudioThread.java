@@ -448,6 +448,9 @@ public final class AudioThread extends CodecThread implements Clock {
                     if (accessUnit.status == AccessUnit.ERROR) {
                         if (LOGS_ENABLED) Log.e(TAG, "queue ERROR");
                         mDequeueInputErrorFlag = true;
+                    } else if (accessUnit.status == AccessUnit.FORMAT_CHANGED) {
+                        if (LOGS_ENABLED) Log.e(TAG, "Format changes is not supported for audio");
+                        mDequeueInputErrorFlag = true;
                     }
                     if (mMediaCrypto != null) {
                         CryptoInfo info = new CryptoInfo();
