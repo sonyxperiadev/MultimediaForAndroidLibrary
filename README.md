@@ -9,6 +9,7 @@ Multimedia for Android Library contains an application level media player. It pr
   * Subtitles: SMPTE-TT
   * DRM: Marlin and PlayReady (DRM support is not availble on all devices)
   * MPEG-DASH: DASH264, DASH265 (isoff-on-demand and isoff-live profiles only)
+  * Microsoft Smooth Streaming
   
 # Developer Guide
 The library requires API level 19 (KitKat) or above.

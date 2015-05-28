@@ -53,4 +53,10 @@ public class MimeType {
     public static final String MP3 = "audio/mpeg";
 
     public static final String ALAC = "audio/alac";
+
+    public static final String SMOOTH_STREAMING = "application/vnd.ms-sstr+xml";
+
+    public static final String VC1 = "video/vc1";
+
+    public static final String WMA = "audio/x-ms-wma";
 }

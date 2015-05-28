@@ -37,3 +37,8 @@ HTTP PIFF;Test 21;http://playready.directtaps.net/smoothstreaming/SSWSS720H264/S
 HTTP PIFF;Test 22;http://playready.directtaps.net/smoothstreaming/SSWSS720H264/SuperSpeedway_720_1427.ismv
 HTTP PIFF;Test 23;http://playready.directtaps.net/smoothstreaming/SSWSS720H264/SuperSpeedway_720_2056.ismv
 HTTP PIFF;Test 24;http://playready.directtaps.net/smoothstreaming/SSWSS720H264/SuperSpeedway_720_2962.ismv
+Smooth Streaming;SSW (H264+AAC) Unprotected;http://playready.directtaps.net/smoothstreaming/SSWSS720H264/SuperSpeedway_720.ism/Manifest
+Smooth Streaming;Taxi 3 (AAC-LC) Unprotected;http://playready.directtaps.net/smoothstreaming/ISMAAACLC/Taxi3_AACLC.ism/Manifest
+Smooth Streaming;Elephants dream (Subtitles);http://demo.unified-streaming.com/video/elephantsdream/elephantsdream.ism/Manifest
+Smooth Streaming;SSW (H264+AAC) Protected;http://playready.directtaps.net/smoothstreaming/SSWSS720H264PR/SuperSpeedway_720.ism/Manifest
+Smooth Streaming;Taxi 3 (AAC) Protected;http://playready.directtaps.net/smoothstreaming/ISMAAACLCPR/Taxi3_AACLC.ism/Manifest
