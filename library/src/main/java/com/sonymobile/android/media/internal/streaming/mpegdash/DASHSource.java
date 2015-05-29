@@ -30,8 +30,10 @@ import com.sonymobile.android.media.TrackInfo.TrackType;
 import com.sonymobile.android.media.internal.AccessUnit;
 import com.sonymobile.android.media.internal.Configuration;
 import com.sonymobile.android.media.internal.MediaSource;
+import com.sonymobile.android.media.internal.MimeType;
 
 import java.lang.ref.WeakReference;
+import java.net.HttpURLConnection;
 import java.util.Vector;
 
 public class DASHSource extends MediaSource {
@@ -56,6 +58,8 @@ public class DASHSource extends MediaSource {
 
     private String mUrl;
 
+    private HttpURLConnection mUrlConnection;
+
     private DASHSession mSession;
 
     private EventHandler mEventHandler;
@@ -78,13 +82,20 @@ public class DASHSource extends MediaSource {
         }
     }
 
+    public DASHSource(HttpURLConnection urlConnection, Handler notify, int maxBufferSize) {
+        super(notify);
+
+        mUrlConnection = urlConnection;
+        mMaxBufferSize = maxBufferSize;
+    }
+
     @Override
     public void prepareAsync() {
         mEventHandler = new EventHandler(new WeakReference<>(this));
 
         mSession = new DASHSession(mEventHandler, mBandwidthEstimator, mRepresentationSelector,
                 mMaxBufferSize);
-        mSession.connect(mUrl);
+        mSession.connect(mUrl, mUrlConnection);
     }
 
     @Override
@@ -214,9 +225,18 @@ public class DASHSource extends MediaSource {
     }
 
     public static boolean canHandle(String uri) {
-        return ((uri.startsWith("http://") || uri.startsWith("https://") ||
-                uri.startsWith("vuabs://") || uri.startsWith("vuabss://")) &&
-                (uri.endsWith(".mpd") || uri.indexOf(".mpd?") > 0) ||
-                uri.endsWith("(format=mpd-time-csf)"));
+        return uri.startsWith("vuabs://") || uri.startsWith("vuabss://");
+    }
+
+    public static boolean canHandle(String mime, String uri) {
+        if (mime.equalsIgnoreCase(MimeType.MPEG_DASH)) {
+            return true;
+        }
+
+        if (uri.endsWith(".mpd") || uri.indexOf(".mpd?") > 0) {
+            return true;
+        }
+
+        return false;
     }
 }

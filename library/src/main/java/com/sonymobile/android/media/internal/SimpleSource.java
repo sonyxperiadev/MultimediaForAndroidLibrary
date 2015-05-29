@@ -19,6 +19,7 @@ package com.sonymobile.android.media.internal;
 import java.io.FileDescriptor;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
+import java.net.HttpURLConnection;
 import java.util.Vector;
 
 import android.media.MediaFormat;
@@ -58,6 +59,8 @@ public final class SimpleSource extends MediaSource {
     private long mOffset;
 
     private long mLength;
+
+    private HttpURLConnection mUrlConnection;
 
     private int mMaxBufferSize;
 
@@ -105,10 +108,32 @@ public final class SimpleSource extends MediaSource {
         mSupportsPreview = true;
     }
 
+    public SimpleSource(HttpURLConnection urlConnection, Handler notify, int maxBufferSize) {
+        super(notify);
+        if (maxBufferSize == -1) {
+            maxBufferSize = Configuration.DEFAULT_HTTP_BUFFER_SIZE;
+        }
+
+        mOffset = 0;
+        mLength = -1;
+        mUrlConnection = urlConnection;
+        mMaxBufferSize = maxBufferSize;
+
+        mEventThread = new HandlerThread("SimpleSource");
+        mEventThread.start();
+
+        mEventHandler = new EventHandler(new WeakReference<SimpleSource>(this),
+                mEventThread.getLooper());
+
+        mIsHttp = true;
+        mBuffering = true;
+        notify(SOURCE_BUFFERING_START);
+    }
+
     @Override
     public void prepareAsync() {
         if (mMediaParser == null) {
-            mEventHandler.sendEmptyMessage(MSG_PREPARE);
+            mEventHandler.obtainMessage(MSG_PREPARE, mUrlConnection).sendToTarget();
         } else {
             notifyPrepared();
         }
@@ -235,11 +260,16 @@ public final class SimpleSource extends MediaSource {
         return null;
     }
 
-    private void onPrepareAsync() {
+    private void onPrepareAsync(HttpURLConnection urlConnection) {
         if (mMediaParser == null) {
             try {
-                mMediaParser = MediaParserFactory.createParser(mPath, mOffset, mLength,
-                        mMaxBufferSize, mEventHandler);
+                if (urlConnection != null) {
+                    mMediaParser = MediaParserFactory.createParser(urlConnection,
+                            mMaxBufferSize, mEventHandler);
+                } else {
+                    mMediaParser = MediaParserFactory.createParser(mPath, mOffset, mLength,
+                            mMaxBufferSize, mEventHandler);
+                }
             } catch (IOException e) {
                 notifyPrepareFailed(MediaError.IO);
                 return;
@@ -290,7 +320,7 @@ public final class SimpleSource extends MediaSource {
             SimpleSource thiz = mSource.get();
             switch (msg.what) {
                 case MSG_PREPARE:
-                    thiz.onPrepareAsync();
+                    thiz.onPrepareAsync((HttpURLConnection)msg.obj);
                     break;
                 case MSG_SEEKTO:
                     thiz.onSeek((Long) msg.obj);

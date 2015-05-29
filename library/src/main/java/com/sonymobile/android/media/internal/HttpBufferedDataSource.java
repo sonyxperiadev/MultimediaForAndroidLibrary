@@ -20,6 +20,7 @@ import static com.sonymobile.android.media.internal.MediaSource.SOURCE_BUFFERING
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.net.HttpURLConnection;
 
 import android.os.Handler;
 import android.util.Log;
@@ -72,6 +73,11 @@ public class HttpBufferedDataSource extends BufferedDataSource {
 
         if (LOGS_ENABLED)
             Log.v(TAG, "Created HttpBufferedDataSource");
+    }
+
+    public HttpBufferedDataSource(HttpURLConnection urlConnection, int bufferSize, Handler notify,
+                                  BandwidthEstimator bandwidthEstimator) throws IOException {
+        super(urlConnection, bufferSize, notify, bandwidthEstimator);
     }
 
     @Override

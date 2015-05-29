@@ -43,6 +43,7 @@ import java.io.EOFException;
 import java.io.FileDescriptor;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.net.HttpURLConnection;
 
 import android.os.Handler;
 import android.util.Log;
@@ -142,6 +143,15 @@ public abstract class DataSource implements Closeable {
             throw new IllegalArgumentException("Null FileDescriptor is not allowed!");
         }
         return new DirectDataSource(fd, offset, length);
+    }
+
+    public static DataSource create(HttpURLConnection urlConnection, int bufferSize, Handler notify,
+                                    BandwidthEstimator bandwidthEstimator) throws IOException {
+        if (urlConnection == null) {
+            throw new IllegalArgumentException("Null urlConnection is not allowed!");
+        }
+
+        return new HttpBufferedDataSource(urlConnection, bufferSize, notify, bandwidthEstimator);
     }
 
     protected BandwidthEstimator mBandwidthEstimator;

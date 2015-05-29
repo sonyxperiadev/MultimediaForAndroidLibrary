@@ -531,7 +531,10 @@ public final class Player {
                         thiz.mSource = new SimpleSource(thiz.mDataSourceFd, thiz.mDataSourceOffset,
                                 thiz.mDataSourceLength, thiz.mEventHandler);
                     } else {
-                        if (DASHSource.canHandle(thiz.mDataSourcePath)) {
+                        if (HttpSnifferSource.canHandle(thiz.mDataSourcePath)) {
+                            thiz.mSource = new HttpSnifferSource(thiz.mDataSourcePath,
+                                    thiz.mEventHandler, thiz.mMaxBufferSize);
+                        } else if (DASHSource.canHandle(thiz.mDataSourcePath)) {
                             thiz.mSource = new DASHSource(thiz.mDataSourcePath, thiz.mEventHandler,
                                     thiz.mMaxBufferSize);
                         } else {

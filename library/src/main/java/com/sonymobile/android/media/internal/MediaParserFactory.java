@@ -20,6 +20,7 @@ import java.io.FileDescriptor;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.net.HttpURLConnection;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -119,6 +120,68 @@ public class MediaParserFactory {
         } else {
             return doCreateParser(path, offset, length, maxBufferSize, notify);
         }
+    }
+
+    public static MediaParser createParser(HttpURLConnection urlConnection, int maxBufferSize,
+                                           Handler notify) throws IOException {
+
+        MediaParser selectedParser = null;
+        Class[] parameterTypes = {
+                DataSource.class
+        };
+        MediaParser parser = null;
+        if (maxBufferSize == -1) {
+            maxBufferSize = Configuration.DEFAULT_HTTP_BUFFER_SIZE;
+        }
+
+        DataSource dataSource;
+        try {
+            dataSource = DataSource.create(urlConnection, maxBufferSize, notify, null);
+        } catch (IllegalArgumentException e) {
+            if (LOGS_ENABLED) Log.e(TAG, "Could not create DataSource", e);
+            return null;
+        }
+
+        for (int i = 0; i < registeredParsers.length; i++) {
+            Constructor c = null;
+            try {
+                c = registeredParsers[i].getConstructor(parameterTypes);
+            } catch (NoSuchMethodException e) {
+                if (LOGS_ENABLED) Log.e(TAG, "Unable to find constructor", e);
+                continue;
+            }
+            try {
+                parser = (MediaParser)c.newInstance(dataSource);
+                if (parser.canParse()) {
+                    if (parser.parse()) {
+                        selectedParser = parser;
+                        break;
+                    }
+                }
+            } catch (InstantiationException e) {
+                if (LOGS_ENABLED) Log.e(TAG, "Unable to instantiate parser class", e);
+            } catch (IllegalAccessException e) {
+                if (LOGS_ENABLED) Log.e(TAG, "Illegal access to parser class constructor", e);
+            } catch (IllegalArgumentException e) {
+                if (LOGS_ENABLED) Log.e(TAG, "Illegal argument when creating parser", e);
+            } catch (InvocationTargetException e) {
+                if (LOGS_ENABLED) Log.e(TAG, "Unable to invoke parser constructor", e);
+            }
+            try {
+                dataSource.reset();
+            } catch (IOException e) {
+                dataSource = DataSource.create(urlConnection, maxBufferSize,
+                        notify, null);
+            }
+        }
+        if (selectedParser == null) {
+            try {
+                dataSource.close();
+            } catch (IOException e) {
+                if (LOGS_ENABLED) Log.e(TAG, "Exception closing datasource", e);
+            }
+        }
+        return selectedParser;
     }
 
     private static MediaParser doCreateParser(String path,

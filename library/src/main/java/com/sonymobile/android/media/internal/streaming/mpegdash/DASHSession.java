@@ -213,8 +213,9 @@ public final class DASHSession {
         return accessUnit;
     }
 
-    public void connect(String url) {
-        mEventHandler.obtainMessage(MSG_CONNECT, url).sendToTarget();
+    public void connect(String url, HttpURLConnection urlConnection) {
+        mEventHandler.obtainMessage(MSG_CONNECT,
+                urlConnection != null ? urlConnection : url).sendToTarget();
     }
 
     public MetaData getMetaData() {
@@ -370,11 +371,18 @@ public final class DASHSession {
     private void onConnect(Message msg) {
         boolean success = false;
         int error = MediaError.UNKNOWN;
+        String uri;
+        HttpURLConnection urlConnection;
         try {
-            String uri = (String)msg.obj;
+            if (msg.obj instanceof HttpURLConnection) {
+                urlConnection = (HttpURLConnection)msg.obj;
+                uri = urlConnection.getURL().toString();
+            } else {
+                uri = (String)msg.obj;
+                URL url = new URL(uri);
+                urlConnection = (HttpURLConnection)url.openConnection();
+            }
             if (LOGS_ENABLED) Log.i(TAG, "onConnect " + uri);
-            URL url = new URL(uri);
-            HttpURLConnection urlConnection = (HttpURLConnection)url.openConnection();
 
             if (urlConnection.getResponseCode() / 100 == 2) {
 

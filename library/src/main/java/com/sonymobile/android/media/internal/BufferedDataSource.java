@@ -106,6 +106,27 @@ public abstract class BufferedDataSource extends DataSource {
         openConnectionsAndStreams();
     }
 
+    protected BufferedDataSource(HttpURLConnection urlConnection, int bufferSize, Handler notify,
+                                 BandwidthEstimator bandwidthEstimator) throws IOException {
+
+        mOffset = 0;
+        mLength = -1;
+        mBufferSize = bufferSize;
+        mUri = urlConnection.getURL().toString();
+        mCurrentOffset = 0;
+        mNotify = notify;
+        mBandwidthEstimator = bandwidthEstimator;
+
+        if (mNotify != null) {
+            mReconnectThread = new HandlerThread("Reconnect thread");
+            mReconnectThread.start();
+
+            mReconnectHandler = new ReconnectHandler(mReconnectThread.getLooper());
+        }
+
+        useConnectionsAndStreams(urlConnection);
+    }
+
     @Override
     public int read(byte[] buffer) throws IOException {
         return readAt(mCurrentOffset, buffer, buffer.length);
@@ -354,6 +375,64 @@ public abstract class BufferedDataSource extends DataSource {
                     mContentLength = -1;
                     if (LOGS_ENABLED) Log.e(TAG, "Failed to Parse header field");
                 }
+            }
+
+            return httpConnection;
+
+        } catch (MalformedURLException e) {
+            throw new IOException("Not an HTTP Url!");
+        } catch (ProtocolException e) {
+            throw new IOException("Unsupported response from server!");
+        }
+    }
+
+    protected void useConnectionsAndStreams(HttpURLConnection urlConnection) throws IOException {
+        InputStream in = null;
+        mRangeExtended = false;
+        if (LOGS_ENABLED) Log.d(TAG, "useConnectionsAndStreams at " + mCurrentOffset);
+
+        mHttpURLConnection = useHttpConnection(urlConnection);
+        in = mHttpURLConnection.getInputStream();
+
+        // Set bufferSize to the default size.
+        int bufferSize = Configuration.DEFAULT_HTTP_BUFFER_SIZE;
+
+        if (mBufferSize != -1) {
+            // Size specified at create time.
+            bufferSize = mBufferSize;
+        }
+
+        mBufferSize = bufferSize;
+
+        // TODO: We need to check if we run on a low memory device and adjust
+        // the buffer size.
+        if (in != null) {
+            mBis = new BufferedStream(in, bufferSize, mBandwidthEstimator, mReconnectHandler);
+        } else {
+            throw new IOException("Unable to open data stream");
+        }
+    }
+
+    private HttpURLConnection useHttpConnection(HttpURLConnection httpConnection)
+            throws IOException {
+        try {
+            InetAddress address = InetAddress.getByName(httpConnection.getURL().getHost());
+            mServerIP = address.getHostAddress();
+
+            int responseCode = httpConnection.getResponseCode();
+
+            if (responseCode != HttpURLConnection.HTTP_OK
+                    && responseCode != HttpURLConnection.HTTP_PARTIAL) {
+                if (LOGS_ENABLED) Log.e(TAG, "Server responded with " + responseCode);
+                throw new IOException("Not OK from server");
+            }
+
+            try {
+                mContentLength =
+                        Long.parseLong(httpConnection.getHeaderField("Content-Length"));
+            } catch (NumberFormatException e) {
+                mContentLength = -1;
+                if (LOGS_ENABLED) Log.e(TAG, "Failed to Parse header field");
             }
 
             return httpConnection;
