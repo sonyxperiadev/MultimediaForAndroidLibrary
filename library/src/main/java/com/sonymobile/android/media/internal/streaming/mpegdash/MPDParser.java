@@ -566,6 +566,8 @@ public class MPDParser {
             mCurrentRepresentation.baseURL = parser.getText();
         } else if (mCurrentPeriod != null) {
             mCurrentPeriod.baseURL = parser.getText();
+        } else {
+            mBaseUri = parser.getText();
         }
     }
 
