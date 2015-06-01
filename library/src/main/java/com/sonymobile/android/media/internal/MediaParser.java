@@ -43,6 +43,10 @@ abstract public class MediaParser implements MetaDataParser, MetaData {
 
     protected ArrayList<Track> mTracks;
 
+    protected boolean mIsParsed;
+
+    protected boolean mParseResult;
+
     public MediaParser() {
 
     }

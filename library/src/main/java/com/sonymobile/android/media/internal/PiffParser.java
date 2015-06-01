@@ -90,6 +90,10 @@ public class PiffParser extends ISOBMFFParser {
 
     @Override
     public boolean parse() {
+        if (mIsParsed) {
+            return mParseResult;
+        }
+
         boolean parseOK = super.parse();
 
         if (mCurrentVideoTrack != null) {

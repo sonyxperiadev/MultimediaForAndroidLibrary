@@ -368,6 +368,12 @@ public class ISOBMFFParser extends MediaParser {
     @Override
     public boolean parse() {
         if (LOGS_ENABLED) Log.v(TAG, "ISOBMFFParser parse");
+        if (mIsParsed) {
+            return mParseResult;
+        }
+
+        mIsParsed = true;
+
         boolean parseOK = true;
 
         initParsing();
@@ -471,6 +477,8 @@ public class ISOBMFFParser extends MediaParser {
                 }
             }
         }
+
+        mParseResult = parseOK;
 
         return parseOK;
     }

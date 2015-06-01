@@ -102,6 +102,10 @@ public class VUParser extends ISOBMFFParser {
 
     @Override
     public boolean parse() {
+        if (mIsParsed) {
+            return mParseResult;
+        }
+
         boolean parseOK = super.parse();
 
         mMetaDataValues.put(KEY_MIME_TYPE, MimeType.MNV);
