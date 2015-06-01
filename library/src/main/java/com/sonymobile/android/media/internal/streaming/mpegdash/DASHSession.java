@@ -121,6 +121,10 @@ public final class DASHSession {
 
     private final int[] mMaxBufferSizes;
 
+    private long mLastMPDFetchTimeMs;
+
+    private String mMPDUrl;
+
     public DASHSession(Handler callbackHandler, BandwidthEstimator estimator,
             RepresentationSelector selector, int maxBufferSize) {
 
@@ -254,6 +258,13 @@ public final class DASHSession {
                     switch (msg.arg1) {
                         case FETCHER_EOS: {
                             PacketSource packetSource = thiz.mPacketSources.get(type);
+
+                            if (!thiz.mMPDParser.hasNextPeriod() &&
+                                    thiz.mMPDParser.isDynamicWaitingForUpdate()) {
+                                // This is a dynamic stream.
+                                // Wait for more data to be added to the MPD.
+                                break;
+                            }
 
                             thiz.mFetchers.remove(type);
 
@@ -397,6 +408,7 @@ public final class DASHSession {
 
             if (urlConnection.getResponseCode() / 100 == 2) {
 
+                mMPDUrl = uri;
                 mMPDParser = new MPDParser(uri);
 
                 if (mBandwidthEstimator == null) {
@@ -437,6 +449,7 @@ public final class DASHSession {
                             selectedRepresentations);
                     mMPDParser.updateRepresentations(selectedRepresentations);
                     changeConfiguration(0);
+                    mLastMPDFetchTimeMs = System.currentTimeMillis();
                 } else {
                     error = MediaError.MALFORMED;
                 }
@@ -484,6 +497,13 @@ public final class DASHSession {
             return;
         }
 
+        long minUpdatePeriodUs = mMPDParser.getMinUpdatePeriodUs();
+        if (minUpdatePeriodUs > -1 &&
+                mLastMPDFetchTimeMs + (minUpdatePeriodUs / 1000) < System.currentTimeMillis()) {
+            updateMPD();
+            mLastMPDFetchTimeMs = System.currentTimeMillis();
+        }
+
         RepresentationFetcher selectedFetcher = null;
         for (Map.Entry<TrackType, RepresentationFetcher> item : mFetchers.entrySet()) {
             RepresentationFetcher fetcher = item.getValue();
@@ -511,6 +531,26 @@ public final class DASHSession {
             Message msg = mEventHandler.obtainMessage(MSG_DOWNLOAD_NEXT);
             mEventHandler.sendMessageDelayed(msg, 1000);
         }
+    }
+
+    private boolean updateMPD() {
+        try {
+            URL url = new URL(mMPDUrl);
+            HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
+
+            if (urlConnection.getResponseCode() / 100 == 2) {
+                return mMPDParser.update(urlConnection.getInputStream());
+            } else {
+                if (LOGS_ENABLED)Log.e(TAG, "HTTP error " + urlConnection.getResponseCode() +
+                        " while updating MPD");
+            }
+        } catch (MalformedURLException e) {
+            if (LOGS_ENABLED) Log.e(TAG, "MalformedURLException in updateMPD", e);
+        } catch (IOException e) {
+            if (LOGS_ENABLED) Log.e(TAG, "IOException in updateMPD", e);
+        }
+
+        return false;
     }
 
     private void changeConfiguration(long timeUs) {

@@ -22,6 +22,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
 import java.nio.charset.Charset;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Vector;
@@ -48,6 +50,8 @@ public class MPDParser {
 
     private static final String TAG = "MPDParser";
 
+    private static final int MAX_RETRIES = 5;
+
     private long mDurationUs = -1;
 
     private long mMinBufferTimeUs;
@@ -69,6 +73,14 @@ public class MPDParser {
     private String mBaseUri;
 
     private String mMPDFile = "";
+
+    private boolean mIsDynamic = false;
+
+    private long mMinUpdatePeriodUs;
+
+    private byte[] mLastDigest;
+
+    private int mUnchangedCounter = 0;
 
     public MPDParser(String baseUri) {
         mBaseUri = baseUri.substring(0, baseUri.lastIndexOf('/') + 1);
@@ -106,14 +118,14 @@ public class MPDParser {
     }
 
     public boolean parse(InputStream in) {
-        boolean success = false;
-
         byte[] buffer;
         try {
+            MessageDigest digester = MessageDigest.getInstance("MD5");
             ByteArrayOutputStream out = new ByteArrayOutputStream();
             buffer = new byte[1024];
             int read = in.read(buffer);
             while (read > 0) {
+                digester.update(buffer, 0, read);
                 out.write(buffer, 0, read);
                 read = in.read(buffer);
             }
@@ -127,15 +139,20 @@ public class MPDParser {
             }
 
             mMPDFile = out.toString(charSet.name());
-
+            mLastDigest = digester.digest();
             out.close();
         } catch (IOException e) {
             if (LOGS_ENABLED) Log.e(TAG, "Could not download MPD", e);
             return false;
+        } catch (NoSuchAlgorithmException e) {
+            if (LOGS_ENABLED) Log.e(TAG, "Unsupported digest method", e);
+            return false;
         }
 
-        in = new ByteArrayInputStream(buffer);
+        return parseXML(new ByteArrayInputStream(buffer), false);
+    }
 
+    private boolean parseXML(InputStream in, boolean update) {
         XmlPullParser parser = Xml.newPullParser();
         try {
             parser.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, false);
@@ -145,7 +162,7 @@ public class MPDParser {
                     if (parser.getName().equals("MPD")) {
                         handleMPD(parser);
                     } else if (parser.getName().equals("Period")) {
-                        handlePeriod(parser);
+                        handlePeriod(parser, update);
                     } else if (parser.getName().equals("AdaptationSet")) {
                         handleAdaptationSet(parser);
                     } else if (parser.getName().equals("ContentComponent")) {
@@ -178,11 +195,8 @@ public class MPDParser {
                         handleBaseURL(parser);
                     }
                 } else if (parser.getEventType() == XmlPullParser.END_TAG) {
-                    if (parser.getName().equals("MPD")) {
-                        success = mCurrentPeriod == null && mCurrentAdaptationSet == null
-                                && mCurrentRepresentation == null;
-                    } else if (parser.getName().equals("Period")) {
-                        endPeriod();
+                    if (parser.getName().equals("Period")) {
+                        endPeriod(update);
                     } else if (parser.getName().equals("AdaptationSet")) {
                         endAdaptationSet();
                     } else if (parser.getName().equals("Representation")) {
@@ -192,6 +206,9 @@ public class MPDParser {
                     }
                 }
             }
+
+            return mCurrentPeriod == null && mCurrentAdaptationSet == null
+                    && mCurrentRepresentation == null;
         } catch (XmlPullParserException e) {
             if (LOGS_ENABLED) Log.e(TAG, "XmlPullParserException during parse", e);
             return false;
@@ -202,8 +219,121 @@ public class MPDParser {
             if (LOGS_ENABLED) Log.e(TAG, "ParseException during parse", e);
             return false;
         }
+    }
 
-        return success;
+    public boolean update(InputStream in) {
+        byte[] buffer = new byte[1024];
+        try {
+            MessageDigest digester = MessageDigest.getInstance("MD5");
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+
+            int read = in.read(buffer);
+            while (read > 0) {
+                out.write(buffer, 0, read);
+                digester.update(buffer, 0, read);
+                read = in.read(buffer);
+            }
+
+            byte[] digest = digester.digest();
+
+            if (MessageDigest.isEqual(digest, mLastDigest)) {
+                mUnchangedCounter++;
+                return false;
+            }
+
+            buffer = out.toByteArray();
+        } catch (IOException e) {
+            if (LOGS_ENABLED) Log.e(TAG, "Could not download updated MPD", e);
+            return false;
+        } catch (NoSuchAlgorithmException e) {
+            if (LOGS_ENABLED) Log.e(TAG, "Unsupported digest method", e);
+            return false;
+        }
+
+        mUnchangedCounter = 0;
+        return parseXML(new ByteArrayInputStream(buffer), true);
+    }
+
+    private void updatePeriod(Period oldPeriod, Period newPeriod) {
+        int noAdaptationSets = oldPeriod.adaptationSets.size();
+        int i = 0;
+        while (i < noAdaptationSets) {
+            AdaptationSet oldAdaptationSet = oldPeriod.adaptationSets.get(i);
+            boolean found = false;
+
+            for (int j = 0; j < newPeriod.adaptationSets.size(); j++) {
+                AdaptationSet newAdaptationSet = newPeriod.adaptationSets.get(j);
+
+                if (oldAdaptationSet.mime.equals(newAdaptationSet.mime)) {
+                    updateSegmentTimeline(oldAdaptationSet, newAdaptationSet);
+                    newPeriod.adaptationSets.remove(j);
+                    found = true;
+                    break;
+                }
+            }
+
+            if (!found) {
+                oldPeriod.adaptationSets.remove(i);
+                noAdaptationSets--;
+                oldPeriod.currentAdaptationSet[TrackType.AUDIO.ordinal()] = -1;
+                oldPeriod.currentAdaptationSet[TrackType.VIDEO.ordinal()] = -1;
+                oldPeriod.currentAdaptationSet[TrackType.SUBTITLE.ordinal()] = -1;
+            } else {
+                i++;
+            }
+        }
+
+        if (!newPeriod.adaptationSets.isEmpty()) {
+            for (i = 0; i < newPeriod.adaptationSets.size(); i++) {
+                oldPeriod.adaptationSets.add(newPeriod.adaptationSets.get(i));
+            }
+
+            oldPeriod.currentAdaptationSet[TrackType.AUDIO.ordinal()] = -1;
+            oldPeriod.currentAdaptationSet[TrackType.VIDEO.ordinal()] = -1;
+            oldPeriod.currentAdaptationSet[TrackType.SUBTITLE.ordinal()] = -1;
+        }
+    }
+
+    private void updateSegmentTimeline(AdaptationSet oldAdaptationSet,
+                                       AdaptationSet newAdaptationSet) {
+        for (int i = 0; i < oldAdaptationSet.representations.size(); i++) {
+            SegmentTemplate template = oldAdaptationSet.representations.get(i).segmentTemplate;
+
+            if (template != null) {
+                template.handled = false;
+            }
+        }
+
+        for (int i = 0; i < oldAdaptationSet.representations.size(); i++) {
+            Representation oldRepresentation = oldAdaptationSet.representations.get(i);
+
+            if (oldRepresentation.segmentTemplate != null &&
+                    oldRepresentation.segmentTemplate.handled) {
+                continue;
+            }
+
+            for (int j = 0; j < newAdaptationSet.representations.size(); j++) {
+                Representation newRepresentation = newAdaptationSet.representations.get(i);
+
+                if (oldRepresentation.id.equals(newRepresentation.id)) {
+                    if (newRepresentation.segmentTemplate != null) {
+                        if (oldRepresentation.segmentTemplate == null) {
+                            oldRepresentation.segmentTemplate = newRepresentation.segmentTemplate;
+                        } else {
+                            if (newRepresentation.segmentTemplate.segmentTimeline != null) {
+                                oldRepresentation.segmentTemplate.segmentTimeline =
+                                        newRepresentation.segmentTemplate.segmentTimeline;
+                            }
+                        }
+
+                        oldRepresentation.segmentTemplate.handled = true;
+                    }
+
+                    newAdaptationSet.representations.remove(j);
+                    break;
+                }
+            }
+        }
     }
 
     private void handleMPD(XmlPullParser parser) {
@@ -211,12 +341,25 @@ public class MPDParser {
         mDurationUs = parseISO8601Duration(parser.getAttributeValue(null,
                 "mediaPresentationDuration"));
 
+        String type = parser.getAttributeValue(null, "type");
+        if (type.equalsIgnoreCase("dynamic")) {
+            mIsDynamic = true;
+        }
+
         mMinBufferTimeUs = parseISO8601Duration(parser.getAttributeValue(null, "minBufferTime"));
+
+        mMinUpdatePeriodUs =
+                parseISO8601Duration(parser.getAttributeValue(null, "minimumUpdatePeriod"));
     }
 
-    private void handlePeriod(XmlPullParser parser) {
+    private void handlePeriod(XmlPullParser parser, boolean update) {
         mCurrentPeriod = new Period();
         String duration = parser.getAttributeValue(null, "duration");
+
+        mCurrentPeriod.id = parser.getAttributeValue(null, "id");
+        if (mCurrentPeriod.id == null) {
+            mCurrentPeriod.id = "";
+        }
 
         if (duration != null) {
             mCurrentPeriod.durationUs = parseISO8601Duration(duration);
@@ -241,10 +384,26 @@ public class MPDParser {
         mCurrentPeriod.currentAdaptationSet[TrackType.VIDEO.ordinal()] = -1;
         mCurrentPeriod.currentAdaptationSet[TrackType.SUBTITLE.ordinal()] = -1;
 
-        mPeriods.add(mCurrentPeriod);
+        if (!update) {
+            mPeriods.add(mCurrentPeriod);
+        }
     }
 
-    private void endPeriod() {
+    private void endPeriod(boolean update) {
+        if (update) {
+            boolean found = false;
+            for (Period period : mPeriods) {
+                if (period.id.equals(mCurrentPeriod.id)) {
+                    found = true;
+                    updatePeriod(period, mCurrentPeriod);
+                    break;
+                }
+            }
+
+            if (!found) {
+                mPeriods.add(mCurrentPeriod);
+            }
+        }
 
         mCurrentPeriod = null;
     }
@@ -1000,6 +1159,14 @@ public class MPDParser {
         return ((maxWidth + 15) / 16) * ((maxHeight + 15) / 16) * 192;
     }
 
+    public long getMinUpdatePeriodUs() {
+        return mMinUpdatePeriodUs;
+    }
+
+    public boolean isDynamicWaitingForUpdate() {
+        return mIsDynamic && (mUnchangedCounter < MAX_RETRIES);
+    }
+
     public static class SegmentBase {
         String url;
 
@@ -1045,6 +1212,8 @@ public class MPDParser {
     }
 
     public static class Period {
+
+        String id;
 
         public String baseURL;
 
@@ -1099,6 +1268,8 @@ public class MPDParser {
         int durationTicks;
 
         public ArrayList<SegmentTimelineEntry> segmentTimeline;
+
+        boolean handled;
     }
 
     public static class ContentProtection {

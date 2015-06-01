@@ -8,7 +8,7 @@ Multimedia for Android Library contains an application level media player. It pr
   * Codecs: H264, H265 (if supported by device) and AAC.
   * Subtitles: SMPTE-TT
   * DRM: Marlin and PlayReady (DRM support is not availble on all devices)
-  * MPEG-DASH: DASH264, DASH265 (ISO On-Demand profile only)
+  * MPEG-DASH: DASH264, DASH265 (isoff-on-demand and isoff-live profiles only)
   
 # Developer Guide
 The library requires API level 19 (KitKat) or above.
