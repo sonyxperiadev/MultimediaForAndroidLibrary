@@ -17,10 +17,11 @@
 package com.sonymobile.android.media.internal.streaming.mpegdash;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
-import java.nio.charset.StandardCharsets;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Vector;
@@ -107,18 +108,33 @@ public class MPDParser {
     public boolean parse(InputStream in) {
         boolean success = false;
 
-        byte[] buffer = new byte[1024];
-        int read;
+        byte[] buffer;
         try {
-            while ((read = in.read(buffer)) > 0) {
-                mMPDFile += new String(buffer, 0, read, "UTF-8");
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            buffer = new byte[1024];
+            int read = in.read(buffer);
+            while (read > 0) {
+                out.write(buffer, 0, read);
+                read = in.read(buffer);
             }
+
+            buffer = out.toByteArray();
+
+            Charset charSet = Charset.forName("UTF-8");
+            if ((buffer[0] == (byte) 0xff && buffer[1] == (byte) 0xfe) ||
+                    (buffer[0] == (byte) 0xfe && buffer[1] == (byte) 0xff)) {
+                charSet = Charset.forName("UTF-16");
+            }
+
+            mMPDFile = out.toString(charSet.name());
+
+            out.close();
         } catch (IOException e) {
             if (LOGS_ENABLED) Log.e(TAG, "Could not download MPD", e);
             return false;
         }
 
-        in = new ByteArrayInputStream(mMPDFile.getBytes(StandardCharsets.UTF_8));
+        in = new ByteArrayInputStream(buffer);
 
         XmlPullParser parser = Xml.newPullParser();
         try {
