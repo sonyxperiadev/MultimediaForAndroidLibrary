@@ -248,4 +248,8 @@ public class HttpBufferedDataSource extends BufferedDataSource {
             mNotify.sendEmptyMessage(what);
         }
     }
+
+    public boolean isAtEndOfStream() {
+        return mBis == null || mBis.isAtEndOfStream();
+    }
 }

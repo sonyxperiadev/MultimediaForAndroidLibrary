@@ -256,6 +256,10 @@ public final class BufferedStream implements Closeable {
         return mClosed;
     }
 
+    public synchronized boolean isAtEndOfStream() {
+        return mDownloaderThread == null || mDownloaderThread.isAtEndOfStream();
+    }
+
     private class DownloaderThread extends Thread {
 
         private boolean mEos = false;

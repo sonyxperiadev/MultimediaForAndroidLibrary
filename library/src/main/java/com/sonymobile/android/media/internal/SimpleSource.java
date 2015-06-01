@@ -139,10 +139,13 @@ public final class SimpleSource extends MediaSource {
             try {
                 if (mMediaParser.hasDataAvailable(type)) {
                     if (mBuffering) {
-                        if (((HttpBufferedDataSource)mMediaParser.mDataSource).getBufferedSize() <
-                                (((double)((HttpBufferedDataSource)mMediaParser.mDataSource).
-                                        length() * 8 / mMediaParser.getDurationUs()) *
-                                        Configuration.HTTP_MIN_BUFFERING_DURATION_US)) {
+                        HttpBufferedDataSource httpBufferedDataSource =
+                                (HttpBufferedDataSource) mMediaParser.mDataSource;
+                        if (httpBufferedDataSource.getBufferedSize() <
+                                ((double)(httpBufferedDataSource.length() /
+                                        mMediaParser.getDurationUs()) *
+                                        Configuration.HTTP_MIN_BUFFERING_DURATION_US)
+                                && !httpBufferedDataSource.isAtEndOfStream()) {
                             return AccessUnit.ACCESS_UNIT_NO_DATA_AVAILABLE;
                         }
                         mBuffering = false;
