@@ -23,7 +23,7 @@ public class BitReader {
     private int mPos = 0;
 
     public BitReader(byte[] byteData) {
-        mBytes = byteData;
+        mBytes = byteData.clone();
         mPos = 0;
     }
 

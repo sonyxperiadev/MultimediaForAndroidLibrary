@@ -205,15 +205,15 @@ public class DefaultDASHRepresentationSelector implements RepresentationSelector
                 if (availableBandwidth > representation.bandwidth) {
                     if (representation.bandwidth > currentSelectedBandwidth
                             && availableBandwidth < (float)representation.bandwidth * 1.3) {
-                        if (availableBandwidth > (float)representation.bandwidth * 1.1) {
-                            if (mSwitchUpRepresentation == sortedRepresentations.get(i)) {
-                                if (mSwitchUpCounter < 3) {
-                                    mSwitchUpCounter++;
-                                    continue;
-                                }
-                            } else {
-                                mSwitchUpCounter = 1;
-                                mSwitchUpRepresentation = sortedRepresentations.get(i);
+                        if (availableBandwidth < (float)representation.bandwidth * 1.1) {
+                            mSwitchUpCounter = 1;
+                            mSwitchUpRepresentation = sortedRepresentations.get(i);
+                            continue;
+                        }
+
+                        if (mSwitchUpRepresentation == sortedRepresentations.get(i)) {
+                            if (mSwitchUpCounter < 3) {
+                                mSwitchUpCounter++;
                                 continue;
                             }
                         } else {

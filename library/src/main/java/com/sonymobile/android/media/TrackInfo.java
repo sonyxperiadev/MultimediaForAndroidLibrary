@@ -51,7 +51,7 @@ public class TrackInfo {
 
     private String mLanguage;
 
-    private TrackRepresentation[] mRepresentations;
+    private final TrackRepresentation[] mRepresentations;
 
     /**
      * Create a new track info. TrackInfo should normally not be created by
@@ -62,12 +62,13 @@ public class TrackInfo {
      * @param durationUs duration of the track, in microseconds.
      * @param language language of the track.
      */
-    public TrackInfo(TrackType trackType, String mimeType, long durationUs, String language) {
+    public TrackInfo(TrackType trackType, String mimeType, long durationUs, String language,
+                     TrackRepresentation[] representations) {
         mTrackType = trackType;
         mMimeType = mimeType;
         mDurationUs = durationUs;
         mLanguage = language;
-        mRepresentations = null;
+        mRepresentations = representations.clone();
     }
 
     /**
@@ -107,20 +108,11 @@ public class TrackInfo {
     }
 
     /**
-     * Set the track representations.
-     *
-     * @param representations Array of track representations.
-     */
-    public void setRepresentations(TrackRepresentation[] representations) {
-        mRepresentations = representations;
-    }
-
-    /**
      * Get the track representations.
      *
      * @return The track representations, null if they have not been set before.
      */
     public TrackRepresentation[] getRepresentations() {
-        return mRepresentations;
+        return mRepresentations.clone();
     }
 }

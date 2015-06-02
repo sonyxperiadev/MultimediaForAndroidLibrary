@@ -87,7 +87,7 @@ public class SubtitleData {
      * @return the subtitle data.
      */
     public byte[] getData() {
-        return mData;
+        return mData.clone();
     }
 
     /**

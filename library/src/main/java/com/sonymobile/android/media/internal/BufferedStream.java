@@ -16,6 +16,7 @@
 
 package com.sonymobile.android.media.internal;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.SocketTimeoutException;
@@ -33,7 +34,7 @@ import com.sonymobile.android.media.BandwidthEstimator;
  * 2: Implement high / low threshold callbacks to pause / resume data production.
  */
 
-public class BufferedStream extends InputStream {
+public final class BufferedStream implements Closeable {
 
     public static final int MSG_RECONNECT = 1;
 
@@ -42,10 +43,6 @@ public class BufferedStream extends InputStream {
     private static final boolean LOGS_ENABLED = Configuration.DEBUG || false;
 
     private static final String TAG = "BufferedStream";
-
-    private static final int LOW_THRESHOLD_PERCENT = 15;
-
-    private static final int HIGH_THRESHOLD_PERCENT = 85;
 
     // TODO: Maybe should we wrap a BufferedInputStream since we do a lot of
     // small reads, however this could mess up bandwidth measure.
@@ -85,7 +82,6 @@ public class BufferedStream extends InputStream {
         mCallback = handler;
     }
 
-    @Override
     public synchronized int available() throws IOException {
         if (mClosed) {
             throw streamIsClosed();
@@ -94,7 +90,6 @@ public class BufferedStream extends InputStream {
         return mDataBuffer.available();
     }
 
-    @Override
     public synchronized void close() throws IOException {
         if (mClosed) {
             throw streamIsClosed();
@@ -128,17 +123,6 @@ public class BufferedStream extends InputStream {
         mBandwidthEstimator = null;
     }
 
-    @Override
-    public synchronized void mark(int readlimit) {
-
-    }
-
-    @Override
-    public boolean markSupported() {
-        return false;
-    }
-
-    @Override
     public synchronized int read() throws IOException {
         if (mClosed) {
             throw streamIsClosed();
@@ -152,7 +136,6 @@ public class BufferedStream extends InputStream {
         return data;
     }
 
-    @Override
     public synchronized int read(byte[] buffer, int byteOffset, int byteCount) throws IOException {
         if (mClosed) {
             throw streamIsClosed();
@@ -166,7 +149,6 @@ public class BufferedStream extends InputStream {
         return read;
     }
 
-    @Override
     public synchronized int read(byte[] buffer) throws IOException {
         if (mClosed) {
             throw streamIsClosed();
@@ -180,14 +162,12 @@ public class BufferedStream extends InputStream {
         return read;
     }
 
-    @Override
     public synchronized void reset() throws IOException {
         if (mClosed) {
             throw streamIsClosed();
         }
     }
 
-    @Override
     public synchronized long skip(long byteCount) throws IOException {
         if (mClosed) {
             return -1;
@@ -257,7 +237,7 @@ public class BufferedStream extends InputStream {
         mDataBuffer.compact(bytesToDiscard);
     }
 
-    public void reconnect(InputStream in) {
+    public synchronized void reconnect(InputStream in) {
         mInputStream = in;
 
         mDownloaderThread = new DownloaderThread();
@@ -280,45 +260,8 @@ public class BufferedStream extends InputStream {
 
         private boolean mEos = false;
 
-        private boolean mPaused = false;
-
-        private boolean mInPauseState = false;
-
-        private Object mPausedLock = new Object();
-
-        private boolean mHasPassedLowThreshold = false;
-
         public boolean isAtEndOfStream() {
             return mEos;
-        }
-
-        public void pauseProduction() {
-            // We are closed or at end of stream, can't pause.
-            if (mClosed || mEos) {
-                return;
-            }
-
-            mPaused = true;
-            while (!mInPauseState) {
-                synchronized (mPausedLock) {
-                    try {
-                        mPausedLock.wait(100);
-                    } catch (InterruptedException e) {
-                    }
-                }
-            }
-        }
-
-        public void resumeProduction() {
-            mPaused = false;
-        }
-
-        public long skipData(long byteCount) throws IOException {
-            if (mClosed || mEos) {
-                return -1;
-            }
-
-            return mInputStream.skip(byteCount);
         }
 
         @Override
@@ -333,53 +276,42 @@ public class BufferedStream extends InputStream {
             }
 
             if (LOGS_ENABLED) Log.v(TAG, "DownloaderThread will now start.");
-            while (!mClosed && !mEos && mInputStream != null) {
+            while (!isClosed() && !mEos && mInputStream != null) {
                 try {
-                    if (!mPaused) {
-                        mInPauseState = false;
-                        int read = mInputStream.read(data);
+                    int read = mInputStream.read(data);
 
-                        if (read == -1 || mClosed) {
-                            mEos = true;
-                            break;
-                        }
+                    if (read == -1 || mClosed) {
+                        mEos = true;
+                        break;
+                    }
 
-                        // TODO: Do not use outer class member. Should be passed
-                        // to the DownloadThread instead.
-                        if (mBandwidthEstimator != null) {
-                            // TODO call async ?
-                            mBandwidthEstimator.onDataTransferred(read);
-                        }
+                    // TODO: Do not use outer class member. Should be passed
+                    // to the DownloadThread instead.
+                    if (mBandwidthEstimator != null) {
+                        // TODO call async ?
+                        mBandwidthEstimator.onDataTransferred(read);
+                    }
 
-                        mTotalBytesLoaded += read;
+                    mTotalBytesLoaded += read;
 
-                        int totalSaved = 0;
-                        do {
-                            if (mDataBuffer != null) {
-                                int put = mDataBuffer.put(data, totalSaved, read - totalSaved);
-                                totalSaved += put;
-                                if (totalSaved < read) {
-                                    if (put == 0 && freeSpace() < (mBufferSize / 200) &&
-                                            available() < mBufferSize / 10) {
-                                        compact((mBufferSize / 10));
-                                    }
-                                    try {
-                                        // Let the system take a breath.
-                                        Thread.sleep(1);
-                                    } catch (Exception e) {
-                                    }
+                    int totalSaved = 0;
+                    do {
+                        if (mDataBuffer != null) {
+                            int put = mDataBuffer.put(data, totalSaved, read - totalSaved);
+                            totalSaved += put;
+                            if (totalSaved < read) {
+                                if (put == 0 && freeSpace() < (mBufferSize / 200) &&
+                                        available() < mBufferSize / 10) {
+                                    compact((mBufferSize / 10));
+                                }
+                                try {
+                                    // Let the system take a breath.
+                                    Thread.sleep(1);
+                                } catch (InterruptedException e) {
                                 }
                             }
-                        } while (!mClosed && totalSaved < read);
-                    } else {
-                        synchronized (mPausedLock) {
-                            try {
-                                mInPauseState = true;
-                                mPausedLock.wait(100);
-                            } catch (Exception e) {
-                            }
                         }
-                    }
+                    } while (!isClosed() && totalSaved < read);
                 } catch (SocketTimeoutException e) {
                     if (LOGS_ENABLED) Log.e(TAG, "SocketTimeoutException during read!", e);
                     if (mInputStream != null) {
@@ -437,10 +369,14 @@ public class BufferedStream extends InputStream {
                 }
             }
 
-            data = null;
-
             if (LOGS_ENABLED)
                 Log.v(TAG, "DownloaderThread will now exit, stream should be closed by now.");
+        }
+
+        private boolean isClosed() {
+            synchronized (BufferedStream.this) {
+                return mClosed;
+            }
         }
     }
 }

@@ -610,8 +610,6 @@ public class VUParser extends ISOBMFFParser {
         public int mdstIndex = -1;
 
         public int languageIndex = -1;
-
-        public byte[] iconData = null;
     }
 
     @Override

@@ -45,8 +45,9 @@ public class DASHTrackInfo extends TrackInfo {
      * @param rating the rating scheme employed.
      */
     public DASHTrackInfo(TrackType trackType, String mimeType, long durationUs, String language,
-            long startTimeUs, String accessibility, String role, String rating) {
-        super(trackType, mimeType, durationUs, language);
+                         TrackRepresentation[] representations, long startTimeUs,
+                         String accessibility, String role, String rating) {
+        super(trackType, mimeType, durationUs, language, representations);
 
         mStartTimeUs = startTimeUs;
         mAccessibility = accessibility;

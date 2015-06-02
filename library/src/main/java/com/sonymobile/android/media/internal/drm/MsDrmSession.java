@@ -135,10 +135,8 @@ public class MsDrmSession extends DrmSession {
     private synchronized void releaseAllMediaCryptos() {
         if (DEBUG_ENABLED) Log.d(TAG, "Open MediaCryptos: " + mMediaCryptoMap.size());
 
-        Set<String> keys = mMediaCryptoMap.keySet();
-        for (String key : keys) {
-            MediaCrypto mediaCrypto = mMediaCryptoMap.get(key);
-            mediaCrypto.release();
+        for (Map.Entry<String, MediaCrypto> crypto : mMediaCryptoMap.entrySet()) {
+            crypto.getValue().release();
         }
         mMediaCryptoMap.clear();
     }

@@ -32,6 +32,7 @@ import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.Vector;
 
+import android.annotation.SuppressLint;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.res.AssetFileDescriptor;
@@ -1885,6 +1886,7 @@ public final class MediaPlayer {
      * @param mode what wake mode to set. Wake mode should be one of the defined
      *            in {@link android.os.PowerManager}.
      */
+    @SuppressLint("Wakelock")
     public void setWakeMode(Context context, int mode) {
         if (LOGS_ENABLED) Log.d(TAG, "setWakeMode(context, " + mode + ")");
 
@@ -2060,6 +2062,7 @@ public final class MediaPlayer {
         return mPlayer.getCustomVideoConfigurationParameter(key);
     }
 
+    @SuppressLint("Wakelock")
     private void updateKeepDeviceAlive() {
         synchronized (mStateLock) {
             if (LOGS_ENABLED) Log.d(TAG, "updateKeepDeviceAlive Player State: " + mState);

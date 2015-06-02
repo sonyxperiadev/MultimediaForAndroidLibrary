@@ -82,8 +82,6 @@ public abstract class BufferedDataSource extends DataSource {
 
     protected String mServerIP = null;
 
-    protected long mStartOffset = 0;
-
     private Handler mReconnectHandler;
 
     private HandlerThread mReconnectThread;
@@ -103,7 +101,6 @@ public abstract class BufferedDataSource extends DataSource {
         mBufferSize = bufferSize;
         mUri = uri;
         mCurrentOffset = mOffset;
-        mStartOffset = mOffset;
         mNotify = notify;
         mBandwidthEstimator = bandwidthEstimator;
 

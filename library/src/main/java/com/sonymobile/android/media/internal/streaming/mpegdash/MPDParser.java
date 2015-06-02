@@ -706,10 +706,6 @@ public class MPDParser {
                 AdaptationSet adaptationSet = period.adaptationSets.get(j);
                 TrackType trackType = adaptationSet.type;
 
-                DASHTrackInfo trackInfo = new DASHTrackInfo(trackType, adaptationSet.mime,
-                        period.durationUs, adaptationSet.language, period.startTimeUs,
-                        adaptationSet.accessibility, adaptationSet.role, adaptationSet.rating);
-
                 int numRepresentations = adaptationSet.representations.size();
                 TrackRepresentation[] trackRepresentations =
                         new TrackRepresentation[numRepresentations];
@@ -748,8 +744,10 @@ public class MPDParser {
                     trackRepresentations[k] = trackRepresentation;
                 }
 
-                trackInfo.setRepresentations(trackRepresentations);
-                trackInfos[trackIndex] = trackInfo;
+                trackInfos[trackIndex] = new DASHTrackInfo(trackType, adaptationSet.mime,
+                        period.durationUs, adaptationSet.language, trackRepresentations,
+                        period.startTimeUs, adaptationSet.accessibility, adaptationSet.role,
+                        adaptationSet.rating);
                 trackIndex++;
             }
         }

@@ -77,7 +77,7 @@ public class HttpBufferedDataSource extends BufferedDataSource {
     }
 
     @Override
-    public synchronized int readAt(long offset, byte[] buffer, int size) throws IOException {
+    public int readAt(long offset, byte[] buffer, int size) throws IOException {
         if (LOGS_ENABLED) Log.d(TAG, "readAt " + offset + ", " + size + " bytes"
                 + " mCurrentOffset: " + mCurrentOffset);
 
@@ -163,7 +163,7 @@ public class HttpBufferedDataSource extends BufferedDataSource {
         return totalRead;
     }
 
-    protected synchronized void openConnectionsAndStreams()
+    protected void openConnectionsAndStreams()
             throws FileNotFoundException, IOException {
         super.openConnectionsAndStreams();
 
@@ -180,7 +180,7 @@ public class HttpBufferedDataSource extends BufferedDataSource {
     }
 
     @Override
-    public synchronized DataAvailability hasDataAvailable(long offset, int size) {
+    public DataAvailability hasDataAvailable(long offset, int size) {
         if (mBis == null) {
             return DataAvailability.NOT_AVAILABLE;
         }
@@ -207,7 +207,7 @@ public class HttpBufferedDataSource extends BufferedDataSource {
     }
 
     @Override
-    public synchronized void requestReadPosition(long offset) throws IOException {
+    public void requestReadPosition(long offset) throws IOException {
         if (LOGS_ENABLED)
             Log.d(TAG, "Request reconnect now at " + offset);
 

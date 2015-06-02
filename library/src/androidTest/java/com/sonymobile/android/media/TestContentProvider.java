@@ -465,36 +465,16 @@ public class TestContentProvider {
                                 parser.getEventType() == XmlPullParser.START_TAG) {
                             parser.next();
                             if (parser.getEventType() == XmlPullParser.TEXT) {
-                                boolean albumArtDataParsed = true;
                                 String text = parser.getText();
-                                int albumArtSize = 0;
-                                int albumArtWidth = 0;
-                                int albumArtHeight = 0;
-                                if (text.startsWith("s")) {
-                                    int widthIndex = text.indexOf("w");
-                                    if (widthIndex > -1) {
-                                        albumArtSize = Integer.parseInt(text.substring(1,
-                                                widthIndex));
-                                        int heightIndex = text.indexOf("h");
-                                        if (heightIndex > -1) {
-                                            albumArtWidth = Integer.parseInt(text.substring
-                                                    (widthIndex + 1, heightIndex));
-                                            albumArtHeight = Integer.parseInt(text.substring
-                                                    (heightIndex + 1));
-                                        } else {
-                                            albumArtDataParsed = false;
-                                        }
-
-                                    } else {
-                                        albumArtDataParsed = false;
-                                    }
-                                } else {
-                                    albumArtDataParsed = false;
-                                }
-                                if (albumArtDataParsed) {
-                                    obj.setAlbumArtSize(albumArtSize);
-                                    obj.setAlbumArtWidth(albumArtWidth);
-                                    obj.setAlbumArtHeight(albumArtHeight);
+                                int widthIndex = text.indexOf("w");
+                                int heightIndex = text.indexOf("h");
+                                if (text.startsWith("s") && widthIndex > -1 && heightIndex > -1) {
+                                    obj.setAlbumArtSize(Integer.parseInt(text.substring(1,
+                                            widthIndex)));
+                                    obj.setAlbumArtWidth(Integer.parseInt(text.substring
+                                            (widthIndex + 1, heightIndex)));
+                                    obj.setAlbumArtHeight(Integer.parseInt(text.substring
+                                            (heightIndex + 1)));
                                 } else {
                                     Log.d(TAG, "No valid albumart data provided: \"" +
                                             text + "\". Use format s[0-9]+w[0-9]+h[0-9]+");

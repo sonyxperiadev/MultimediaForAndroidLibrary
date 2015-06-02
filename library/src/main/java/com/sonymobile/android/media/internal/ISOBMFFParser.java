@@ -3230,7 +3230,7 @@ public class ISOBMFFParser extends MediaParser {
                 }
                 return mSampleTable.getTimeOfSample(mCurrentSampleIndex);
             } else {
-                if (mTfraList == null) {
+                if (mTfraList == null || mTfraList.isEmpty()) {
                     if (mSidxList != null) {
                         int sidxListLength = mSidxList.size();
                         for (int i = 0; i < sidxListLength; i++) {
@@ -3247,12 +3247,12 @@ public class ISOBMFFParser extends MediaParser {
                                 return sidxEntry.startTimeUs;
                             }
                         }
-                    } else {
-                        mCurrentFragmentSampleQueue = null;
-                        mNextMoofOffset = 0;
-                        mTimeTicks = 0;
-                        return 0;
                     }
+
+                    mCurrentFragmentSampleQueue = null;
+                    mNextMoofOffset = 0;
+                    mTimeTicks = 0;
+                    return 0;
                 }
 
                 // need to set this so we actually get into
@@ -3260,7 +3260,7 @@ public class ISOBMFFParser extends MediaParser {
                 mCurrentSampleIndex = mSampleTable.getSampleCount();
 
                 int numTfra = mTfraList.size();
-                Tfra tfra = mTfraList.get(0);
+                Tfra tfra = null;
                 for (int i = 0; i < numTfra; i++) {
                     tfra = mTfraList.get(i);
                     long tfratimeUs = (tfra.timeTicks * 1000000 / mTimeScale);
@@ -3646,13 +3646,11 @@ public class ISOBMFFParser extends MediaParser {
                     representation = new TrackRepresentation(-1);
                 }
 
-                TrackInfo trackInfo = new TrackInfo(trackType, mimeType, durationUs, language);
-                TrackRepresentation[] representations = new TrackRepresentation[1];
-                representations[0] = representation;
-                trackInfo.setRepresentations(representations);
-                trackInfos[i] = trackInfo;
+                trackInfos[i] = new TrackInfo(trackType, mimeType, durationUs, language,
+                        new TrackRepresentation[] { representation });
             } else {
-                trackInfos[i] = new TrackInfo(TrackType.UNKNOWN, "", 0, "");
+                trackInfos[i] = new TrackInfo(TrackType.UNKNOWN, "", 0, "",
+                        new TrackRepresentation[] {});
             }
         }
 
