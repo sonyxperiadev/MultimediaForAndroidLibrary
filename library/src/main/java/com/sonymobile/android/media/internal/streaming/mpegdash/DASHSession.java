@@ -63,6 +63,14 @@ public final class DASHSession {
 
     private static final int MSG_FETCHER_CALLBACK = 2;
 
+    private static final int MSG_CHANGE_CONFIGURATION = 3;
+
+    private static final int MSG_SEEK = 4;
+
+    private static final int MSG_DISCONNECT = 5;
+
+    private static final int MSG_SELECT_TRACK = 6;
+
     public static final int FETCHER_EOS = 0;
 
     public static final int FETCHER_ERROR = 1;
@@ -72,14 +80,6 @@ public final class DASHSession {
     public static final int FETCHER_DRM_INFO = 3;
 
     public static final int FETCHER_UPDATE_STATISTICS = 4;
-
-    private static final int MSG_CHANGE_CONFIGURATION = 3;
-
-    private static final int MSG_SEEK = 4;
-
-    private static final int MSG_DISCONNECT = 5;
-
-    private static final int MSG_SELECT_TRACK = 6;
 
     public static final String KEY_TIMEUS = "timeus";
 

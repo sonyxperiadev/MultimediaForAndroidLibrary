@@ -769,21 +769,6 @@ public class MPDParser {
         }
     }
 
-    public boolean canSelectOrDeselectTrack(int index, boolean select) {
-        int numPeriods = mPeriods.size();
-
-        int totalTracks = 0;
-        for (int i = 0; i < numPeriods; i++) {
-            totalTracks += mPeriods.get(i).adaptationSets.size();
-        }
-
-        if (index < 0 || index >= totalTracks) {
-            return false;
-        }
-
-        return true;
-    }
-
     public TrackType selectTrack(boolean select, int index) {
         Period period = null;
         int trackCount = 0;
