@@ -42,7 +42,7 @@ public class MediaParserFactory {
 
         MediaParser parser = null;
         for (int i = 0; i < registeredParsers.length; i++) {
-            Constructor c = null;
+            Constructor c;
             try {
                 c = registeredParsers[i].getConstructor(parameterTypes);
             } catch (NoSuchMethodException e) {
@@ -128,7 +128,7 @@ public class MediaParserFactory {
         Class[] parameterTypes = {
                 DataSource.class
         };
-        MediaParser parser = null;
+        MediaParser parser;
         if (maxBufferSize == -1) {
             maxBufferSize = Configuration.DEFAULT_HTTP_BUFFER_SIZE;
         }

@@ -109,7 +109,7 @@ public final class BufferedStream implements Closeable {
             try {
                 mInputStream.close();
                 mInputStream = null;
-            } catch (Exception e) {
+            } catch (IOException e) {
             }
         }
 
@@ -168,7 +168,7 @@ public final class BufferedStream implements Closeable {
         }
     }
 
-    public synchronized long skip(long byteCount) throws IOException {
+    public synchronized long skip(long byteCount) {
         if (mClosed) {
             return -1;
         }
@@ -182,11 +182,7 @@ public final class BufferedStream implements Closeable {
     }
 
     protected synchronized boolean rewind(long rewindBytes) {
-        if (mClosed) {
-            return false;
-        }
-
-        return mDataBuffer.rewind(rewindBytes);
+        return !mClosed && mDataBuffer.rewind(rewindBytes);
     }
 
     protected synchronized void fastForward(long fastForwardBytes) {
@@ -206,27 +202,15 @@ public final class BufferedStream implements Closeable {
     }
 
     protected synchronized boolean canDataFit(long bytes) {
-        if (mClosed) {
-            return false;
-        }
-
-        return mDataBuffer.canDataFit(bytes);
+        return !mClosed && mDataBuffer.canDataFit(bytes);
     }
 
     protected synchronized boolean canRewind(long bytesToRewind) {
-        if (mClosed) {
-            return false;
-        }
-
-        return mDataBuffer.canRewind(bytesToRewind);
+        return !mClosed && mDataBuffer.canRewind(bytesToRewind);
     }
 
     protected synchronized boolean canFastForward(long bytesToFastForward) {
-        if (mClosed) {
-            return false;
-        }
-
-        return mDataBuffer.canFastForward(bytesToFastForward);
+        return !mClosed && mDataBuffer.canFastForward(bytesToFastForward);
     }
 
     protected synchronized void compact(int bytesToDiscard) {

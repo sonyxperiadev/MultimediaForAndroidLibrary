@@ -48,10 +48,6 @@ public class DASHBufferedDataSource extends BufferedDataSource {
         if (LOGS_ENABLED) Log.d(TAG, "readAt " + offset + ", " + size + " bytes"
                 + " mCurrentOffset: " + mCurrentOffset);
 
-        if (mConnectError != STATUS_OK) {
-            return mConnectError;
-        }
-
         checkConnectionAndStream();
 
         if (offset > mCurrentOffset) {

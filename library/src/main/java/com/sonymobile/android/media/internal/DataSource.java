@@ -192,16 +192,16 @@ public abstract class DataSource implements Closeable {
 
     protected long peekLong(byte[] src, int offset) {
         int h = ((src[offset++] & 0xff) << 24) | ((src[offset++] & 0xff) << 16)
-                | ((src[offset++] & 0xff) << 8) | ((src[offset++] & 0xff) << 0);
+                | ((src[offset++] & 0xff) << 8) | (src[offset++] & 0xff);
         int l = ((src[offset++] & 0xff) << 24) | ((src[offset++] & 0xff) << 16)
-                | ((src[offset++] & 0xff) << 8) | ((src[offset] & 0xff) << 0);
+                | ((src[offset++] & 0xff) << 8) | (src[offset] & 0xff);
         return (((long)h) << 32L) | ((long)l) & 0xffffffffL;
 
     }
 
     protected int peekInt(byte[] src, int offset) {
         return (((src[offset++] & 0xff) << 24) | ((src[offset++] & 0xff) << 16)
-                | ((src[offset++] & 0xff) << 8) | ((src[offset] & 0xff) << 0));
+                | ((src[offset++] & 0xff) << 8) | (src[offset] & 0xff));
     }
 
     protected short peekShort(byte[] src, int offset) {

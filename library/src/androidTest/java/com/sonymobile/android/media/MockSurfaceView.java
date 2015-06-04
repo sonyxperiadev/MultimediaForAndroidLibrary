@@ -21,7 +21,6 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
-import android.graphics.PorterDuff.Mode;
 import android.util.AttributeSet;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -41,8 +40,6 @@ public class MockSurfaceView extends SurfaceView implements SurfaceHolder.Callba
     private static final int RECT_BOTTOM = 200;
 
     private SurfaceHolder mHolder;
-
-    private MockCanvas mCanvas;
 
     public MockSurfaceView(Context context) {
         super(context);
@@ -70,11 +67,11 @@ public class MockSurfaceView extends SurfaceView implements SurfaceHolder.Callba
     @Override
     public void surfaceCreated(SurfaceHolder sh) {
 
-        mCanvas = new MockCanvas(Bitmap.createBitmap(BITMAP_WIDTH, BITMAP_HEIGHT,
+        Canvas canvas = new Canvas(Bitmap.createBitmap(BITMAP_WIDTH, BITMAP_HEIGHT,
                 Bitmap.Config.ARGB_8888));
-        draw(mCanvas);
+        draw(canvas);
 
-        Canvas canvas = mHolder.lockCanvas();
+        canvas = mHolder.lockCanvas();
         Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
         paint.setColor(Color.BLACK);
         canvas.drawRect(RECT_LEFT, RECT_TOP, RECT_RIGHT, RECT_BOTTOM, paint);
@@ -86,16 +83,4 @@ public class MockSurfaceView extends SurfaceView implements SurfaceHolder.Callba
         getHolder().removeCallback(this);
     }
 
-}
-
-class MockCanvas extends Canvas {
-
-    public MockCanvas(Bitmap bitmap) {
-        super(bitmap);
-    }
-
-    @Override
-    public void drawColor(int color, Mode mode) {
-        super.drawColor(color, mode);
-    }
 }

@@ -294,11 +294,7 @@ public class ISOBMFFParser extends MediaParser {
 
     protected ArrayList<IsoTrack> mMfraTracks;
 
-    protected boolean mHasSampleTable = false;
-
     protected ArrayDeque<BoxHeader> mCurrentBoxSequence;
-
-    protected boolean mIsPlayReadyProtected = false;
 
     protected boolean mParseODSMData = false;
 
@@ -323,8 +319,6 @@ public class ISOBMFFParser extends MediaParser {
     protected boolean mParsedSencData = false;
 
     protected int mNALLengthSize;
-
-    protected int mCurrentMoofSequenceNumber = -1;
 
     private static final int[] ISOBMFF_COMPATIBLE_BRANDS = {
             fourCC('i', 's', 'o', 'm'), fourCC('m', 'p', '4', '1'), fourCC('m', 'p', '4', '2'),
@@ -356,13 +350,11 @@ public class ISOBMFFParser extends MediaParser {
         return c1 << 24 | c2 << 16 | c3 << 8 | c4;
     }
 
-    protected String ccruof(long id) {
-        StringBuilder sb = new StringBuilder(4);
-        sb.append((char)((id & 0x00000000FF000000) >> 24));
-        sb.append((char)((id & 0x0000000000FF0000) >> 16));
-        sb.append((char)((id & 0x000000000000FF00) >> 8));
-        sb.append((char)(id & 0x00000000000000FF));
-        return sb.toString();
+    protected static String ccruof(long id) {
+        return String.valueOf((char) ((id & 0x00000000FF000000) >> 24)) +
+                (char) ((id & 0x0000000000FF0000) >> 16) +
+                (char) ((id & 0x000000000000FF00) >> 8) +
+                (char) (id & 0x00000000000000FF);
     }
 
     @Override
@@ -382,7 +374,7 @@ public class ISOBMFFParser extends MediaParser {
             long sourceLength = mDataSource.length();
             BoxHeader nextHeader;
             mCurrentOffset = 0;
-            while (mInitDone == false && (mCurrentOffset < sourceLength || sourceLength == -1) &&
+            while (!mInitDone && (mCurrentOffset < sourceLength || sourceLength == -1) &&
                     parseOK) {
                 nextHeader = getNextBoxHeader();
                 if (nextHeader == null) {
@@ -535,7 +527,7 @@ public class ISOBMFFParser extends MediaParser {
         if (trackIndex < 0 || trackIndex >= mTracks.size()) {
             return null;
         }
-        return ((IsoTrack)mTracks.get(trackIndex)).getMediaFormat();
+        return mTracks.get(trackIndex).getMediaFormat();
     }
 
     @Override
@@ -730,14 +722,11 @@ public class ISOBMFFParser extends MediaParser {
                 SampleTable sampleTable = currentTrack.getSampleTable();
                 sampleTable.setTimescale(currentTrack.getTimeScale());
 
-                if (sampleTable.calculateSampleCountAndDuration() == false) {
+                if (!sampleTable.calculateSampleCountAndDuration()) {
                     if (LOGS_ENABLED) Log.w(TAG,
                             "Error while calculating sample count and duration");
                 }
                 int sampleCount = sampleTable.getSampleCount();
-                if (sampleCount > 0) {
-                    mHasSampleTable = true;
-                }
                 long trackDurationUs = currentTrack.getDurationUs();
                 if (trackDurationUs > 0) {
                     float frameRate = (sampleCount * 1000000.0f / trackDurationUs);
@@ -1003,12 +992,12 @@ public class ISOBMFFParser extends MediaParser {
                 parseOK = parseBox(nextBoxHeader);
             }
         } else if (header.boxType == BOX_ID_MEHD) {
-            int versionFlags = 0;
+            int versionFlags;
             try {
                 versionFlags = mDataSource.readInt();
                 int version = (versionFlags >> 24) & 0xFF;
 
-                long durationTicks = 0;
+                long durationTicks;
                 if (version == 1) {
                     durationTicks = mDataSource.readLong();
                 } else {
@@ -1052,9 +1041,7 @@ public class ISOBMFFParser extends MediaParser {
                     mTracks.add(track);
                 }
 
-                if (track != null) {
-                    track.setTrex(newTrex);
-                }
+                track.setTrex(newTrex);
             } catch (IOException e) {
                 if (LOGS_ENABLED) Log.e(TAG, "IOException while parsing 'trex' box", e);
 
@@ -1328,7 +1315,7 @@ public class ISOBMFFParser extends MediaParser {
                     mDataSource.skipBytes(2); // skip language code
                     byte[] buffer = new byte[(int)(header.boxDataSize - 6)];
                     mDataSource.read(buffer);
-                    String metaDataValue = null;
+                    String metaDataValue;
                     if ((0xFF & buffer[0]) == 0xFF && (0xFF & buffer[1]) == 0xFE
                             || (0xFF & buffer[0]) == 0xFE && (0xFF & buffer[1]) == 0xFF) {
                         metaDataValue = new String(buffer, 0, buffer.length - 2,
@@ -1409,7 +1396,7 @@ public class ISOBMFFParser extends MediaParser {
                     mDataSource.skipBytes(2); // skip language code
                     byte[] buffer = new byte[(int)(header.boxDataSize - 6)];
                     mDataSource.read(buffer);
-                    String metaDataValue = null;
+                    String metaDataValue;
                     if ((0xFF & buffer[0]) == 0xFF && (0xFF & buffer[1]) == 0xFE) {
                         if (buffer[buffer.length - 3] == 0 && buffer[buffer.length - 2] == 0) {
                             if (!mMetaDataValues.containsKey(KEY_TRACK_NUMBER)) {
@@ -1461,7 +1448,7 @@ public class ISOBMFFParser extends MediaParser {
                     mDataSource.skipBytes(2); // skip language code
                     byte[] buffer = new byte[(int)(header.boxDataSize - 6)];
                     mDataSource.read(buffer);
-                    String metaDataValue = null;
+                    String metaDataValue;
                     if ((0xFF & buffer[0]) == 0xFF && (0xFF & buffer[1]) == 0xFE
                             || (0xFF & buffer[0]) == 0xFE && (0xFF & buffer[1]) == 0xFF) {
                         metaDataValue = new String(buffer, 0, buffer.length - 2,
@@ -1546,15 +1533,6 @@ public class ISOBMFFParser extends MediaParser {
             parseOK = parsePasp(header);
         } else if (header.boxType == BOX_ID_UUID) {
             parseOK = parseUuid(header);
-        } else if (header.boxType == BOX_ID_MFHD) {
-            try {
-                int sequenceNumber = mDataSource.readInt();
-            } catch (IOException e) {
-                if (LOGS_ENABLED) Log.e(TAG, "IOException while parsing 'mfhd' box", e);
-
-                mCurrentBoxSequence.removeLast();
-                return false;
-            }
         } else if (header.boxType == BOX_ID_MDAT) {
             parseOK = parseMdat();
         } else {
@@ -1833,7 +1811,7 @@ public class ISOBMFFParser extends MediaParser {
             mDataSource.skipBytes(2); // skip language code
             byte[] buffer = new byte[(int)(header.boxDataSize - 6)];
             mDataSource.read(buffer);
-            String metaDataValue = null;
+            String metaDataValue;
             if ((0xFF & buffer[0]) == 0xFF && (0xFF & buffer[1]) == 0xFE
                     || (0xFF & buffer[0]) == 0xFE && (0xFF & buffer[1]) == 0xFF) {
                 metaDataValue = new String(buffer, 0, buffer.length - 2,
@@ -1922,8 +1900,8 @@ public class ISOBMFFParser extends MediaParser {
             mDataSource.skipBytes(4); // version and flags
             int entryCount = mDataSource.readInt();
             for (int i = 0; i < entryCount; i++) {
-                long segmentDurationTicks = 0;
-                long mediaTimeTicks = 0;
+                long segmentDurationTicks;
+                long mediaTimeTicks;
                 // if (((versionFlags >> 24) & 0xFF) == 1){
                 // segmentDuration = mDataSource.readLong();
                 // mediaTime = mDataSource.readLong();
@@ -1964,8 +1942,8 @@ public class ISOBMFFParser extends MediaParser {
             int numberOfEntry = mDataSource.readInt();
             ArrayList<Tfra> tfraList = new ArrayList<Tfra>(numberOfEntry);
             for (int i = 0; i < numberOfEntry; i++) {
-                long timeTicks = 0;
-                long moofOffset = 0;
+                long timeTicks;
+                long moofOffset;
                 if (version == 1) {
                     timeTicks = mDataSource.readLong();
                     moofOffset = mDataSource.readLong();
@@ -2198,13 +2176,13 @@ public class ISOBMFFParser extends MediaParser {
     }
 
     private boolean parseMvhd(BoxHeader header) {
-        int versionFlags = 0;
+        int versionFlags;
         try {
             versionFlags = mDataSource.readInt();
             int version = versionFlags >> 24;
             // long creationTime = 0;
             // long modificationTime = 0;
-            long durationTicks = 0;
+            long durationTicks;
             if (version == 1) {
                 // creationTime = mDataSource.readLong();
                 // modificationTime = mDataSource.readLong();
@@ -2243,8 +2221,8 @@ public class ISOBMFFParser extends MediaParser {
             if (LOGS_ENABLED) Log.e(TAG, "IOException while parsing 'mdhd' box", e);
         }
         int version = data[0];
-        int timescale = 0;
-        long durationTicks = 0;
+        int timescale;
+        long durationTicks;
         short lang;
         String language;
         if (version == 1) {
@@ -2295,12 +2273,10 @@ public class ISOBMFFParser extends MediaParser {
     }
 
     protected boolean parseTkhd(byte[] data) {
-        int trackId = 0;
+        int trackId;
         // long duration = 0;
-        boolean trackEnabled = false;
-        int dynSize = -1;
+        int dynSize;
 
-        int flags = (data[1] & 0xFF) << 16 | (data[2] & 0xFF) << 8 | data[3] & 0xFF;
         if (data[0] == 1) { // version 1
             // skip 8 for creation_time
             // skip 8 for modification_time
@@ -2362,12 +2338,6 @@ public class ISOBMFFParser extends MediaParser {
             }
         } else if (LOGS_ENABLED) {
             Log.w(TAG, "Can't read the rotation matrix");
-        }
-
-        if ((flags & 1) == 1) {
-            trackEnabled = true;
-        } else {
-            if (LOGS_ENABLED) Log.w(TAG, "track not enabled");
         }
 
         boolean foundTrack = false;
@@ -2453,7 +2423,7 @@ public class ISOBMFFParser extends MediaParser {
         AvccData avccData = new AvccData();
         avccData.spsBuffer = ByteBuffer.allocate(1024);
         avccData.ppsBuffer = ByteBuffer.allocate(1024);
-        int currentBufferOffset = 0;
+        int currentBufferOffset;
         if (buffer[0] != 1) { // configurationVersion
             return null;
         }
@@ -2816,11 +2786,10 @@ public class ISOBMFFParser extends MediaParser {
 
     private boolean parseUuidSomd(BoxHeader header) {
         long boxEndOffset = mCurrentOffset + header.boxDataSize - 16;
-        boolean parseOK = true;
         try {
             mDataSource.skipBytes(4); // version
             mCurrentOffset += 4;
-            while (mCurrentOffset < boxEndOffset && parseOK) {
+            while (mCurrentOffset < boxEndOffset) {
                 BoxHeader nextBoxHeader = getNextBoxHeader();
                 if (nextBoxHeader.boxType == BOX_ID_FLGS) {
                     long flagsData = mDataSource.readLong();
@@ -2836,9 +2805,9 @@ public class ISOBMFFParser extends MediaParser {
             }
         } catch (IOException e) {
             if (LOGS_ENABLED) Log.e(TAG, "IOException while parsing UUID_PROF box", e);
-            parseOK = false;
+            return false;
         }
-        return parseOK;
+        return true;
     }
 
     protected static class BoxHeader {
@@ -3199,10 +3168,7 @@ public class ISOBMFFParser extends MediaParser {
 
         @Override
         public String toString() {
-            StringBuilder sb = new StringBuilder(32);
-            sb.append("TrackID = " + mTrackId + ",");
-            // sb.append("Track type = '"+ccruof(mType)+"'");
-            return sb.toString();
+            return "TrackID = " + mTrackId + "," + "Track type = " + mType;
         }
 
         public long seekTo(long seekTimeUs, boolean isFragmented) {
@@ -3384,13 +3350,9 @@ public class ISOBMFFParser extends MediaParser {
                 }
 
                 if (mCurrentFragmentSampleQueue.isEmpty()) {
-                    if (mNextMoofOffset < 0) {
-                        // End of stream, return true so other tracks can run to
-                        // completion
-                        return true;
-                    } else {
-                        return false;
-                    }
+                    // End of stream, return true so other tracks can run to
+                    // completion
+                    return mNextMoofOffset < 0;
                 }
 
                 FragmentSample sample = mCurrentFragmentSampleQueue.peek();
@@ -3573,11 +3535,7 @@ public class ISOBMFFParser extends MediaParser {
         public long dataOffset = 0;
 
         public String toString() {
-            StringBuilder sb = new StringBuilder();
-            sb.append("offset = " + dataOffset);
-            sb.append(", size = " + size);
-            sb.append(", duration = " + durationTicks);
-            return sb.toString();
+            return "offset = " + dataOffset + ", size = " + size + ", duration = " + durationTicks;
         }
     }
 
@@ -3632,7 +3590,7 @@ public class ISOBMFFParser extends MediaParser {
                 long durationUs = track.getDurationUs();
                 String language = track.getLanguage();
 
-                TrackRepresentation representation = null;
+                TrackRepresentation representation;
 
                 if (trackType == TrackType.AUDIO) {
                     int channelCount = mediaFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT);
@@ -3675,7 +3633,6 @@ public class ISOBMFFParser extends MediaParser {
                 mCurrentSubtitleTrack.seekTo(timeUs, mIsFragmented);
             }
         }
-        mCurrentMoofSequenceNumber = -1;
     }
 
     @Override
@@ -3812,8 +3769,7 @@ public class ISOBMFFParser extends MediaParser {
     @Override
     public int getInteger(String key) {
         if (mMetaDataValues.containsKey(key)) {
-            Integer val = (Integer)mMetaDataValues.get(key);
-            return val.intValue();
+            return (Integer)mMetaDataValues.get(key);
         }
         return Integer.MIN_VALUE;
     }
@@ -3821,8 +3777,7 @@ public class ISOBMFFParser extends MediaParser {
     @Override
     public long getLong(String key) {
         if (mMetaDataValues.containsKey(key)) {
-            Long val = (Long)(mMetaDataValues.get(key));
-            return val.longValue();
+            return (Long)(mMetaDataValues.get(key));
         }
         return Long.MIN_VALUE;
     }
@@ -3830,8 +3785,7 @@ public class ISOBMFFParser extends MediaParser {
     @Override
     public float getFloat(String key) {
         if (mMetaDataValues.containsKey(key)) {
-            Float val = (Float)(mMetaDataValues.get(key));
-            return val.floatValue();
+            return (Float)(mMetaDataValues.get(key));
         }
         return Float.MIN_VALUE;
     }
@@ -3890,8 +3844,8 @@ public class ISOBMFFParser extends MediaParser {
     private long findNextMoofForTrack(int trackId) {
         BoxHeader header;
         long moofOffset = Integer.MIN_VALUE;
-        boolean parseOk = true;
-        long sourceLength = -1;
+        boolean parseOk;
+        long sourceLength;
         try {
             sourceLength = mDataSource.length();
         } catch (IOException e) {
@@ -3926,9 +3880,7 @@ public class ISOBMFFParser extends MediaParser {
             leadingZeroBits++;
         }
 
-        int codeNum = (1 << leadingZeroBits) - 1 + br.getBits(leadingZeroBits);
-
-        return codeNum;
+        return (1 << leadingZeroBits) - 1 + br.getBits(leadingZeroBits);
     }
 
     protected void parseSPS(byte[] spsData) {

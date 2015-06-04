@@ -275,12 +275,12 @@ public class MPDParser {
 
     private void endAdaptationSet() {
         if (mCurrentAdaptationSet.type == TrackType.UNKNOWN) {
-            if (mCurrentAdaptationSet.mime.indexOf("audio") > -1) {
+            if (mCurrentAdaptationSet.mime.contains("audio")) {
                 mCurrentAdaptationSet.type = TrackType.AUDIO;
-            } else if (mCurrentAdaptationSet.mime.indexOf("video") > -1) {
+            } else if (mCurrentAdaptationSet.mime.contains("video")) {
                 mCurrentAdaptationSet.type = TrackType.VIDEO;
-            } else if (mCurrentAdaptationSet.mime.indexOf("text") > -1
-                    || mCurrentAdaptationSet.mime.indexOf("image") > -1) {
+            } else if (mCurrentAdaptationSet.mime.contains("text")
+                    || mCurrentAdaptationSet.mime.contains("image")) {
                 mCurrentAdaptationSet.type = TrackType.SUBTITLE;
             }
         }
@@ -770,7 +770,7 @@ public class MPDParser {
     }
 
     public TrackType selectTrack(boolean select, int index) {
-        Period period = null;
+        Period period;
         int trackCount = 0;
 
         if (index < 0) {
@@ -924,7 +924,7 @@ public class MPDParser {
     }
 
     public void selectRepresentations(int trackIndex, Vector<Integer> representations) {
-        Period period = null;
+        Period period;
         int trackCount = 0;
 
         if (trackIndex < 0) {

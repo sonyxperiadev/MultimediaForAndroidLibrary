@@ -77,7 +77,7 @@ public final class ClockImpl implements Clock, Codec {
          * increase scenario handles going from speed less than 1x to 1x.
          */
         if (mIsRunning) {
-            long systemClockUs = (long)(System.nanoTime() / 1000);
+            long systemClockUs = System.nanoTime() / 1000;
             long currentTime = (long)(systemClockUs - mStartTimeUs + mStartTimeOffsetUs
                     + ((systemClockUs - mSpeedAnchorUs)
                     * (mPlaybackSpeed - Util.DEFAULT_PLAYBACK_SPEED)));
@@ -107,7 +107,7 @@ public final class ClockImpl implements Clock, Codec {
             return;
         }
         mIsRunning = true;
-        mStartTimeUs = (long)(System.nanoTime() / 1000);
+        mStartTimeUs = System.nanoTime() / 1000;
         mSpeedAnchorUs = mStartTimeUs;
         if (mStartTimeOffsetUs != 0) {
             mStartTimeUs -= mStartTimeOffsetUs;

@@ -21,7 +21,6 @@ import android.os.HandlerThread;
 import android.os.Looper;
 import android.os.Message;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 
 public class HandlerHelper {

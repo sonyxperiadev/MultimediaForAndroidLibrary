@@ -52,10 +52,6 @@ public class PacketSource {
         return accessUnit;
     }
 
-    public synchronized ArrayDeque<AccessUnit> getAllAccessUnits() {
-        return mBuffer;
-    }
-
     public synchronized MediaFormat getFormat() {
         if (mBuffer.size() > 0) {
             return mBuffer.getFirst().format;

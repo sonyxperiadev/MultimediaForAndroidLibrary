@@ -21,9 +21,7 @@ import com.sonymobile.android.media.annotations.MetaInfo;
 import com.sonymobile.android.media.annotations.Protocol;
 
 import android.test.InstrumentationTestRunner;
-import android.util.Log;
 
-import java.lang.annotation.Annotation;
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;

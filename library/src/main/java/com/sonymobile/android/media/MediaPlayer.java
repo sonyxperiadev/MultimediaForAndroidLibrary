@@ -647,7 +647,7 @@ public final class MediaPlayer {
         /**
          * State when playback has been completed.
          */
-        COMPLETED;
+        COMPLETED
     }
 
     /**

@@ -16,8 +16,6 @@
 
 package com.sonymobile.android.media.internal;
 
-import static com.sonymobile.android.media.internal.MediaSource.SOURCE_BUFFERING_END;
-import static com.sonymobile.android.media.internal.MediaSource.SOURCE_BUFFERING_START;
 import static com.sonymobile.android.media.internal.MediaSource.SOURCE_BUFFERING_UPDATE;
 
 import java.io.FileNotFoundException;
@@ -80,10 +78,6 @@ public class HttpBufferedDataSource extends BufferedDataSource {
     public int readAt(long offset, byte[] buffer, int size) throws IOException {
         if (LOGS_ENABLED) Log.d(TAG, "readAt " + offset + ", " + size + " bytes"
                 + " mCurrentOffset: " + mCurrentOffset);
-
-        if (mConnectError != STATUS_OK) {
-            return mConnectError;
-        }
 
         checkConnectionAndStream();
 
@@ -171,15 +165,6 @@ public class HttpBufferedDataSource extends BufferedDataSource {
     }
 
     @Override
-    protected void doReconnect() throws IOException {
-        super.doReconnect();
-    }
-
-    protected void doCloseAsync() {
-        super.doCloseAsync();
-    }
-
-    @Override
     public DataAvailability hasDataAvailable(long offset, int size) {
         if (mBis == null) {
             return DataAvailability.NOT_AVAILABLE;
@@ -230,9 +215,8 @@ public class HttpBufferedDataSource extends BufferedDataSource {
                 percentage = 0;
             }
         } catch (IOException e) {
-        } finally {
-            return percentage;
         }
+        return percentage;
     }
 
     public int getBufferedSize() {

@@ -17,7 +17,6 @@ package com.sonymobile.android.media.internal.drm;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 
 import android.media.MediaCrypto;

@@ -129,8 +129,8 @@ public class PiffParser extends ISOBMFFParser {
                         && !mParsedSencData) {
                     mParsedSencData = true;
                     int versionFlags = mDataSource.readInt();
-                    int ivSize = 0;
-                    byte[] kID = null;
+                    int ivSize;
+                    byte[] kID;
                     if ((versionFlags & 0x1) != 0) {
                         mDataSource.skipBytes(3); // Skip Algorithm id
                         ivSize = mDataSource.readInt();

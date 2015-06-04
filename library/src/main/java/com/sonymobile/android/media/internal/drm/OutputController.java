@@ -46,8 +46,6 @@ public class OutputController {
 
     private final static String TAG = "OutputController";
 
-    private Context mContext;
-
     private OnOutputControllerUpdateListener mOutputControllerUpdateListener;
 
     private HashMap<String, String> mDrmInfo;
@@ -113,10 +111,9 @@ public class OutputController {
         if (context == null) {
             throw new IllegalArgumentException("context cannot be null");
         }
-        mContext = context;
         mOutputControllerUpdateListener = listener;
 
-        mDisplayManager = (DisplayManager)mContext.getSystemService(Context.DISPLAY_SERVICE);
+        mDisplayManager = (DisplayManager)context.getSystemService(Context.DISPLAY_SERVICE);
         if (mDisplayManager == null) {
             throw new RuntimeException("Failed to create displaymanager");
         }
@@ -213,7 +210,7 @@ public class OutputController {
                 String key = entry.getKey();
                 if (key.equalsIgnoreCase(LicenseInfo.OPL_COMPRESSED_DIGITAL_AUDIO)) {
                     String value = entry.getValue();
-                    int opl_value = 0;
+                    int opl_value;
                     try {
                         opl_value = Integer.parseInt(value, 10);
                         oplCompressedDigitalAudioVal = opl_value;
@@ -222,7 +219,7 @@ public class OutputController {
                     }
                 } else if (key.equalsIgnoreCase(LicenseInfo.OPL_UNCOMPRESSED_DIGITAL_AUDIO)) {
                     String value = entry.getValue();
-                    int opl_value = 0;
+                    int opl_value;
                     try {
                         opl_value = Integer.parseInt(value, 10);
                         oplUncompressedDigitalAudioVal = opl_value;
@@ -231,7 +228,7 @@ public class OutputController {
                     }
                 } else if (key.equalsIgnoreCase(LicenseInfo.OPL_COMPRESSED_DIGITAL_VIDEO)) {
                     String value = entry.getValue();
-                    int opl_value = 0;
+                    int opl_value;
                     try {
                         opl_value = Integer.parseInt(value, 10);
                         oplCompressedDigitalVideoVal = opl_value;
@@ -240,7 +237,7 @@ public class OutputController {
                     }
                 } else if (key.equalsIgnoreCase(LicenseInfo.OPL_UNCOMPRESSED_DIGITAL_VIDEO)) {
                     String value = entry.getValue();
-                    int opl_value = 0;
+                    int opl_value;
                     try {
                         opl_value = Integer.parseInt(value, 10);
                         oplUncompressedDigitalVideoVal = opl_value;
@@ -249,18 +246,10 @@ public class OutputController {
                     }
                 } else if (key.equalsIgnoreCase(LicenseInfo.PLAYENABLER_TYPE)) {
                     String value = entry.getValue();
-                    if (value.equalsIgnoreCase("true")) {
-                        playEnablerVal = true;
-                    } else {
-                        playEnablerVal = false;
-                    }
+                    playEnablerVal = value.equalsIgnoreCase("true");
                 } else if (key.equalsIgnoreCase(LicenseInfo.VALID_RINGTONE_LICENSE)) {
                     String value = entry.getValue();
-                    if (value.equalsIgnoreCase("true")) {
-                        ringtoneAllowedVal = true;
-                    } else {
-                        ringtoneAllowedVal = false;
-                    }
+                    ringtoneAllowedVal = value.equalsIgnoreCase("true");
                 }
             }
         }

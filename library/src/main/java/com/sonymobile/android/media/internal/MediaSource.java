@@ -19,9 +19,7 @@ package com.sonymobile.android.media.internal;
 import java.util.Vector;
 
 import android.media.MediaFormat;
-import android.os.Bundle;
 import android.os.Handler;
-import android.os.Message;
 
 import com.sonymobile.android.media.BandwidthEstimator;
 import com.sonymobile.android.media.MediaPlayer.Statistics;

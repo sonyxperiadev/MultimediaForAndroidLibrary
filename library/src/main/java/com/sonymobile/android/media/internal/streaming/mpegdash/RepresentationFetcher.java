@@ -509,7 +509,7 @@ public class RepresentationFetcher {
                 if (mRepresentation.segmentTemplate != null) {
                     if (mRepresentation.segmentTemplate.segmentTimeline != null) {
                         boolean found = false;
-                        long segmentTimelineTemplateTicks = 0;
+                        long segmentTimelineTemplateTicks;
                         for (SegmentTimelineEntry entry :
                                 mRepresentation.segmentTemplate.segmentTimeline) {
                             long segmentDurationUs = entry.durationTicks * 1000000L
@@ -736,13 +736,9 @@ public class RepresentationFetcher {
     public boolean isBufferFull(long minBufferTime, int maxBufferDataSize) {
         // Assume previous moof is a good enough approximation of next moof
         long nextFragmentSize = mParser.getMoofDataSize();
-        if ((maxBufferDataSize > 0 &&
+        return (maxBufferDataSize > 0 &&
                 mPacketSource.getBufferSize() + nextFragmentSize > maxBufferDataSize)
-                || mPacketSource.getBufferDuration() > minBufferTime) {
-            return true;
-        }
-
-        return false;
+                || mPacketSource.getBufferDuration() > minBufferTime;
     }
 
     public long getNextTimeUs() {

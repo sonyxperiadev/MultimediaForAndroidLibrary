@@ -35,9 +35,7 @@ public class BitReader {
         int currentByte = 0xFF & mBytes[pos / 8];
 
         int bitIndex = pos % 8;
-        int bit = 0x01 & (currentByte >> (7 - bitIndex));
-
-        return bit;
+        return 0x01 & (currentByte >> (7 - bitIndex));
     }
 
     public int getBits(int nbrBits) {

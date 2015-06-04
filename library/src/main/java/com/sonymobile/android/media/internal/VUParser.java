@@ -70,10 +70,6 @@ public class VUParser extends ISOBMFFParser {
 
     private ArrayList<String> mHmmpTitles;
 
-    private ArrayList<SinfData> mSinfList;
-
-    private byte[] mIpmpMetaData;
-
     protected boolean mIsMarlinProtected = false;
 
     private boolean mNeedsMTSD = false;
@@ -302,7 +298,7 @@ public class VUParser extends ISOBMFFParser {
             // TODO: Should multiple entries be supported?
             return false;
         }
-        mSinfList = new ArrayList<SinfData>(2);
+        ArrayList<SinfData> sinfList = new ArrayList<>(2);
 
         ByteBuffer stszData = sampleTable.getStszData();
         stszData.rewind();
@@ -322,7 +318,7 @@ public class VUParser extends ISOBMFFParser {
             stcoData.getInt(); // version and flags
             stcoData.getInt(); // entry_count
 
-            long sampleOffset = 0;
+            long sampleOffset;
             if (sampleTable.isUsingLongChunkOffsets()) {
                 sampleOffset = stcoData.getLong();
             } else {
@@ -336,7 +332,7 @@ public class VUParser extends ISOBMFFParser {
                 return false;
             }
             int size = 0;
-            int sizePart = 0;
+            int sizePart;
             do {
                 sizePart = (dataBuffer.get() & 0xFF);
                 size = ((size << 7) & 0xFFFFFF80) | (sizePart & 0x7F);
@@ -367,13 +363,12 @@ public class VUParser extends ISOBMFFParser {
                 SinfData sinfData = new SinfData();
                 sinfData.esIdReference = esTrackReferenceIndex;
                 sinfData.ipmpDescriptorId = ipmpDescriptorId;
-                mSinfList.add(sinfData);
+                sinfList.add(sinfData);
                 size -= kObjectSize;
             }
             dataBuffer.get(); // IPMP Descriptor Update Tag
-            int sinfCount = mSinfList.size();
+            int sinfCount = sinfList.size();
             size = 0;
-            sizePart = 0;
             do {
                 sizePart = (dataBuffer.get() & 0xFF);
                 size = ((size << 7) & 0xFFFFFF80) | (sizePart & 0x7F);
@@ -382,7 +377,6 @@ public class VUParser extends ISOBMFFParser {
                 dataBuffer.get(); // IPMP Descriptor Tag
                 int ipmpByteCount = 1;
                 int ipmpLength = 0;
-                sizePart = 0;
                 do {
                     sizePart = (dataBuffer.get() & 0xFF);
                     ipmpByteCount++;
@@ -393,14 +387,11 @@ public class VUParser extends ISOBMFFParser {
                 dataBuffer.getShort(); // IPMPS Type
                 byte[] ipmpData = new byte[ipmpLength - 3];
                 dataBuffer.get(ipmpData);
-                SinfData sinfData = null;
+                SinfData sinfData;
                 for (int i = 0; i < sinfCount; i++) {
-                    sinfData = mSinfList.get(i);
+                    sinfData = sinfList.get(i);
                     if (sinfData.ipmpDescriptorId == ipmpDescriptorId) {
-                        sinfData.ipmpData = new byte[ipmpData.length];
-                        for (int j = 0; j < ipmpData.length; j++) {
-                            sinfData.ipmpData[j] = ipmpData[j];
-                        }
+                        sinfData.ipmpData = ipmpData;
                         break;
                     }
                 }
@@ -408,7 +399,7 @@ public class VUParser extends ISOBMFFParser {
             }
             int ipmpDataLength = 0;
             for (int i = 0; i < sinfCount; i++) {
-                SinfData sinfData = mSinfList.get(i);
+                SinfData sinfData = sinfList.get(i);
                 ipmpDataLength += sinfData.ipmpData.length;
             }
 
@@ -439,7 +430,7 @@ public class VUParser extends ISOBMFFParser {
             for (int i = 0; i < numTracks; i++) {
                 IsoTrack track = (IsoTrack)mTracks.get(i);
                 for (int j = 0; j < sinfCount; j++) {
-                    SinfData sinfData = mSinfList.get(j);
+                    SinfData sinfData = sinfList.get(j);
                     if (sinfData.esIdReference == track.getTrackId()) {
                         track.getMetaData().addValue(MetaData.KEY_IPMP_DATA, sinfData.ipmpData);
                         // track index
@@ -466,7 +457,7 @@ public class VUParser extends ISOBMFFParser {
                                 sinfData.ipmpData.length);
 
                         // Create JSON for this track
-                        String jsonData = null;
+                        String jsonData;
                         try {
                             jsonData = Util.getJSONIPMPData(tempData);
                         } catch (JSONException e) {
@@ -485,9 +476,7 @@ public class VUParser extends ISOBMFFParser {
                 }
             }
 
-            mIpmpMetaData = ipmpMetaData;
-
-            addMetaDataValue(KEY_IPMP_DATA, mIpmpMetaData);
+            addMetaDataValue(KEY_IPMP_DATA, ipmpMetaData);
 
             mCurrentTrack.getMetaData()
                     .addValue(KEY_MIME_TYPE, MimeType.OCTET_STREAM);
@@ -508,12 +497,11 @@ public class VUParser extends ISOBMFFParser {
 
     private boolean parseUuidPROF(BoxHeader header) {
         long boxEndOffset = mCurrentOffset + header.boxDataSize - 16;
-        boolean parseOK = true;
         try {
             mDataSource.skipBytes(4); // version and flags
             mDataSource.skipBytes(4); // profile_entry_count, not necessary
             mCurrentOffset += 8;
-            while (mCurrentOffset < boxEndOffset && parseOK) {
+            while (mCurrentOffset < boxEndOffset) {
                 BoxHeader nextBoxHeader = getNextBoxHeader();
                 if (nextBoxHeader.boxType == fourCC('V', 'P', 'R', 'F')) {
                     mDataSource.skipBytes(10 * 4); // skippable data
@@ -525,9 +513,9 @@ public class VUParser extends ISOBMFFParser {
             }
         } catch (IOException e) {
             if (LOGS_ENABLED) Log.e(TAG, "IOException while parsing UUID_PROF box", e);
-            parseOK = false;
+            return false;
         }
-        return parseOK;
+        return true;
     }
 
     private static class MtsmEntry {
@@ -545,7 +533,6 @@ public class VUParser extends ISOBMFFParser {
     }
 
     private boolean parseMtdt(BoxHeader header) {
-        boolean parseOK = true;
         // if mCurrentBoxSequence contains trak, then add metadata to current
         // track
         // else metadata is for file
@@ -601,7 +588,7 @@ public class VUParser extends ISOBMFFParser {
             if (LOGS_ENABLED) Log.e(TAG, "Exception while reading from 'MTDT' box", e);
             return false;
         }
-        return parseOK;
+        return true;
     }
 
     private static class IconInfo {
@@ -671,7 +658,7 @@ public class VUParser extends ISOBMFFParser {
     }
 
     protected ByteBuffer parseAvccForMarlin(byte[] buffer) {
-        int currentBufferOffset = 0;
+        int currentBufferOffset;
         if (buffer[0] != 1) { // configurationVersion
             return null;
         }
@@ -864,15 +851,14 @@ public class VUParser extends ISOBMFFParser {
                     accessUnit.format = mMediaFormat;
                 } else {
                     cryptoInfo = new CryptoInfo();
-                    byte[] ivData = null;
-                    byte[] key = null;
                     int[] numClearBytes = new int[1];
                     numClearBytes[0] = 0;
                     int[] numEncryptedBytes = new int[1];
                     numEncryptedBytes[0] = accessUnit.size;
                     int numSubSamples = 1;
                     cryptoInfo.set(numSubSamples, numClearBytes,
-                            numEncryptedBytes, key, ivData, MediaCodec.CRYPTO_MODE_AES_CTR);
+                            numEncryptedBytes, null/*key*/, null/*ivData*/,
+                            MediaCodec.CRYPTO_MODE_AES_CTR);
                 }
             }
             accessUnit.cryptoInfo = cryptoInfo;

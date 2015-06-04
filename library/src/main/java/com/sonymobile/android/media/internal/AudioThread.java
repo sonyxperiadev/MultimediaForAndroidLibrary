@@ -233,7 +233,7 @@ public final class AudioThread extends CodecThread implements Clock {
 
     private long getCurrentPlayPositionUs() {
         long systemClockUs = System.nanoTime() / 1000;
-        long playPositionUs = -1;
+        long playPositionUs;
 
         if (mAllDataRendered) {
             long timeDiffUs = systemClockUs - mLastTimeStampTimeUs;
@@ -264,7 +264,7 @@ public final class AudioThread extends CodecThread implements Clock {
 
     private long getAudioTimestampUs() {
         long systemClockUs = System.nanoTime() / 1000;
-        long currentTimeUs = -1;
+        long currentTimeUs;
         if (mAudioTimestamp == null) {
             mAudioTimestamp = new AudioTimestamp();
         }

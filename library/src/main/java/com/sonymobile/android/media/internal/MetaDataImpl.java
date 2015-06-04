@@ -31,8 +31,7 @@ public class MetaDataImpl implements MetaData {
     @Override
     public int getInteger(String key) {
         if (mMetaDataValues.containsKey(key)) {
-            Integer val = (Integer)mMetaDataValues.get(key);
-            return val.intValue();
+            return (Integer)mMetaDataValues.get(key);
         }
         return Integer.MIN_VALUE;
     }
@@ -40,8 +39,7 @@ public class MetaDataImpl implements MetaData {
     @Override
     public long getLong(String key) {
         if (mMetaDataValues.containsKey(key)) {
-            Long val = (Long)(mMetaDataValues.get(key));
-            return val.longValue();
+            return (Long)(mMetaDataValues.get(key));
         }
         return Long.MIN_VALUE;
     }
@@ -49,8 +47,7 @@ public class MetaDataImpl implements MetaData {
     @Override
     public float getFloat(String key) {
         if (mMetaDataValues.containsKey(key)) {
-            Float val = (Float)(mMetaDataValues.get(key));
-            return val.floatValue();
+            return (Float)(mMetaDataValues.get(key));
         }
         return Float.MIN_VALUE;
     }

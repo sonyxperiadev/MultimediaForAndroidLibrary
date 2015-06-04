@@ -55,7 +55,7 @@ public class DASHISOParser extends ISOBMFFParser {
     private byte[] mTkhd;
 
     public DASHISOParser() {
-        super((DataSource)null);
+        super(null);
 
         initParsing();
     }
@@ -97,9 +97,8 @@ public class DASHISOParser extends ISOBMFFParser {
 
         try {
             long sourceLength = mDataSource.length();
-            boolean parseOK = true;
 
-            while (mCurrentOffset < sourceLength && parseOK) {
+            while (mCurrentOffset < sourceLength) {
                 BoxHeader header = getNextBoxHeader();
                 if (header == null) {
                     break;
@@ -257,7 +256,7 @@ public class DASHISOParser extends ISOBMFFParser {
             return ERROR;
         }
 
-        int versionFlags = 0;
+        int versionFlags;
         try {
             versionFlags = mDataSource.readInt();
             int version = versionFlags >> 24;

@@ -20,7 +20,6 @@ import java.io.FileDescriptor;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.Vector;
-import java.util.concurrent.locks.ReentrantLock;
 
 import android.media.MediaFormat;
 import android.os.Handler;
@@ -34,7 +33,6 @@ import com.sonymobile.android.media.BandwidthEstimator;
 import com.sonymobile.android.media.MediaError;
 import com.sonymobile.android.media.MediaPlayer.Statistics;
 import com.sonymobile.android.media.MetaData;
-import com.sonymobile.android.media.MetaDataParserFactory;
 import com.sonymobile.android.media.RepresentationSelector;
 import com.sonymobile.android.media.TrackInfo;
 import com.sonymobile.android.media.TrackInfo.TrackType;
@@ -295,7 +293,7 @@ public final class SimpleSource extends MediaSource {
                     thiz.onPrepareAsync();
                     break;
                 case MSG_SEEKTO:
-                    thiz.onSeek(((Long)(msg.obj)).longValue());
+                    thiz.onSeek((Long) msg.obj);
                     break;
                 case SOURCE_BUFFERING_UPDATE:
                     if (thiz.mPrepared && !thiz.mEventHandler.hasMessages(MSG_CHECK_BUFFERING)) {

@@ -704,7 +704,6 @@ public class ApiTest {
                 fail("Timeout in waitForPrepareAsync");
             }
         }
-        return;
     }
 
     public static void prepareAsync(TestContent tc) throws IOException {
@@ -1989,7 +1988,7 @@ public class ApiTest {
         }
     }
 
-    public static void setGetCustomVideoConfigurationParameter() throws IOException {
+    public static void setGetCustomVideoConfigurationParameter() {
         try {
             initMediaPlayer();
 
@@ -2066,7 +2065,7 @@ public class ApiTest {
         }
     }
 
-    protected static void shutDown() {
+    private static void shutDown() {
         try {
             if (sMediaPlayer != null && sMediaPlayer.getState() != MediaPlayer.State.END) {
                 sMediaPlayer.release();

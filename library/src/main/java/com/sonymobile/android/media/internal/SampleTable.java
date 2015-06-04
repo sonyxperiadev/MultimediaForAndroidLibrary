@@ -17,7 +17,6 @@
 package com.sonymobile.android.media.internal;
 
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
 
 import android.util.Log;
 
@@ -159,8 +158,8 @@ class SampleTable {
         int sttsEntryCount = mSttsData.getInt(); // entry_count
 
         long sttsCurrentSampleTimeToSample = 0;
-        int sttsCurrentSampleCount = 0;
-        int sttsCurrentSampleDelta = 0;
+        int sttsCurrentSampleCount;
+        int sttsCurrentSampleDelta;
         for (int i = 0; i < sttsEntryCount; ++i) {
             sttsCurrentSampleCount = mSttsData.getInt();
             sttsCurrentSampleDelta = mSttsData.getInt();
@@ -373,7 +372,7 @@ class SampleTable {
     }
 
     public int findSampleIndex(long seekTimeUs) {
-        long sampleTimeUs = 0;
+        long sampleTimeUs;
         int sampleCount = 0;
         int latestSyncSampleIndex = 0;
         for (int i = 0; i < mSampleCount; i++) {

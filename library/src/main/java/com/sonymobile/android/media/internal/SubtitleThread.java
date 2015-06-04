@@ -247,7 +247,7 @@ public final class SubtitleThread implements Codec {
                     break;
                 }
                 case MSG_HANDLE_SUBTITLE: {
-                    long delayMs = 10;
+                    long delayMs;
                     if (mCurrentSubtitle != null) {
                         if ((mCurrentSubtitle.getStartTimeUs() - mClock.getCurrentTimeUs()) / 1000
                                 < Configuration.SUBTITLE_PRETRIGGER_TIME_MS) {

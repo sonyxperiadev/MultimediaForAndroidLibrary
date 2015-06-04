@@ -40,8 +40,6 @@ public class DirectDataSource extends DataSource {
 
     private static final int SIZE_SHORT = 2;
 
-    private FileDescriptor mFd;
-
     private FileInputStream mFis;
 
     private FileChannel mFileChannel;
@@ -83,8 +81,7 @@ public class DirectDataSource extends DataSource {
     }
 
     private void setup(FileDescriptor fd, long offset, long length) throws IOException {
-        mFd = fd;
-        mFis = new FileInputStream(mFd);
+        mFis = new FileInputStream(fd);
         mFileChannel = mFis.getChannel();
         mStartOffset = offset >= 0 ? offset : 0;
         mLength = length > 0 ? length : Long.MAX_VALUE;

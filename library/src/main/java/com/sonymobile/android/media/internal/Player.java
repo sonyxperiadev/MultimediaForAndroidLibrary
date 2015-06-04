@@ -104,8 +104,6 @@ public final class Player {
 
     public static final int NOTIFY_PREPARED = 1;
 
-    public static final int NOTIFY_PREPARED_FAILED = 2;
-
     public static final int NOTIFY_ERROR = 3;
 
     public static final int NOTIFY_BUFFERING_START = 4;
@@ -491,19 +489,13 @@ public final class Player {
     private boolean isVideoSetupComplete() {
         boolean hasVideo = mSource.getSelectedTrackIndex(TrackType.VIDEO) != -1;
 
-        if (!hasVideo) {
-            return true;
-        }
-        return mVideoThread != null && mVideoThread.isSetupCompleted();
+        return !hasVideo || (mVideoThread != null && mVideoThread.isSetupCompleted());
     }
 
     private boolean isAudioSetupComplete() {
         boolean hasAudio = mSource.getSelectedTrackIndex(TrackType.AUDIO) != -1;
 
-        if (!hasAudio) {
-            return true;
-        }
-        return mAudioThread != null && mAudioThread.isSetupCompleted();
+        return !hasAudio || (mAudioThread != null && mAudioThread.isSetupCompleted());
     }
 
     private static class EventHandler extends Handler {

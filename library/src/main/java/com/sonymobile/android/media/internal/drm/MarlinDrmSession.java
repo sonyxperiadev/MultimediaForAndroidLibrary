@@ -51,7 +51,7 @@ public class MarlinDrmSession extends DrmSession {
 
     @Override
     public synchronized void open() throws DrmLicenseException {
-        byte[] initData = null;
+        byte[] initData;
 
         mState = STATE_OPENING;
         if (mMarlinInitData != null) {

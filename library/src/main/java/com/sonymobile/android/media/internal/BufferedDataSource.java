@@ -48,17 +48,11 @@ public abstract class BufferedDataSource extends DataSource {
 
     private static final String TAG = "BufferedDataSource";
 
-    protected static final int STATUS_OK = 0;
-
     protected static final int INT = 4;
 
     protected static final int LONG = 8;
 
     protected static final int SHORT = 2;
-
-    protected static final int TEN_KB = 10000;
-
-    protected static final int ONE_MB = 1000 * 1000;
 
     protected HttpURLConnection mHttpURLConnection;
 
@@ -73,8 +67,6 @@ public abstract class BufferedDataSource extends DataSource {
     protected boolean mRangeExtended = false;
 
     protected String mUri = null;
-
-    protected int mConnectError = STATUS_OK;
 
     protected int mLength = -1;
 
@@ -152,10 +144,6 @@ public abstract class BufferedDataSource extends DataSource {
 
     @Override
     public int readByte() throws IOException {
-        if (mConnectError != STATUS_OK) {
-            return mConnectError;
-        }
-
         checkConnectionAndStream();
 
         int readByte = mBis.read();
@@ -176,10 +164,6 @@ public abstract class BufferedDataSource extends DataSource {
 
     @Override
     public long skipBytes(long count) throws IOException {
-        if (mConnectError != STATUS_OK) {
-            return mConnectError;
-        }
-
         checkConnectionAndStream();
 
         long totalSkipped = 0;
@@ -483,11 +467,6 @@ public abstract class BufferedDataSource extends DataSource {
 
     @Override
     public abstract int readAt(long offset, byte[] buffer, int size) throws IOException;
-
-    @Override
-    public void requestReadPosition(long offset) throws IOException {
-        // Empty implementation, interested subclasses should override.
-    }
 
     class ReconnectHandler extends Handler {
 
