@@ -171,7 +171,7 @@ public class TestContentProvider {
 
     private String getMediaStoreUri(String idName) {
 
-        if (!idName.equals("") && mContext != null) {
+        if (!idName.isEmpty() && mContext != null) {
             ContentResolver cr = mContext.getContentResolver();
             Cursor c = cr.query(Media.EXTERNAL_CONTENT_URI, null, Media.DISPLAY_NAME
                     + "=? COLLATE NOCASE",
@@ -466,8 +466,8 @@ public class TestContentProvider {
                             parser.next();
                             if (parser.getEventType() == XmlPullParser.TEXT) {
                                 String text = parser.getText();
-                                int widthIndex = text.indexOf("w");
-                                int heightIndex = text.indexOf("h");
+                                int widthIndex = text.indexOf('w');
+                                int heightIndex = text.indexOf('h');
                                 if (text.startsWith("s") && widthIndex > -1 && heightIndex > -1) {
                                     obj.setAlbumArtSize(Integer.parseInt(text.substring(1,
                                             widthIndex)));

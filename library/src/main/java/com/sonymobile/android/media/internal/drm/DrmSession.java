@@ -143,7 +143,7 @@ public abstract class DrmSession {
      *
      * @return A OutputController
      */
-    public OutputController getOutputController() {
+    public synchronized OutputController getOutputController() {
         return mOutputController;
     }
 }

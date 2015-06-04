@@ -294,7 +294,7 @@ public interface MetaData {
     /**
      * Gets a byte[] from the meta data.
      *
-     * @param key of the byte[] that is wanted. Keys are specified in this
+     * @param key1 of the byte[] that is wanted. Keys are specified in this
      *            MetaData interface.
      * @param key2 extra parameter for a more specified call.
      * @return byte[] corresponding to the key wanted. If not found null is
