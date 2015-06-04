@@ -49,7 +49,7 @@ public final class SimpleSource extends MediaSource {
 
     private static final int MSG_CHECK_BUFFERING = 13;
 
-    MediaParser mMediaParser;
+    private MediaParser mMediaParser;
 
     private boolean mBuffering = false;
 

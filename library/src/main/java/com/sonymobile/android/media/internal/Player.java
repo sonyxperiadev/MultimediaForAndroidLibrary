@@ -194,7 +194,7 @@ public final class Player {
 
     private int mRotation = 0;
 
-    public float mPlaybackSpeed = 1.0f;
+    private float mPlaybackSpeed = 1.0f;
 
     private boolean mStarted = false;
 

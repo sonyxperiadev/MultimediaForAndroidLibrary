@@ -108,11 +108,11 @@ public final class AudioThread extends CodecThread implements Clock {
 
     private long mAnchorTimeUs = -1;
 
-    public MediaCrypto mMediaCrypto;
+    private MediaCrypto mMediaCrypto;
 
     private long mStoredTimeUs = 0;
 
-    public int mAudioSessionId;
+    private int mAudioSessionId;
 
     private AudioTimestamp mAudioTimestamp;
 

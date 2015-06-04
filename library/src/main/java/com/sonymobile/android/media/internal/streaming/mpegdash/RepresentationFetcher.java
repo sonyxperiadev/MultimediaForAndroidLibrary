@@ -43,7 +43,7 @@ public class RepresentationFetcher {
         INIT, SIDX, FRAGMENT
     }
 
-    public static final int SIDX_HEADER_SNIFF_SIZE = 200;
+    private static final int SIDX_HEADER_SNIFF_SIZE = 200;
 
     private static final boolean LOGS_ENABLED = Configuration.DEBUG || false;
 

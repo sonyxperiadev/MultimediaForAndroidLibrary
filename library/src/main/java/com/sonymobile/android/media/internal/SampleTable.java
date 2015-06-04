@@ -26,17 +26,17 @@ class SampleTable {
 
     private static final String TAG = "SampleTable";
 
-    ByteBuffer mSttsData;
+    private ByteBuffer mSttsData;
 
-    ByteBuffer mCttsData;
+    private ByteBuffer mCttsData;
 
-    ByteBuffer mStscData;
+    private ByteBuffer mStscData;
 
-    ByteBuffer mStszData;
+    private ByteBuffer mStszData;
 
-    ByteBuffer mStcoData;
+    private ByteBuffer mStcoData;
 
-    ByteBuffer mStssData;
+    private ByteBuffer mStssData;
 
     private int mSampleCount;
 

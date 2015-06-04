@@ -34,7 +34,7 @@ public class DASHISOParser extends ISOBMFFParser {
 
     private static final String TAG = "DASHISOParser";
 
-    protected static final int sBoxIdSidx = fourCC('s', 'i', 'd', 'x');
+    private static final int sBoxIdSidx = fourCC('s', 'i', 'd', 'x');
 
     private ArrayList<SubSegment> mSegmentIndex;
 

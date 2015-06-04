@@ -1592,7 +1592,7 @@ public class ApiTest {
         }
     }
 
-    public static boolean multipleRepresentations() {
+    private static boolean multipleRepresentations() {
         TrackInfo[] tracks = sMediaPlayer.getTrackInfo();
         for (TrackInfo trackInfo : tracks) {
             if (trackInfo.getTrackType() == TrackType.VIDEO
@@ -1956,11 +1956,11 @@ public class ApiTest {
 
     }
 
-    protected static void initMediaPlayer() {
+    private static void initMediaPlayer() {
         initMediaPlayer(null);
     }
 
-    protected static void initMediaPlayer(final Context context) {
+    private static void initMediaPlayer(final Context context) {
         /*
          * MediaPlayer is created on new thread since callbacks are executed on
          * creating thread. If the media player is created on the same thread as

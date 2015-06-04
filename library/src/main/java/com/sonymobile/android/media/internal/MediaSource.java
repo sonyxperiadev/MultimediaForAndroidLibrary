@@ -50,7 +50,7 @@ public abstract class MediaSource {
 
     protected boolean mSupportsPreview;
 
-    public MediaSource(Handler notify) {
+    protected MediaSource(Handler notify) {
         mNotify = notify;
     }
 
