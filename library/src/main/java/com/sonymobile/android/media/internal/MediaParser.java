@@ -59,8 +59,8 @@ abstract public class MediaParser implements MetaDataParser, MetaData {
      */
     public MediaParser(DataSource source) {
         mDataSource = source;
-        mTracks = new ArrayList<MediaParser.Track>();
-        mMetaDataValues = new Hashtable<String, Object>();
+        mTracks = new ArrayList<>();
+        mMetaDataValues = new Hashtable<>();
     }
 
     /**
@@ -75,8 +75,8 @@ abstract public class MediaParser implements MetaDataParser, MetaData {
             maxBufferSize = Configuration.DEFAULT_HTTP_BUFFER_SIZE;
         }
         mDataSource = DataSource.create(uri, maxBufferSize, false);
-        mTracks = new ArrayList<MediaParser.Track>();
-        mMetaDataValues = new Hashtable<String, Object>();
+        mTracks = new ArrayList<>();
+        mMetaDataValues = new Hashtable<>();
     }
 
     /**
@@ -93,8 +93,8 @@ abstract public class MediaParser implements MetaDataParser, MetaData {
             maxBufferSize = Configuration.DEFAULT_HTTP_BUFFER_SIZE;
         }
         mDataSource = DataSource.create(uri, offset, (int)length, maxBufferSize, null, null, false);
-        mTracks = new ArrayList<MediaParser.Track>();
-        mMetaDataValues = new Hashtable<String, Object>();
+        mTracks = new ArrayList<>();
+        mMetaDataValues = new Hashtable<>();
     }
 
     /**
@@ -109,8 +109,8 @@ abstract public class MediaParser implements MetaDataParser, MetaData {
      */
     public MediaParser(FileDescriptor fd, long offset, long length) {
         mDataSource = DataSource.create(fd, offset, length);
-        mTracks = new ArrayList<MediaParser.Track>();
-        mMetaDataValues = new Hashtable<String, Object>();
+        mTracks = new ArrayList<>();
+        mMetaDataValues = new Hashtable<>();
     }
 
     /**

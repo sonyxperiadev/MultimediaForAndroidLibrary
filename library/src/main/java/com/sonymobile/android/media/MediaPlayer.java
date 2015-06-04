@@ -949,17 +949,17 @@ public final class MediaPlayer {
                 Process.THREAD_PRIORITY_MORE_FAVORABLE);
         mPlayerEventThread.start();
 
-        mPlayerEventHandler = new PlayerEventHandler(new WeakReference<MediaPlayer>(this),
+        mPlayerEventHandler = new PlayerEventHandler(new WeakReference<>(this),
                 mPlayerEventThread.getLooper());
 
         Looper looper = Looper.myLooper();
         if (looper != null) {
-            mCallbackDispatcher = new CallbackDispatcher(new WeakReference<MediaPlayer>(this),
+            mCallbackDispatcher = new CallbackDispatcher(new WeakReference<>(this),
                     looper);
         } else {
             looper = Looper.getMainLooper();
             if (looper != null) {
-                mCallbackDispatcher = new CallbackDispatcher(new WeakReference<MediaPlayer>(this),
+                mCallbackDispatcher = new CallbackDispatcher(new WeakReference<>(this),
                         looper);
             } else {
                 mCallbackDispatcher = null;
@@ -1562,7 +1562,7 @@ public final class MediaPlayer {
                         Thread.MAX_PRIORITY);
                 mPlayerEventThread.start();
 
-                mPlayerEventHandler = new PlayerEventHandler(new WeakReference<MediaPlayer>(this),
+                mPlayerEventHandler = new PlayerEventHandler(new WeakReference<>(this),
                         mPlayerEventThread.getLooper());
                 mPlayer = new Player(mPlayerEventHandler, mContext, mAudioSessionId);
                 mState = State.IDLE;

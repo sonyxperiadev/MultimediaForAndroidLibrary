@@ -21,7 +21,7 @@ import java.lang.ref.WeakReference;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.HashMap;
+import java.util.EnumMap;
 import java.util.Map;
 import java.util.Vector;
 
@@ -99,9 +99,9 @@ public final class DASHSession {
 
     private boolean mBuffering = true;
 
-    private HashMap<TrackInfo.TrackType, RepresentationFetcher> mFetchers = new HashMap<TrackInfo.TrackType, RepresentationFetcher>();
+    private final EnumMap<TrackType, RepresentationFetcher> mFetchers = new EnumMap<>(TrackType.class);
 
-    private HashMap<TrackInfo.TrackType, PacketSource> mPacketSources = new HashMap<TrackInfo.TrackType, PacketSource>();
+    private final EnumMap<TrackType, PacketSource> mPacketSources = new EnumMap<>(TrackType.class);
 
     private BandwidthEstimator mBandwidthEstimator;
 
@@ -129,7 +129,7 @@ public final class DASHSession {
         mEventThread = new HandlerThread("DASH");
         mEventThread.start();
 
-        mEventHandler = new EventHandler(new WeakReference<DASHSession>(this),
+        mEventHandler = new EventHandler(new WeakReference<>(this),
                 mEventThread.getLooper());
 
         mPacketSources.put(TrackType.AUDIO, new PacketSource());

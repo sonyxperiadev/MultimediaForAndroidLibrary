@@ -120,7 +120,7 @@ public class TestContentProvider {
     private Context mContext;
 
     public TestContentProvider(Context context) {
-        mContents = new ArrayList<TestContent>();
+        mContents = new ArrayList<>();
         mContext = context;
         loadContents();
     }

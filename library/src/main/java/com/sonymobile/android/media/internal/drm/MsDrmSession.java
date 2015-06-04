@@ -48,7 +48,7 @@ public class MsDrmSession extends DrmSession {
         mPsshInfo = psshInfo;
         mMediaDrm = new MediaDrm(DrmUUID.PLAY_READY);
         mOutputController = null;
-        mMediaCryptoMap = new HashMap<String, MediaCrypto>();
+        mMediaCryptoMap = new HashMap<>();
     }
 
     @Override

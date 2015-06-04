@@ -145,7 +145,7 @@ public class PiffParser extends ISOBMFFParser {
                         int sampleCount = mDataSource.readInt();
 
                         ArrayList<CryptoInfo> cryptoInfos =
-                                new ArrayList<CryptoInfo>(sampleCount);
+                                new ArrayList<>(sampleCount);
 
                         for (int i = 0; i < sampleCount; i++) {
                             CryptoInfo info = new CryptoInfo();

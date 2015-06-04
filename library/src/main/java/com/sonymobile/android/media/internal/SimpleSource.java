@@ -83,7 +83,7 @@ public final class SimpleSource extends MediaSource {
         mEventThread = new HandlerThread("SimpleSource");
         mEventThread.start();
 
-        mEventHandler = new EventHandler(new WeakReference<SimpleSource>(this),
+        mEventHandler = new EventHandler(new WeakReference<>(this),
                 mEventThread.getLooper());
 
         if (path.startsWith("/") || path.startsWith("file")) {

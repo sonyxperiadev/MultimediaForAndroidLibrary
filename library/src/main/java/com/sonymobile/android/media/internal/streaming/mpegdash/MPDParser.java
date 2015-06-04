@@ -51,7 +51,7 @@ public class MPDParser {
 
     private long mMinBufferTimeUs;
 
-    private ArrayList<Period> mPeriods = new ArrayList<Period>();
+    private final ArrayList<Period> mPeriods = new ArrayList<>();
 
     private Period mCurrentPeriod;
 
@@ -441,7 +441,7 @@ public class MPDParser {
         }
 
         if (template.segmentTimeline == null) {
-            template.segmentTimeline = new ArrayList<SegmentTimelineEntry>();
+            template.segmentTimeline = new ArrayList<>();
         }
 
         String time = parser.getAttributeValue(null, "t");
@@ -1068,7 +1068,7 @@ public class MPDParser {
 
         String audioChannelConfiguration;
 
-        ArrayList<Representation> representations = new ArrayList<Representation>();
+        final ArrayList<Representation> representations = new ArrayList<>();
     }
 
     public static class SegmentTemplate {

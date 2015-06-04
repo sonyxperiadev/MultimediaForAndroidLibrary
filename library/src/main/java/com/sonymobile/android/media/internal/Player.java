@@ -221,12 +221,12 @@ public final class Player {
             mAudioSessionId = AudioSessionManager.generateNewAudioSessionId(mContext);
         }
 
-        mCustomVideoMediaFormatParams = new HashMap<String, Integer>();
+        mCustomVideoMediaFormatParams = new HashMap<>();
 
         mEventThread = new HandlerThread("Player");
         mEventThread.start();
 
-        mEventHandler = new EventHandler(new WeakReference<Player>(this),
+        mEventHandler = new EventHandler(new WeakReference<>(this),
                 mEventThread.getLooper());
 
         mCallbacks = callbackListener;
@@ -1143,7 +1143,7 @@ public final class Player {
                     byte[] psshData =
                             fileMeta.getByteBuffer(MetaData.KEY_DRM_PSSH_DATA);
 
-                    Map<UUID, byte[]> psshInfo = new HashMap<UUID, byte[]>();
+                    Map<UUID, byte[]> psshInfo = new HashMap<>();
                     psshInfo.put(DrmUUID.PLAY_READY, psshData);
 
                     mDrmSession = DrmSessionFactory.create(DrmUUID.PLAY_READY,

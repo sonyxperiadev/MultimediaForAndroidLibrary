@@ -1254,7 +1254,7 @@ public class ApiTest {
                 sMediaPlayer.selectTrack(0);
             }
             sMediaPlayer.play();
-            Vector<Integer> content = new Vector<Integer>();
+            Vector<Integer> content = new Vector<>();
             content.add(Integer.valueOf(0));
             content.add(Integer.valueOf(1));
             sMediaPlayer.selectTrack(0, content);

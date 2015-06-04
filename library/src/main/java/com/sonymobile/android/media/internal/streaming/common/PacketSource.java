@@ -24,7 +24,7 @@ import com.sonymobile.android.media.internal.AccessUnit;
 
 public class PacketSource {
 
-    private ArrayDeque<AccessUnit> mBuffer = new ArrayDeque<AccessUnit>();
+    private final ArrayDeque<AccessUnit> mBuffer = new ArrayDeque<>();
 
     private long mNextTimeUs = -1;
 

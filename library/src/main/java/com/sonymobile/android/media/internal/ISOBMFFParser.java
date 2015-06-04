@@ -519,7 +519,7 @@ public class ISOBMFFParser extends MediaParser {
 
     protected void initParsing() {
         mCurrentOffset = 0;
-        mCurrentBoxSequence = new ArrayDeque<BoxHeader>(10);
+        mCurrentBoxSequence = new ArrayDeque<>(10);
     }
 
     @Override
@@ -1076,7 +1076,7 @@ public class ISOBMFFParser extends MediaParser {
             parseOK = parseTrun(header);
         } else if (header.boxType == BOX_ID_MFRA) {
             if (!mFoundMfra) {
-                mMfraTracks = new ArrayList<ISOBMFFParser.IsoTrack>(2);
+                mMfraTracks = new ArrayList<>(2);
                 while (mCurrentOffset < boxEndOffset && parseOK) {
                     BoxHeader nextBoxHeader = getNextBoxHeader();
                     parseOK = parseBox(nextBoxHeader);
@@ -1616,7 +1616,7 @@ public class ISOBMFFParser extends MediaParser {
 
                 int sampleCount = mDataSource.readInt();
 
-                ArrayList<CryptoInfo> cryptoInfos = new ArrayList<CryptoInfo>(sampleCount);
+                ArrayList<CryptoInfo> cryptoInfos = new ArrayList<>(sampleCount);
 
                 for (int i = 0; i < sampleCount; i++) {
                     CryptoInfo info = new CryptoInfo();
@@ -1940,7 +1940,7 @@ public class ISOBMFFParser extends MediaParser {
             int lengthSizeOfTrunNum = ((lengths >> 2) & 0x00000003) + 1;
             int lengthSizeOfSampleNum = (lengths & 0x00000003) + 1;
             int numberOfEntry = mDataSource.readInt();
-            ArrayList<Tfra> tfraList = new ArrayList<Tfra>(numberOfEntry);
+            ArrayList<Tfra> tfraList = new ArrayList<>(numberOfEntry);
             for (int i = 0; i < numberOfEntry; i++) {
                 long timeTicks;
                 long moofOffset;
@@ -2001,7 +2001,7 @@ public class ISOBMFFParser extends MediaParser {
             int versionFlags = mDataSource.readInt();
             int sampleCount = mDataSource.readInt();
             int dataOffset = 0;
-            ArrayList<FragmentSample> fragmentSamples = new ArrayList<FragmentSample>(sampleCount);
+            ArrayList<FragmentSample> fragmentSamples = new ArrayList<>(sampleCount);
             if ((versionFlags & 0x000001) != 0) {
                 dataOffset = mDataSource.readInt();
             }
@@ -2639,7 +2639,7 @@ public class ISOBMFFParser extends MediaParser {
             mDataSource.skipBytes(2); // reserved
             short referenceCount = mDataSource.readShort();
 
-            ArrayList<SidxEntry> sidxList = new ArrayList<SidxEntry>(referenceCount);
+            ArrayList<SidxEntry> sidxList = new ArrayList<>(referenceCount);
             long sidxTotalDurationUs = 0;
             long sidxTotalOffset = boxEndOffset;
 
@@ -2885,7 +2885,7 @@ public class ISOBMFFParser extends MediaParser {
             mMetaData = new MetaDataImpl();
             mSampleTable = new SampleTable();
             mCurrentFragmentSampleQueue = null;
-            mSampleDescriptionList = new ArrayList<MediaFormat>(1);
+            mSampleDescriptionList = new ArrayList<>(1);
         }
 
         public boolean buildSampleTable() {
@@ -2910,7 +2910,7 @@ public class ISOBMFFParser extends MediaParser {
         public void addFragmentSamples(ArrayList<FragmentSample> fragmentSamples) {
             int numNewSamples = fragmentSamples.size();
             if (mCurrentFragmentSampleQueue == null) {
-                mCurrentFragmentSampleQueue = new ArrayDeque<FragmentSample>(numNewSamples);
+                mCurrentFragmentSampleQueue = new ArrayDeque<>(numNewSamples);
             }
             for (int i = 0; i < numNewSamples; i++) {
                 mCurrentFragmentSampleQueue.add(fragmentSamples.get(i));
@@ -2920,7 +2920,7 @@ public class ISOBMFFParser extends MediaParser {
         public void addCryptoInfos(ArrayList<CryptoInfo> cryptoInfos) {
             int numNewSamples = cryptoInfos.size();
             if (mCurrentCryptoInfoQueue == null) {
-                mCurrentCryptoInfoQueue = new ArrayDeque<CryptoInfo>(numNewSamples);
+                mCurrentCryptoInfoQueue = new ArrayDeque<>(numNewSamples);
             }
             for (int i = 0; i < numNewSamples; i++) {
                 mCurrentCryptoInfoQueue.add(cryptoInfos.get(i));

@@ -157,7 +157,7 @@ public class VUParser extends ISOBMFFParser {
             parseOK = parseMtdt(header);
         } else if (header.boxType == BOX_ID_MTSM) {
             if (mMtsmList == null) {
-                mMtsmList = new ArrayList<MtsmEntry>();
+                mMtsmList = new ArrayList<>();
             }
             mCurrentMtsmEntry = new MtsmEntry();
             while (mCurrentOffset < boxEndOffset && parseOK) {
@@ -177,7 +177,7 @@ public class VUParser extends ISOBMFFParser {
             try {
                 mDataSource.skipBytes(4);
                 int metadataSampleCount = mDataSource.readInt();
-                mCurrentMtsmEntry.mMdstList = new ArrayList<MdstEntry>(metadataSampleCount);
+                mCurrentMtsmEntry.mMdstList = new ArrayList<>(metadataSampleCount);
                 for (int i = 0; i < metadataSampleCount; i++) {
                     MdstEntry mdstEntry = new MdstEntry();
                     mdstEntry.metadataSampleDescriptionIndex = mDataSource.readInt();
@@ -539,9 +539,9 @@ public class VUParser extends ISOBMFFParser {
         // we're currently not interested in anything on track level
         try {
             int numberOfUnits = mDataSource.readShort();
-            mHmmpTitles = new ArrayList<String>(1);
-            ArrayDeque<String> titleLanguages = new ArrayDeque<String>(1);
-            ArrayDeque<String> iconLanguages = new ArrayDeque<String>(1);
+            mHmmpTitles = new ArrayList<>(1);
+            ArrayDeque<String> titleLanguages = new ArrayDeque<>(1);
+            ArrayDeque<String> iconLanguages = new ArrayDeque<>(1);
             for (int i = 0; i < numberOfUnits; i++) {
                 short dataUnitSize = mDataSource.readShort();
                 int dataTypeID = mDataSource.readInt();
@@ -562,7 +562,7 @@ public class VUParser extends ISOBMFFParser {
                 } else if (encodingType == 0x101) {
                     if (dataTypeID == 0xA04) {
                         if (mIconList == null) {
-                            mIconList = new ArrayList<IconInfo>();
+                            mIconList = new ArrayList<>();
                         }
                         mDataSource.skipBytes(4); // selectionFlags
                         mDataSource.skipBytes(4); // reserved

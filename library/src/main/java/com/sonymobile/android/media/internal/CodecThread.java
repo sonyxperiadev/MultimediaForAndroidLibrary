@@ -60,8 +60,8 @@ public abstract class CodecThread implements Codec {
     private Object mFramePoolLock = new Object();
 
     protected CodecThread() {
-        mDecodedFrames = new ArrayDeque<Frame>();
-        mFramePool = new ArrayDeque<Frame>(5);
+        mDecodedFrames = new ArrayDeque<>();
+        mFramePool = new ArrayDeque<>(5);
     }
 
     protected void addDecodedFrame(Frame frame) {

@@ -80,7 +80,7 @@ public class DASHSource extends MediaSource {
 
     @Override
     public void prepareAsync() {
-        mEventHandler = new EventHandler(new WeakReference<DASHSource>(this));
+        mEventHandler = new EventHandler(new WeakReference<>(this));
 
         mSession = new DASHSession(mEventHandler, mBandwidthEstimator, mRepresentationSelector,
                 mMaxBufferSize);

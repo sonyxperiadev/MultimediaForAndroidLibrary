@@ -25,7 +25,7 @@ public class MetaDataImpl implements MetaData {
     Hashtable<String, Object> mMetaDataValues;
 
     public MetaDataImpl() {
-        mMetaDataValues = new Hashtable<String, Object>();
+        mMetaDataValues = new Hashtable<>();
     }
 
     @Override

@@ -105,7 +105,7 @@ public class DASHISOParser extends ISOBMFFParser {
                 } else if (header.boxType == sBoxIdSidx) {
                     mSidxSize = header.boxDataSize;
                     source.setRange(header.startOffset, header.boxHeaderSize + header.boxDataSize);
-                    mSegmentIndex = new ArrayList<DASHISOParser.SubSegment>();
+                    mSegmentIndex = new ArrayList<>();
                     return parseSegmentIndex(header);
                 } else {
                     int err = parseBox12(header);
@@ -155,7 +155,7 @@ public class DASHISOParser extends ISOBMFFParser {
             } else if (header.boxType == sBoxIdSidx) {
                 mSidxSize = header.boxDataSize;
                 source.setRange(header.startOffset, header.boxHeaderSize + header.boxDataSize);
-                mSegmentIndex = new ArrayList<DASHISOParser.SubSegment>();
+                mSegmentIndex = new ArrayList<>();
 
                 return parseSegmentIndex(header);
             } else {
@@ -288,7 +288,7 @@ public class DASHISOParser extends ISOBMFFParser {
                 referenceSize = referenceSize & 0x7fffffff;
                 if (referenceType == 1) {
                     if (subSidxOffsets == null) {
-                        subSidxOffsets = new ArrayList<Long>(referenceCount);
+                        subSidxOffsets = new ArrayList<>(referenceCount);
                     }
 
                     subSidxOffsets.add(offset);

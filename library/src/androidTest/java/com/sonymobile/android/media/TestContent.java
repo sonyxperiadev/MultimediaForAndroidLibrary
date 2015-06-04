@@ -107,7 +107,7 @@ public class TestContent {
             "LOCAL_WITH_SONY_MOBILE_FLAGS";
 
     public TestContent() {
-        mMetaDataValues = new HashMap<String, Object>();
+        mMetaDataValues = new HashMap<>();
     }
 
     public String getContentUri() {
