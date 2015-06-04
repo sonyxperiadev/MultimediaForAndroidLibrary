@@ -80,9 +80,9 @@ public class OutputController {
                         //When coming from play and resume
                         //No new display is added, check restrictions for existing displays
                         Display[] displays = mDisplayManager.getDisplays();
-                        for (int i = 0; i < displays.length; i++) {
-                            if (displays[i].isValid()) {
-                                mOutputController.checkVideoOutputRestriction(displays[i]);
+                        for (Display display : displays) {
+                            if (display.isValid()) {
+                                mOutputController.checkVideoOutputRestriction(display);
                             }
                         }
                     } else {

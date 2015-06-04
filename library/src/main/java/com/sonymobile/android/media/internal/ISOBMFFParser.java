@@ -27,7 +27,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
 
 import android.media.MediaCodec;
 import android.media.MediaCodec.CryptoInfo;
@@ -1668,9 +1667,7 @@ public class ISOBMFFParser extends MediaParser {
     }
 
     protected boolean boxIsUnder(int boxType) {
-        Iterator<BoxHeader> iterator = mCurrentBoxSequence.iterator();
-        while (iterator.hasNext()) {
-            BoxHeader header = iterator.next();
+        for (BoxHeader header : mCurrentBoxSequence) {
             if (header.boxType == boxType) {
                 return true;
             }
@@ -2439,9 +2436,7 @@ public class ISOBMFFParser extends MediaParser {
             spsUnit[1] = 0;
             spsUnit[2] = 0;
             spsUnit[3] = 1;
-            for (int j = 0; j < spsLength; j++) {
-                spsUnit[j + 4] = buffer[currentBufferOffset + j];
-            }
+            System.arraycopy(buffer, currentBufferOffset, spsUnit, 4, spsLength);
             avccData.spsBuffer.put(spsUnit);
             currentBufferOffset += spsLength;
         }
@@ -2454,9 +2449,7 @@ public class ISOBMFFParser extends MediaParser {
             ppsUnit[1] = 0;
             ppsUnit[2] = 0;
             ppsUnit[3] = 1;
-            for (int j = 0; j < ppsLength; j++) {
-                ppsUnit[j + 4] = buffer[currentBufferOffset + j];
-            }
+            System.arraycopy(buffer, currentBufferOffset, ppsUnit, 4, ppsLength);
             avccData.ppsBuffer.put(ppsUnit);
             currentBufferOffset += ppsLength;
         }
@@ -3742,16 +3735,16 @@ public class ISOBMFFParser extends MediaParser {
             mDataSource.skipBytes(4); // minor_version
             int numCompatibilityBrands = (int)((header.boxDataSize - 8) / 4);
             if (numCompatibilityBrands == 0) {
-                for (int j = 0; j < ISOBMFF_COMPATIBLE_BRANDS.length; j++) {
-                    if (ISOBMFF_COMPATIBLE_BRANDS[j] == majorBrand) {
+                for (int compatibleBrand : ISOBMFF_COMPATIBLE_BRANDS) {
+                    if (compatibleBrand == majorBrand) {
                         return true;
                     }
                 }
             }
             for (int i = 0; i < numCompatibilityBrands; i++) {
                 int brand = mDataSource.readInt();
-                for (int j = 0; j < ISOBMFF_COMPATIBLE_BRANDS.length; j++) {
-                    if (ISOBMFF_COMPATIBLE_BRANDS[j] == brand) {
+                for (int compatibleBrand : ISOBMFF_COMPATIBLE_BRANDS) {
+                    if (compatibleBrand == brand) {
                         return true;
                     }
                 }

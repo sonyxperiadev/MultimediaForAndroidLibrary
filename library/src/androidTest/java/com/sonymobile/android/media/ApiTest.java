@@ -928,17 +928,17 @@ public class ApiTest {
             TrackInfo[] ti = sMediaPlayer.getTrackInfo();
             assertTrue("TrackInfo length zero", ti.length != 0);
             boolean videoTrackFound = false;
-            for (int i = 0; i < ti.length; i++) {
-                if (ti[i].getTrackType() == TrackType.VIDEO) {
+            for (TrackInfo trackInfo : ti) {
+                if (trackInfo.getTrackType() == TrackType.VIDEO) {
                     videoTrackFound = true;
 
-                    TrackRepresentation[] tr = ti[i].getRepresentations();
+                    TrackRepresentation[] tr = trackInfo.getRepresentations();
                     assertTrue("No video representation in video track", tr.length > 0);
 
                     assertEquals("Width not equal to expected width", tc.getWidth(),
-                            ((VideoTrackRepresentation)tr[0]).getWidth());
+                            ((VideoTrackRepresentation) tr[0]).getWidth());
                     assertEquals("Height not equal to expected height", tc.getHeight(),
-                            ((VideoTrackRepresentation)tr[0]).getHeight());
+                            ((VideoTrackRepresentation) tr[0]).getHeight());
                 }
             }
 
@@ -1594,9 +1594,9 @@ public class ApiTest {
 
     public static boolean multipleRepresentations() {
         TrackInfo[] tracks = sMediaPlayer.getTrackInfo();
-        for (int i = 0; i < tracks.length; i++) {
-            if (tracks[i].getTrackType() == TrackType.VIDEO
-                    && tracks[i].getRepresentations().length > 1) {
+        for (TrackInfo trackInfo : tracks) {
+            if (trackInfo.getTrackType() == TrackType.VIDEO
+                    && trackInfo.getRepresentations().length > 1) {
                 return true;
             }
         }

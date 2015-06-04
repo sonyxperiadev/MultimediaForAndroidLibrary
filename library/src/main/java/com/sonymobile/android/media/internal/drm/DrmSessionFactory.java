@@ -16,7 +16,6 @@
 
 package com.sonymobile.android.media.internal.drm;
 
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.UUID;
@@ -42,9 +41,8 @@ public class DrmSessionFactory {
         if (psshInfo == null || psshInfo.isEmpty()) {
             throw new IllegalArgumentException("Invalid PSSH information");
         }
-        Iterator<Entry<UUID, byte[]>> itr = psshInfo.entrySet().iterator();
-        while (itr.hasNext()) {
-            drmSession = create(itr.next().getKey(), psshInfo);
+        for (Entry<UUID, byte[]> uuidEntry : psshInfo.entrySet()) {
+            drmSession = create(uuidEntry.getKey(), psshInfo);
             if (drmSession != null) {
                 break;
             }

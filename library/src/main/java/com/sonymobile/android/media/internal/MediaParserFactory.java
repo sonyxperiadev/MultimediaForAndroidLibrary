@@ -41,16 +41,16 @@ public class MediaParserFactory {
         };
 
         MediaParser parser = null;
-        for (int i = 0; i < registeredParsers.length; i++) {
+        for (Class registeredParser : registeredParsers) {
             Constructor c;
             try {
-                c = registeredParsers[i].getConstructor(parameterTypes);
+                c = registeredParser.getConstructor(parameterTypes);
             } catch (NoSuchMethodException e) {
                 if (LOGS_ENABLED) Log.e(TAG, "Unable to find constructor", e);
                 continue;
             }
             try {
-                parser = (MediaParser)c.newInstance(fd, offset, length);
+                parser = (MediaParser) c.newInstance(fd, offset, length);
                 if (parser.canParse()) {
                     if (parser.parse()) {
                         return parser;
@@ -142,16 +142,16 @@ public class MediaParserFactory {
             return null;
         }
 
-        for (int i = 0; i < registeredParsers.length; i++) {
-            Constructor c = null;
+        for (Class registeredParser : registeredParsers) {
+            Constructor c;
             try {
-                c = registeredParsers[i].getConstructor(parameterTypes);
+                c = registeredParser.getConstructor(parameterTypes);
             } catch (NoSuchMethodException e) {
                 if (LOGS_ENABLED) Log.e(TAG, "Unable to find constructor", e);
                 continue;
             }
             try {
-                parser = (MediaParser)c.newInstance(dataSource);
+                parser = (MediaParser) c.newInstance(dataSource);
                 if (parser.canParse()) {
                     if (parser.parse()) {
                         selectedParser = parser;

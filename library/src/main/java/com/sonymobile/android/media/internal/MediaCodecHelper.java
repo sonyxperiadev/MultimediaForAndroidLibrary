@@ -59,8 +59,8 @@ public class MediaCodecHelper {
             if (!info.isEncoder()) {
                 String[] supportedTypes = info.getSupportedTypes();
 
-                for (int j = 0; j < supportedTypes.length; j++) {
-                    if (supportedTypes[j].equalsIgnoreCase(mimeType)) {
+                for (String supportedType : supportedTypes) {
+                    if (supportedType.equalsIgnoreCase(mimeType)) {
                         String name = info.getName();
 
                         if (requireSecure) {
