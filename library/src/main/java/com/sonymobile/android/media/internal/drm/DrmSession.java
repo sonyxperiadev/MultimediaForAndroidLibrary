@@ -28,7 +28,7 @@ import android.media.MediaDrm;
 public abstract class DrmSession {
 
     public static class DrmLicenseException extends Exception {
-        private int mErrorCode;
+        private final int mErrorCode;
 
         public DrmLicenseException(int errorCode) {
             mErrorCode = errorCode;

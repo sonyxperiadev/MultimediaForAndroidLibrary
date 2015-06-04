@@ -47,9 +47,9 @@ public class HandlerHelper {
         }
     }
 
-    private ArrayList<WaitHandler> mMessageList = new ArrayList<>();
+    private final ArrayList<WaitHandler> mMessageList = new ArrayList<>();
 
-    private Object mListLock = new Object();
+    private final Object mListLock = new Object();
 
     public Object sendMessageAndAwaitResponse(Message msg) {
         HandlerThread waitThread = new HandlerThread("sendMessageAndAwaitResponse");

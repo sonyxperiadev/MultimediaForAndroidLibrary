@@ -45,11 +45,11 @@ public final class DummyVideoThread extends VideoCodecThread {
 
     private boolean mEOS = false;
 
-    private Clock mClock;
+    private final Clock mClock;
 
     private boolean mStarted = false;
 
-    private Handler mCallback;
+    private final Handler mCallback;
 
     private boolean mSetupCompleted = false;
 
@@ -57,7 +57,7 @@ public final class DummyVideoThread extends VideoCodecThread {
 
     private float mCurrentSpeed = 1.0f;
 
-    private HandlerHelper mHandlerHelper;
+    private final HandlerHelper mHandlerHelper;
 
     public DummyVideoThread(MediaFormat format, MediaSource source, Clock clock,
             Handler callback) {

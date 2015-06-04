@@ -51,13 +51,13 @@ public abstract class CodecThread implements Codec {
 
     protected static final int MSG_SET_SPEED = 12;
 
-    private ArrayDeque<Frame> mDecodedFrames;
+    private final ArrayDeque<Frame> mDecodedFrames;
 
-    private Object mDecodedFramesLock = new Object();
+    private final Object mDecodedFramesLock = new Object();
 
-    private ArrayDeque<Frame> mFramePool;
+    private final ArrayDeque<Frame> mFramePool;
 
-    private Object mFramePoolLock = new Object();
+    private final Object mFramePoolLock = new Object();
 
     protected CodecThread() {
         mDecodedFrames = new ArrayDeque<>();
@@ -153,7 +153,7 @@ public abstract class CodecThread implements Codec {
     protected static class Frame {
         byte[] byteBuffer;
 
-        BufferInfo info;
+        final BufferInfo info;
 
         int bufferIndex;
 

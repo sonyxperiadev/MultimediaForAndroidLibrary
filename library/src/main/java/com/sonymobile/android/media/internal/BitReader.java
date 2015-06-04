@@ -18,7 +18,7 @@ package com.sonymobile.android.media.internal;
 
 public class BitReader {
 
-    private byte[] mBytes;
+    private final byte[] mBytes;
 
     private int mPos = 0;
 

@@ -551,9 +551,9 @@ public final class MediaPlayer {
      * Class that holds information relevant to streamed dynamic content.
      */
     public static class Statistics {
-        private int linkSpeed;
+        private final int linkSpeed;
 
-        private String serverIP;
+        private final String serverIP;
 
         private String videoURI;
 
@@ -715,11 +715,11 @@ public final class MediaPlayer {
 
     private Handler mPlayerEventHandler;
 
-    private Handler mCallbackDispatcher;
+    private final Handler mCallbackDispatcher;
 
-    private Object mStateLock = new Object();
+    private final Object mStateLock = new Object();
 
-    private Object mListenerLock = new Object();
+    private final Object mListenerLock = new Object();
 
     private SurfaceHolder mSurfaceHolder;
 
@@ -735,7 +735,7 @@ public final class MediaPlayer {
 
     private static class CallbackDispatcher extends Handler {
 
-        private WeakReference<MediaPlayer> mMediaPlayer;
+        private final WeakReference<MediaPlayer> mMediaPlayer;
 
         public CallbackDispatcher(WeakReference<MediaPlayer> mediaPlayer, Looper looper) {
             super(looper);
@@ -853,7 +853,7 @@ public final class MediaPlayer {
 
     private static class PlayerEventHandler extends Handler {
 
-        private WeakReference<MediaPlayer> mMediaPlayer;
+        private final WeakReference<MediaPlayer> mMediaPlayer;
 
         public PlayerEventHandler(WeakReference<MediaPlayer> mediaPlayer, Looper looper) {
             super(looper);

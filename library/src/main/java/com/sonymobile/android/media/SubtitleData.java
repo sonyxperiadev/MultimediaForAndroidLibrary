@@ -29,13 +29,13 @@ public class SubtitleData {
 
     private static final String TAG = "SubtitleData";
 
-    private int mTrackIndex;
+    private final int mTrackIndex;
 
-    private long mStartTimeUs;
+    private final long mStartTimeUs;
 
-    private long mDurationUs;
+    private final long mDurationUs;
 
-    private byte[] mData;
+    private final byte[] mData;
 
     /**
      * Creates a new SubtitleData object. SubtitleData should normally not be

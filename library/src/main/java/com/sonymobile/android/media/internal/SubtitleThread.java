@@ -63,13 +63,13 @@ public final class SubtitleThread implements Codec {
 
     private MediaSource mSource;
 
-    private Clock mClock;
+    private final Clock mClock;
 
     private boolean mStarted = false;
 
     private SubtitleData mCurrentSubtitle = null;
 
-    private Handler mCallback;
+    private final Handler mCallback;
 
     private MediaDrm mMediaDrm;
 
@@ -79,7 +79,7 @@ public final class SubtitleThread implements Codec {
 
     private boolean mEos = false;
 
-    private HandlerHelper mHandlerHelper;
+    private final HandlerHelper mHandlerHelper;
 
     public SubtitleThread(MediaSource source, Clock clock,
             Handler callback) {

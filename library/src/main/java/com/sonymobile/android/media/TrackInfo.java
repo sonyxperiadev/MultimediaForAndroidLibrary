@@ -43,13 +43,13 @@ public class TrackInfo {
         UNKNOWN
     }
 
-    private TrackType mTrackType;
+    private final TrackType mTrackType;
 
-    private String mMimeType;
+    private final String mMimeType;
 
-    private long mDurationUs;
+    private final long mDurationUs;
 
-    private String mLanguage;
+    private final String mLanguage;
 
     private final TrackRepresentation[] mRepresentations;
 

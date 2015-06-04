@@ -21,7 +21,7 @@ package com.sonymobile.android.media;
  */
 public class TrackRepresentation {
 
-    private int mBitrate;
+    private final int mBitrate;
 
     /**
      * Creates a new TrackRepresentation. TrackRepresentation should normally

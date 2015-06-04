@@ -21,11 +21,11 @@ package com.sonymobile.android.media;
  */
 public class AudioTrackRepresentation extends TrackRepresentation {
 
-    private int mChannelCount;
+    private final int mChannelCount;
 
-    private String mChannelConfiguration;
+    private final String mChannelConfiguration;
 
-    private int mSampleRate;
+    private final int mSampleRate;
 
     /**
      * Create a new audio track representation. AudioTrackRepresentation should

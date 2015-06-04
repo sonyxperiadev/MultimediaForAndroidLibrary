@@ -1036,9 +1036,9 @@ public class MPDParser {
 
         long startTimeUs;
 
-        ArrayList<AdaptationSet> adaptationSets = new ArrayList<AdaptationSet>();
+        final ArrayList<AdaptationSet> adaptationSets = new ArrayList<>();
 
-        int[] currentAdaptationSet = new int[TrackType.UNKNOWN.ordinal()];
+        final int[] currentAdaptationSet = new int[TrackType.UNKNOWN.ordinal()];
     }
 
     public static class AdaptationSet {

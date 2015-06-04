@@ -46,7 +46,7 @@ public abstract class MediaSource {
 
     public static final int SOURCE_BUFFERING_UPDATE = 8;
 
-    private Handler mNotify;
+    private final Handler mNotify;
 
     protected boolean mSupportsPreview;
 

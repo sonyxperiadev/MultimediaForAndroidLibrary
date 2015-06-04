@@ -40,7 +40,7 @@ public final class ClockImpl implements Clock, Codec {
 
     private float mPlaybackSpeed = Util.DEFAULT_PLAYBACK_SPEED;
 
-    private Handler mCallback;
+    private final Handler mCallback;
 
     private HandlerThread mEventThread;
 

@@ -277,7 +277,7 @@ public final class SimpleSource extends MediaSource {
 
     private static class EventHandler extends Handler {
 
-        private WeakReference<SimpleSource> mSource;
+        private final WeakReference<SimpleSource> mSource;
 
         public EventHandler(WeakReference<SimpleSource> source, Looper looper) {
             super(looper);

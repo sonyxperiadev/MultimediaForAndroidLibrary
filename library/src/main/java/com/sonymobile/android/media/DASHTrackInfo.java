@@ -22,13 +22,13 @@ package com.sonymobile.android.media;
  */
 public class DASHTrackInfo extends TrackInfo {
 
-    private long mStartTimeUs;
+    private final long mStartTimeUs;
 
-    private String mAccessibility;
+    private final String mAccessibility;
 
-    private String mRole;
+    private final String mRole;
 
-    private String mRating;
+    private final String mRating;
 
     /**
      * Create a new DASHTrackInfo. Normally a DASHTrackInfo should not be

@@ -89,11 +89,11 @@ public final class DASHSession {
 
     private static final int MAX_BUFFER_DURATION_US = 10000000;
 
-    private HandlerThread mEventThread;
+    private final HandlerThread mEventThread;
 
-    private EventHandler mEventHandler;
+    private final EventHandler mEventHandler;
 
-    private Handler mCallbackHandler;
+    private final Handler mCallbackHandler;
 
     private MPDParser mMPDParser;
 
@@ -109,7 +109,7 @@ public final class DASHSession {
 
     private long mLastDequeuedTimeUs;
 
-    private MetaDataImpl mMetaData = new MetaDataImpl();
+    private final MetaDataImpl mMetaData = new MetaDataImpl();
 
     private boolean mSeekPending = false;
 
@@ -117,9 +117,9 @@ public final class DASHSession {
 
     private String mVideoURI;
 
-    private int mMaxBufferSize;
+    private final int mMaxBufferSize;
 
-    private int[] mMaxBufferSizes;
+    private final int[] mMaxBufferSizes;
 
     public DASHSession(Handler callbackHandler, BandwidthEstimator estimator,
             RepresentationSelector selector, int maxBufferSize) {
@@ -227,7 +227,7 @@ public final class DASHSession {
 
     private static class EventHandler extends Handler {
 
-        private WeakReference<DASHSession> mSession;
+        private final WeakReference<DASHSession> mSession;
 
         public EventHandler(WeakReference<DASHSession> session, Looper looper) {
             super(looper);

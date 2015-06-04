@@ -65,7 +65,7 @@ public class OutputController {
     @SuppressLint("HandlerLeak")
     private class EventHandler extends Handler {
 
-        private OutputController mOutputController;
+        private final OutputController mOutputController;
 
         public EventHandler(OutputController outputController, DisplayManager displayManager) {
             mOutputController = outputController;

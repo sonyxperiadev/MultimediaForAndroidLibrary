@@ -64,7 +64,7 @@ public class DASHSource extends MediaSource {
 
     private RepresentationSelector mRepresentationSelector = null;
 
-    private int mMaxBufferSize;
+    private final int mMaxBufferSize;
 
     public DASHSource(String url, Handler notify, int maxBufferSize) {
         super(notify);
@@ -130,7 +130,7 @@ public class DASHSource extends MediaSource {
 
     private static class EventHandler extends Handler {
 
-        private WeakReference<DASHSource> mSource;
+        private final WeakReference<DASHSource> mSource;
 
         public EventHandler(WeakReference<DASHSource> source) {
             super();

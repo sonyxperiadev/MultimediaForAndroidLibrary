@@ -2833,9 +2833,9 @@ public class ISOBMFFParser extends MediaParser {
     }
 
     public class IsoTrack implements Track {
-        protected MetaDataImpl mMetaData;
+        protected final MetaDataImpl mMetaData;
 
-        protected SampleTable mSampleTable;
+        protected final SampleTable mSampleTable;
 
         protected int mTimeScale = 0;
 
@@ -2871,7 +2871,7 @@ public class ISOBMFFParser extends MediaParser {
 
         protected int mCurrentSampleDescriptionIndex = -1;
 
-        protected ArrayList<MediaFormat> mSampleDescriptionList;
+        protected final ArrayList<MediaFormat> mSampleDescriptionList;
 
         protected long mNextMoofOffset = 0;
 

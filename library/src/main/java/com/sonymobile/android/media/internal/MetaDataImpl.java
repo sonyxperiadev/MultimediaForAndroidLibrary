@@ -22,7 +22,7 @@ import com.sonymobile.android.media.MetaData;
 
 public class MetaDataImpl implements MetaData {
 
-    Hashtable<String, Object> mMetaDataValues;
+    private final Hashtable<String, Object> mMetaDataValues;
 
     public MetaDataImpl() {
         mMetaDataValues = new Hashtable<>();

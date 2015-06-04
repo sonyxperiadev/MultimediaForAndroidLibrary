@@ -48,7 +48,7 @@ public final class BufferedStream implements Closeable {
     // small reads, however this could mess up bandwidth measure.
     private InputStream mInputStream;
 
-    private int mBufferSize;
+    private final int mBufferSize;
 
     private Buffer mDataBuffer;
 

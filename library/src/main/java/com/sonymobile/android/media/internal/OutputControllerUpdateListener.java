@@ -27,7 +27,7 @@ public class OutputControllerUpdateListener implements OnOutputControllerUpdateL
 
     public static final int OUTPUT_BLOCKED = 2;
 
-    private Player mPlayer;
+    private final Player mPlayer;
 
     public OutputControllerUpdateListener(Player p) {
         mPlayer = p;

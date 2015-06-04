@@ -25,7 +25,7 @@ public class OutputControlEvent {
 
     public final static int OUTPUT_EXTERNAL_HDMI_RESTRICTED = 3;
 
-    private LicenseInfo mLicenseInfo;
+    private final LicenseInfo mLicenseInfo;
 
     public OutputControlEvent(LicenseInfo licenseInfo){
         mLicenseInfo = licenseInfo;

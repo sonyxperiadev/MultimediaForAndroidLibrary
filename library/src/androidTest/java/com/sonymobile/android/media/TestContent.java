@@ -68,7 +68,7 @@ public class TestContent {
 
     private int mAlbumArtHeight = -1;
 
-    private HashMap<String, Object> mMetaDataValues;
+    private final HashMap<String, Object> mMetaDataValues;
 
     public final static String ID_TYPE_LOCAL = "LOCAL";
 

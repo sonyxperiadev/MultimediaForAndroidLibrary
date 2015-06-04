@@ -21,11 +21,11 @@ package com.sonymobile.android.media;
  */
 public class VideoTrackRepresentation extends TrackRepresentation {
 
-    private int mWidth;
+    private final int mWidth;
 
-    private int mHeight;
+    private final int mHeight;
 
-    private float mFrameRate;
+    private final float mFrameRate;
 
     /**
      * Create a new VideoTrackRepresentation. VideoTrackRepresentation should

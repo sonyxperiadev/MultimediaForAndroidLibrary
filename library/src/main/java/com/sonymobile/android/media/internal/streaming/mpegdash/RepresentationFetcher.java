@@ -51,15 +51,15 @@ public class RepresentationFetcher {
 
     private State mState = State.INIT;
 
-    private Representation mRepresentation;
+    private final Representation mRepresentation;
 
-    private PacketSource mPacketSource;
+    private final PacketSource mPacketSource;
 
-    private DASHSession mSession;
+    private final DASHSession mSession;
 
-    private DASHISOParser mParser = new DASHISOParser();
+    private final DASHISOParser mParser = new DASHISOParser();
 
-    private TrackType mType;
+    private final TrackType mType;
 
     private ArrayList<SubSegment> mSegmentIndex;
 
@@ -75,9 +75,9 @@ public class RepresentationFetcher {
 
     private long mSeekTimeUs = -1;
 
-    private long mTimeOffset;
+    private final long mTimeOffset;
 
-    private int mTrackIndex;
+    private final int mTrackIndex;
 
     private String mLastFragmentUri;
 

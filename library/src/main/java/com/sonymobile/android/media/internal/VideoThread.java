@@ -132,7 +132,7 @@ public final class VideoThread extends VideoCodecThread {
 
     private boolean mDequeueInputErrorFlag = false;
 
-    private Object mRenderingLock = new Object();
+    private final Object mRenderingLock = new Object();
 
     private HashMap<String, Integer> mCustomMediaFormatParams;
 

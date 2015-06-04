@@ -35,9 +35,9 @@ public class DefaultDASHRepresentationSelector implements RepresentationSelector
 
     private static final String TAG = "DefaultDASHRepresentationSelector";
 
-    private MPDParser mMPDParser;
+    private final MPDParser mMPDParser;
 
-    private int mMaxBufferSize;
+    private final int mMaxBufferSize;
 
     private int mSwitchUpCounter = 0;
 

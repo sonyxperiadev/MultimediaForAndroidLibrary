@@ -115,9 +115,9 @@ public class TestContentProvider {
 
     private static final String TAG = "TestContentProvider";
 
-    private ArrayList<TestContent> mContents;
+    private final ArrayList<TestContent> mContents;
 
-    private Context mContext;
+    private final Context mContext;
 
     public TestContentProvider(Context context) {
         mContents = new ArrayList<>();

@@ -142,7 +142,7 @@ public final class Player {
 
     private MediaSource mSource;
 
-    private Handler mCallbacks;
+    private final Handler mCallbacks;
 
     private float mLeftVolume = -1;
 
@@ -178,11 +178,11 @@ public final class Player {
 
     private boolean mFlushingAudio = false;
 
-    private Object mGetPositionLock = new Object();
+    private final Object mGetPositionLock = new Object();
 
     private Handler mPrepareHandler;
 
-    private Context mContext;
+    private final Context mContext;
 
     private int mVideoScalingMode;
 
@@ -204,13 +204,13 @@ public final class Player {
 
     private boolean mErrorHasOccured = false;
 
-    private HashMap<String, Integer> mCustomVideoMediaFormatParams;
+    private final HashMap<String, Integer> mCustomVideoMediaFormatParams;
 
     private Message mExecutingSeekMessage;
 
     private Message mPendingSeekMessage;
 
-    private HandlerHelper mHandlerHelper;
+    private final HandlerHelper mHandlerHelper;
 
     public Player(Handler callbackListener, Context context, int audioSessionId) {
         mContext = context;
@@ -500,7 +500,7 @@ public final class Player {
 
     private static class EventHandler extends Handler {
 
-        private WeakReference<Player> mPlayer;
+        private final WeakReference<Player> mPlayer;
 
         public EventHandler(WeakReference<Player> player, Looper looper) {
             super(looper);

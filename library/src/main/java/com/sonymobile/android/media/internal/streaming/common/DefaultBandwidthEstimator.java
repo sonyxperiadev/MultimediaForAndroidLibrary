@@ -30,9 +30,9 @@ public class DefaultBandwidthEstimator implements BandwidthEstimator {
 
     private static final String TAG = "DefaultBandwidthEstimator";
 
-    private ArrayList<BandWidthMeasureItem> mBandWidthMeasure;
+    private final ArrayList<BandWidthMeasureItem> mBandWidthMeasure;
 
-    private Object mBandWidthMeasureLock = new Object();
+    private final Object mBandWidthMeasureLock = new Object();
 
     private long mOnDataTransferStartedTimeUs = -1;
 

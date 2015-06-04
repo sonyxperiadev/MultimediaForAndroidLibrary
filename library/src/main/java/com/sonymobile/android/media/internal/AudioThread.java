@@ -102,7 +102,7 @@ public final class AudioThread extends CodecThread implements Clock {
 
     private int mSampleRate;
 
-    private Handler mCallbacks;
+    private final Handler mCallbacks;
 
     private int mInputBuffer = -1;
 
@@ -118,7 +118,7 @@ public final class AudioThread extends CodecThread implements Clock {
 
     private Method mAudioTrackGetLatencyMethod;
 
-    private DrmSession mDrmSession;
+    private final DrmSession mDrmSession;
 
     private long mAudioTrackResumeSystemTimeUs;
 
@@ -134,11 +134,11 @@ public final class AudioThread extends CodecThread implements Clock {
 
     private boolean mDequeueInputErrorFlag = false;
 
-    private Object mRenderingLock = new Object();
+    private final Object mRenderingLock = new Object();
 
     private Method mSetAudioTrackMethod;
 
-    private HandlerHelper mHandlerHelper;
+    private final HandlerHelper mHandlerHelper;
 
     public AudioThread(MediaFormat format, MediaSource source, int audioSessionId,
             Handler callback, DrmSession drmSession) {
