@@ -226,6 +226,10 @@ public final class BufferedStream implements Closeable {
 
         mDownloaderThread = new DownloaderThread();
         mDownloaderThread.start();
+
+        if (mDataBuffer != null) {
+            mDataBuffer.resetReconnect();
+        }
     }
 
     public long getTotalBytesLoaded() {
@@ -242,6 +246,10 @@ public final class BufferedStream implements Closeable {
 
     public synchronized boolean isAtEndOfStream() {
         return mDownloaderThread == null || mDownloaderThread.isAtEndOfStream();
+    }
+
+    public synchronized boolean isValidForReconnect() {
+        return mDataBuffer != null && mDataBuffer.isValidForReconnect();
     }
 
     private class DownloaderThread extends Thread {

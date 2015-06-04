@@ -30,6 +30,8 @@ public class Buffer {
 
     private int mCurrentWritePosition;
 
+    private int mReadPositionDuringReconnect;
+
     private boolean mClosed = false;
 
     public Buffer(int size) {
@@ -161,6 +163,18 @@ public class Buffer {
         }
 
         return savedData;
+    }
+
+    public synchronized boolean isValidForReconnect() {
+        boolean isValid = mReadPositionDuringReconnect == 0
+                || mReadPositionDuringReconnect == mCurrentReadPosition
+                || mCurrentWritePosition - mCurrentReadPosition > 0;
+        mReadPositionDuringReconnect = mCurrentReadPosition;
+        return isValid;
+    }
+
+    public synchronized void resetReconnect() {
+        mReadPositionDuringReconnect = 0;
     }
 
     protected synchronized int freeSpace() {

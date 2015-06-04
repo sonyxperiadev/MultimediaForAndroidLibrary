@@ -470,8 +470,6 @@ public abstract class BufferedDataSource extends DataSource {
 
     class ReconnectHandler extends Handler {
 
-        private int mPreviousAvailable = 0;
-
         public ReconnectHandler(Looper looper) {
             super(looper);
         }
@@ -482,9 +480,7 @@ public abstract class BufferedDataSource extends DataSource {
                 case MSG_RECONNECT:
                     try {
                         if (mBis != null) {
-                            int available = mBis.available();
-                            if (available != mPreviousAvailable) {
-                                mPreviousAvailable = available;
+                            if (mBis.isValidForReconnect()) {
                                 doReconnect();
                             } else {
                                 mBis.close();
