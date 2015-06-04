@@ -334,7 +334,7 @@ public final class AudioThread extends CodecThread implements Clock {
         return mAudioSessionId;
     }
 
-    private int getAudioChannelConfiguration(int channelCount) {
+    private static int getAudioChannelConfiguration(int channelCount) {
         if (channelCount == 1) {
             return AudioFormat.CHANNEL_OUT_MONO;
         } else if (channelCount == 2) {

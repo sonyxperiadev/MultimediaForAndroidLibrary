@@ -1256,7 +1256,7 @@ public final class MediaPlayer {
     /*
      * Test whether a given video scaling mode is supported.
      */
-    private boolean isVideoScalingModeSupported(int mode) {
+    private static boolean isVideoScalingModeSupported(int mode) {
         return (mode == VIDEO_SCALING_MODE_SCALE_TO_FIT ||
                 mode == VIDEO_SCALING_MODE_SCALE_TO_FIT_WITH_CROPPING);
     }

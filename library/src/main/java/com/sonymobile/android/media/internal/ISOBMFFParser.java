@@ -3867,7 +3867,7 @@ public class ISOBMFFParser extends MediaParser {
         return moofOffset;
     }
 
-    private int parseUE(BitReader br) {
+    private static int parseUE(BitReader br) {
         int leadingZeroBits = 0;
         while (br.getBits(1) == 0) {
             leadingZeroBits++;

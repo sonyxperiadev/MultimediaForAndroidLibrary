@@ -571,7 +571,7 @@ public class MPDParser {
         }
     }
 
-    private long parseISO8601Duration(String value) {
+    private static long parseISO8601Duration(String value) {
         if (value == null) {
             return -1;
         }
@@ -648,7 +648,7 @@ public class MPDParser {
         return durationUs;
     }
 
-    private float parseFrameRate(String value) {
+    private static float parseFrameRate(String value) {
         try {
             int index = value.indexOf('/');
             if (index < 0) {
@@ -670,7 +670,7 @@ public class MPDParser {
         }
     }
 
-    private int parseChannelConfiguration(String value) {
+    private static int parseChannelConfiguration(String value) {
         try {
             int channelCount = Integer.parseInt(value);
             if (channelCount == 7) { // Front L/R/C, Middle L/R,

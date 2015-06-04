@@ -657,7 +657,7 @@ public class VUParser extends ISOBMFFParser {
         return super.getByteBuffer(key1, key2);
     }
 
-    protected ByteBuffer parseAvccForMarlin(byte[] buffer) {
+    protected static ByteBuffer parseAvccForMarlin(byte[] buffer) {
         int currentBufferOffset;
         if (buffer[0] != 1) { // configurationVersion
             return null;
