@@ -59,6 +59,7 @@ import android.widget.SeekBar.OnSeekBarChangeListener;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.sonymobile.android.media.MediaError;
 import com.sonymobile.android.media.MediaInfo;
 import com.sonymobile.android.media.MediaPlayer;
 import com.sonymobile.android.media.MediaPlayer.OnBufferingUpdateListener;
@@ -421,6 +422,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback,
         mSubtitleLayoutAboveTimeView = (RelativeLayout.LayoutParams)mSubtitleView.getLayoutParams();
         mSubtitleLayoutBottom = (RelativeLayout.LayoutParams)
                 findViewById(R.id.activity_main_subtitleView_params).getLayoutParams();
+        mSubtitleView.setLayoutParams(mSubtitleLayoutBottom);
         mTimeSeekView = (TextView)findViewById(R.id.activity_main_time_seek);
         mMediaPlayer.setOnInfoListener(this);
         mMediaPlayer.setOnBufferingUpdateListener(this);
@@ -925,8 +927,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback,
 
     @Override
     public boolean onError(MediaPlayer mp, int what, int extra) {
-        Toast.makeText(getApplicationContext(), "Error",
-                Toast.LENGTH_LONG).show();
+        mSubtitleView.setText("Error " + errorCodeToString(what));
         mIsBuffering = false;
         toggleLoading(false);
         mDrawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED);
@@ -934,6 +935,41 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback,
         mSeekBarUpdater.deactivate();
         mTimeTracker.stopUpdating();
         return true;
+    }
+
+    private static String errorCodeToString(int errorCode) {
+        switch (errorCode) {
+            case MediaError.UNKNOWN:
+                return "UNKNOWN";
+            case MediaError.INVALID_STATE:
+                return "INVALID_STATE";
+            case MediaError.SERVER_DIED:
+                return "SERVER_DIED";
+            case MediaError.NOT_VALID_FOR_PROGRESSIVE_PLAYBACK:
+                return "NOT_VALID_FOR_PROGRESSIVE_PLAYBACK";
+            case MediaError.IO:
+                return "IO";
+            case MediaError.MALFORMED:
+                return "MALFORMED";
+            case MediaError.UNSUPPORTED:
+                return "UNSUPPORTED";
+            case MediaError.TIMED_OUT:
+                return "TIMED_OUT";
+            case MediaError.DRM_UNKNOWN:
+                return "DRM_UNKNOWN";
+            case MediaError.DRM_NO_LICENSE:
+                return "DRM_NO_LICENSE";
+            case MediaError.DRM_LICENSE_EXPIRED:
+                return "DRM_LICENSE_EXPIRED";
+            case MediaError.DRM_SESSION_NOT_OPENED:
+                return "DRM_SESSION_NOT_OPENED";
+            case MediaError.DRM_LICENSE_FUTURE:
+                return "DRM_LICENSE_FUTURE";
+            case MediaError.DRM_INSUFFICIENT_OUTPUT_PROTECTION:
+                return "DRM_INSUFFICIENT_OUTPUT_PROTECTION";
+            default:
+                return "not defined: " + errorCode;
+        }
     }
 
     @Override
