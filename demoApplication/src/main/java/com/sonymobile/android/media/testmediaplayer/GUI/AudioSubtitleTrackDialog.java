@@ -24,13 +24,11 @@ public class AudioSubtitleTrackDialog {
     public static final String CHOOSE_SUBTITLE_TRACK = "choose subtitle track";
     public static final String CHOOSE_AUDIO_TRACK = "choose audio track";
 
-    private Context mContext;
+    private final Context mContext;
     private AlertDialog levelDialog;
-    private String returnString;
 
     public AudioSubtitleTrackDialog(Context cont){
         mContext = cont;
-        returnString = "";
     }
 
     // Creating and Building the Dialog
@@ -46,10 +44,6 @@ public class AudioSubtitleTrackDialog {
         builder.setSingleChoiceItems(trackInfo, pos, listener);
         levelDialog = builder.create();
         levelDialog.show();
-    }
-
-    public String getReturnString(){
-        return returnString;
     }
 
     public AlertDialog getDialog() {

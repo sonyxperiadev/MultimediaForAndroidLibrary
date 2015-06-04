@@ -23,10 +23,10 @@ import android.widget.SeekBar;
 
 public class SeekbarUpdater {
 
-    private SeekBar mSeekbar;
-    private Handler mHandler;
+    private final SeekBar mSeekbar;
+    private final Handler mHandler;
 
-    private Runnable mSeekbarUpdateRunner;
+    private final Runnable mSeekbarUpdateRunner;
     private MediaPlayer mMediaPlayer;
 
     public SeekbarUpdater(SeekBar seekbar, MediaPlayer mp){

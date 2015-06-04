@@ -36,7 +36,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-public class SubtitleRenderer {
+public final class SubtitleRenderer {
 
     private static final boolean LOGS_ENABLED = PlayerConfiguration.DEBUG || false;
 
@@ -48,11 +48,9 @@ public class SubtitleRenderer {
 
     private static final String TAG = "SubtitleRenderer";
 
-    private TextView mTextView;
+    private final TextView mTextView;
 
-    private TtmlParser mTtmlParser;
-
-    private TtmlSubtitle mTtmlSubtitle;
+    private final TtmlParser mTtmlParser;
 
     private long mBaseTimeMs;
 
@@ -66,15 +64,15 @@ public class SubtitleRenderer {
 
     private List<TimeAndPosition> mSeekList;
 
-    private EventHandler mHandler;
+    private final EventHandler mHandler;
 
-    private RenderHandler mRenderer;
+    private final RenderHandler mRenderer;
 
-    private HandlerThread mHandlerThread;
+    private final HandlerThread mHandlerThread;
 
-    private HandlerThread mRenderThread;
+    private final HandlerThread mRenderThread;
 
-    private MediaPlayer mMediaPlayer;
+    private final MediaPlayer mMediaPlayer;
 
     public SubtitleRenderer(TextView textview, Looper looper, MediaPlayer mp) {
         mHandlerThread = new HandlerThread("SubtitleHandlerThread");
@@ -90,30 +88,29 @@ public class SubtitleRenderer {
 
     public void parseSubtitle(InputStream is) {
         try {
-            mTtmlSubtitle = null;
             mBaseTimeMs = 0;
-            mSeekList = new ArrayList<TimeAndPosition>();
-            mTtmlSubtitle = (TtmlSubtitle)mTtmlParser.parse(is, "UTF-8", 0);
-            mStringsAtTimes = new HashMap<Integer, TtmlData>();
-            if (LOGS_ENABLED) Log.d(TAG, "eventcounters: " + mTtmlSubtitle.getEventTimeCount());
-            int maxCount = mTtmlSubtitle.getEventTimeCount();
+            mSeekList = new ArrayList<>();
+            TtmlSubtitle ttmlSubtitle = (TtmlSubtitle)mTtmlParser.parse(is, "UTF-8", 0);
+            mStringsAtTimes = new HashMap<>();
+            if (LOGS_ENABLED) Log.d(TAG, "eventcounters: " + ttmlSubtitle.getEventTimeCount());
+            int maxCount = ttmlSubtitle.getEventTimeCount();
             for (int i = 0; i < maxCount; i++) {
 
                 if (LOGS_ENABLED) Log.d(TAG, "Text: " +
-                        mTtmlSubtitle.getText(mTtmlSubtitle.getEventTime(i)) + " EventTime: "
-                        + mTtmlSubtitle.getEventTime(i) + " NextEvent: "
-                        + mTtmlSubtitle.getNextEventTimeIndex(mTtmlSubtitle.getEventTime(i)));
+                        ttmlSubtitle.getText(ttmlSubtitle.getEventTime(i)) + " EventTime: "
+                        + ttmlSubtitle.getEventTime(i) + " NextEvent: "
+                        + ttmlSubtitle.getNextEventTimeIndex(ttmlSubtitle.getEventTime(i)));
 
                 mStringsAtTimes.put(i,
-                        new TtmlData(mTtmlSubtitle.getText(mTtmlSubtitle.getEventTime(i)),
-                                mTtmlSubtitle.getEventTime(i) / 1000, mTtmlSubtitle
-                                        .getNextEventTimeIndex(mTtmlSubtitle.getEventTime(i))));
+                        new TtmlData(ttmlSubtitle.getText(ttmlSubtitle.getEventTime(i)),
+                                ttmlSubtitle.getEventTime(i) / 1000, ttmlSubtitle
+                                        .getNextEventTimeIndex(ttmlSubtitle.getEventTime(i))));
 
-                mSeekList.add(new TimeAndPosition(mTtmlSubtitle.getEventTime(i) / 1000, mSeekList
+                mSeekList.add(new TimeAndPosition(ttmlSubtitle.getEventTime(i) / 1000, mSeekList
                         .size()));
 
                 if (LOGS_ENABLED) Log.d(TAG, "Adding to mSeekList, timeTracker: "
-                        + (mTtmlSubtitle.getEventTime(i) / 1000) + " position: "
+                        + (ttmlSubtitle.getEventTime(i) / 1000) + " position: "
                         + (mSeekList.size() - 1));
             }
         } catch (IOException e) {
@@ -168,11 +165,11 @@ public class SubtitleRenderer {
         return 0;
     }
 
-    private class TimeAndPosition {
+    private static class TimeAndPosition {
 
-        public long timeMs;
+        public final long timeMs;
 
-        public int position;
+        public final int position;
 
         private TimeAndPosition(long time, int pos) {
             timeMs = time;
@@ -209,7 +206,10 @@ public class SubtitleRenderer {
                 }
                 case MSG_RENDER_NOTHING: {
                     mRenderer.obtainMessage(MSG_RENDER_NOTHING).sendToTarget();
+                    break;
                 }
+                default:
+                    break;
             }
         }
     }
@@ -229,7 +229,10 @@ public class SubtitleRenderer {
                 }
                 case MSG_RENDER_NOTHING: {
                     setText("");
+                    break;
                 }
+                default:
+                    break;
             }
         }
     }

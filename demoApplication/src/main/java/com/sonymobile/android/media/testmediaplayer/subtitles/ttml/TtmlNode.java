@@ -58,11 +58,11 @@ import java.util.TreeSet;
 
     public static final String TAG_SMPTE_INFORMATION = "smpte:information";
 
-    public final String tag;
+    private final String tag;
 
-    public final boolean isTextNode;
+    private final boolean isTextNode;
 
-    public final String text;
+    private final String text;
 
     public final long startTimeUs;
 
@@ -95,7 +95,7 @@ import java.util.TreeSet;
 
     public void addChild(TtmlNode child) {
         if (children == null) {
-            children = new ArrayList<TtmlNode>();
+            children = new ArrayList<>();
         }
         children.add(child);
     }
@@ -112,7 +112,7 @@ import java.util.TreeSet;
     }
 
     public long[] getEventTimesUs() {
-        TreeSet<Long> eventTimeSet = new TreeSet<Long>();
+        TreeSet<Long> eventTimeSet = new TreeSet<>();
         getEventTimes(eventTimeSet, false);
         long[] eventTimes = new long[eventTimeSet.size()];
         Iterator<Long> eventTimeIterator = eventTimeSet.iterator();

@@ -92,7 +92,7 @@ public class TtmlParser implements SubtitleParser {
             XmlPullParser xmlParser = xmlParserFactory.newPullParser();
             xmlParser.setInput(inputStream, inputEncoding);
             TtmlSubtitle ttmlSubtitle = null;
-            LinkedList<TtmlNode> nodeStack = new LinkedList<TtmlNode>();
+            LinkedList<TtmlNode> nodeStack = new LinkedList<>();
             int unsupportedTagDepth = 0;
             int eventType = xmlParser.getEventType();
             while (eventType != XmlPullParser.END_DOCUMENT) {
@@ -139,7 +139,7 @@ public class TtmlParser implements SubtitleParser {
         return MimeTypes.APPLICATION_TTML.equals(mimeType);
     }
 
-    private TtmlNode parseNode(XmlPullParser parser, TtmlNode parent) {
+    private static TtmlNode parseNode(XmlPullParser parser, TtmlNode parent) {
         long duration = 0;
         long startTime = TtmlNode.UNDEFINED_TIME;
         long endTime = TtmlNode.UNDEFINED_TIME;
@@ -184,7 +184,7 @@ public class TtmlParser implements SubtitleParser {
     }
 
     private static boolean isSupportedTag(String tag) {
-        if (tag.equals(TtmlNode.TAG_TT)
+        return (tag.equals(TtmlNode.TAG_TT)
                 || tag.equals(TtmlNode.TAG_HEAD)
                 || tag.equals(TtmlNode.TAG_BODY)
                 || tag.equals(TtmlNode.TAG_DIV)
@@ -198,10 +198,7 @@ public class TtmlParser implements SubtitleParser {
                 || tag.equals(TtmlNode.TAG_METADATA)
                 || tag.equals(TtmlNode.TAG_SMPTE_IMAGE)
                 || tag.equals(TtmlNode.TAG_SMPTE_DATA)
-                || tag.equals(TtmlNode.TAG_SMPTE_INFORMATION)) {
-            return true;
-        }
-        return false;
+                || tag.equals(TtmlNode.TAG_SMPTE_INFORMATION));
     }
 
     /**

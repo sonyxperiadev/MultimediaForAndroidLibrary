@@ -87,7 +87,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback,
         OnSeekCompleteListener, OnErrorListener, OnSubtitleDataListener,
         OnOutputControlEventListener, OnBufferingUpdateListener {
 
-    private boolean LOGS_ENABLED = PlayerConfiguration.DEBUG || false;
+    private static final boolean LOGS_ENABLED = PlayerConfiguration.DEBUG || false;
 
     private SurfaceView mPreview;
 
@@ -95,7 +95,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback,
 
     private MediaPlayer mMediaPlayer;
 
-    private final String TAG = "DEMOAPPLACTION_MAIN";
+    private static final String TAG = "DEMOAPPLACTION_MAIN";
 
     private static final int mUiOptions = View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
             | View.SYSTEM_UI_FLAG_FULLSCREEN;
@@ -125,8 +125,6 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback,
     private int mSubPos;
 
     private int mAudioPos;
-
-    private RelativeLayout mTopLayout;
 
     private AudioSubtitleTrackDialog mTrackDialog;
 
@@ -162,7 +160,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback,
 
     private boolean mIsPrepared = false;
 
-    private long[] mDebugArray = {
+    private final long[] mDebugArray = {
             0, 0, 0
     };
 
@@ -247,8 +245,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback,
                     || mState == MediaPlayer.State.PREPARED
                     || mState == MediaPlayer.State.COMPLETED) {
                 if (mPlayPauseButton.getTag() == null) {
-                    Boolean b = true;
-                    mPlayPauseButton.setTag(b);
+                    mPlayPauseButton.setTag(true);
                     mPlayPauseButton.setImageResource(R.drawable.media_player_pause_button);
                     if (mState == MediaPlayer.State.PREPARED) {
                         mHandler.post(mHideNavigationRunnable);
@@ -260,8 +257,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback,
                     mSeekBarUpdater.activate();
                 } else {
                     if ((Boolean)(mPlayPauseButton.getTag()) == true) {
-                        Boolean b = false;
-                        mPlayPauseButton.setTag(b);
+                        mPlayPauseButton.setTag(false);
                         mPlayPauseButton.setImageResource(R.drawable.media_player_play_button);
                         if (LOGS_ENABLED) Log.d(TAG, "onPauseClicked");
                         mHandler.removeCallbacks(mFadeOutRunnable);
@@ -273,8 +269,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback,
                             mSubtitleRenderer.pause();
                         }
                     } else {
-                        Boolean b = true;
-                        mPlayPauseButton.setTag(b);
+                        mPlayPauseButton.setTag(true);
                         mPlayPauseButton.setImageResource(R.drawable.media_player_pause_button);
                         if (mMediaPlayer.getState() == MediaPlayer.State.PREPARED
                                 || mMediaPlayer.getState() == MediaPlayer.State.PAUSED
@@ -341,7 +336,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback,
                 onPlayPauseClicked(null);
             }
             mSubtitleTracker.clear();
-            ArrayList<String> tracks = new ArrayList<String>();
+            ArrayList<String> tracks = new ArrayList<>();
             tracks.add("No subtitle");
             TrackInfo[] mTrackInfo = mMediaPlayer.getTrackInfo();
             for (int i = 0; i < mTrackInfo.length; i++) {
@@ -378,7 +373,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback,
                 onPlayPauseClicked(null);
             }
             mAudioTracker.clear();
-            ArrayList<String> tracks = new ArrayList<String>();
+            ArrayList<String> tracks = new ArrayList<>();
             TrackInfo[] mTrackInfo = mMediaPlayer.getTrackInfo();
             for (int i = 0; i < mTrackInfo.length; i++) {
                 if (mTrackInfo[i].getTrackType() == TrackType.AUDIO) {
@@ -414,7 +409,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback,
         mSeekbar.setMax(1000);
         mPlayPauseButton = (ImageView)findViewById(R.id.activity_main_playpause_button);
         mSeekBarUpdater = new SeekbarUpdater(mSeekbar, mMediaPlayer);
-        mTopLayout = (RelativeLayout)findViewById(R.id.activity_main_mainlayout);
+        RelativeLayout topLayout = (RelativeLayout)findViewById(R.id.activity_main_mainlayout);
         mTrackDialog = new AudioSubtitleTrackDialog(this);
         mAudioPos = mSubPos = 0;
         mTimeView = (TextView)findViewById(R.id.activity_main_time);
@@ -425,8 +420,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback,
         mSubtitleRenderer = new SubtitleRenderer(mSubtitleView, Looper.myLooper(), mMediaPlayer);
         mSubtitleLayoutAboveTimeView = (RelativeLayout.LayoutParams)mSubtitleView.getLayoutParams();
         mSubtitleLayoutBottom = (RelativeLayout.LayoutParams)
-                ((TextView)findViewById(R.id.activity_main_subtitleView_params))
-                        .getLayoutParams();
+                findViewById(R.id.activity_main_subtitleView_params).getLayoutParams();
         mTimeSeekView = (TextView)findViewById(R.id.activity_main_time_seek);
         mMediaPlayer.setOnInfoListener(this);
         mMediaPlayer.setOnBufferingUpdateListener(this);
@@ -440,17 +434,17 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback,
         mDrawerLayout = (DrawerLayout)findViewById(R.id.drawer_layout);
         mDrawerLayout.setScrimColor(Color.TRANSPARENT);
         mDrawerLayout.setDrawerListener(this);
-        mFileBrowser = new MediaBrowser(this, elv, lv, mMediaPlayer, (MainActivity)this,
+        mFileBrowser = new MediaBrowser(this, elv, lv, mMediaPlayer, this,
                 mDrawerLayout, debugLinearLayout);
         mIsFileBrowsing = false;
         mPreview = (SurfaceView)findViewById(R.id.mSurfaceView);
         mPreview.setOnTouchListener(this);
-        mTopLayout.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN |
+        topLayout.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN |
                 View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION);
         mPreview.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
                 | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
-        mSubtitleTracker = new HashMap<Integer, Integer>();
-        mAudioTracker = new HashMap<Integer, Integer>();
+        mSubtitleTracker = new HashMap<>();
+        mAudioTracker = new HashMap<>();
         findViewById(R.id.activity_main_loading_panel).bringToFront();
         findViewById(R.id.activity_main_browsing_layout).bringToFront();
         mUpperControls = (RelativeLayout)findViewById(R.id.UpperButtonLayout);
@@ -533,11 +527,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback,
         mMediaPlayer.setOnErrorListener(this);
         mMediaPlayer.setOnSubtitleDataListener(this);
 
-        RelativeLayout browsingLayout =
-                (RelativeLayout)findViewById(R.id.activity_main_browsing_layout);
-        DrawerLayout.LayoutParams params =
-                (DrawerLayout.LayoutParams)browsingLayout
-                        .getLayoutParams();
+        DrawerLayout.LayoutParams params = (DrawerLayout.LayoutParams)browsingL.getLayoutParams();
         Resources resources = getResources();
         int top = 0;
         int bottom = 0;
@@ -567,7 +557,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback,
             mBottomControls.setLayoutParams(tempParams);
             params.setMargins(0, top, 0, 0);
         }
-        browsingLayout.setLayoutParams(params);
+        browsingL.setLayoutParams(params);
         mDrawerLayout.openDrawer(Gravity.START);
 
         mMediaPlayer.setOnOutputControlListener(this);
@@ -604,7 +594,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback,
     private class OwnOnSeekBarChangeListener implements OnSeekBarChangeListener {
         private int progressFromUser = 0;
 
-        private MediaPlayer mCurrentMediaPlayer;
+        private final MediaPlayer mCurrentMediaPlayer;
 
         public OwnOnSeekBarChangeListener(MediaPlayer mMediaPlayer) {
             mCurrentMediaPlayer = mMediaPlayer;
@@ -704,7 +694,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback,
 
     public void onSwapSourceClicked(View view) {
         mFileBrowser.onSwapSourceClicked(mIsFileBrowsing);
-        mIsFileBrowsing = mIsFileBrowsing == true ? false : true;
+        mIsFileBrowsing = !mIsFileBrowsing;
     }
 
     public void onBackPathClicked(View view) {
@@ -748,7 +738,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback,
         mFileBrowser = new MediaBrowser(this, (ExpandableListView)browsingL
                 .findViewById(R.id.file_browsing_exp_list_view),
                 (ListView)browsingL.findViewById(R.id.file_browsing_listview),
-                mMediaPlayer, (MainActivity)this, mDrawerLayout, debugLinearLayout);
+                mMediaPlayer, this, mDrawerLayout, debugLinearLayout);
         mAudioPos = 0;
         mSubPos = 0;
         mMediaPlayer.setOnOutputControlListener(this);
@@ -796,7 +786,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback,
                     int newHeight = canvas.getHeight();
                     int newWidth = bitmap.getWidth() * newHeight / bitmap.getHeight();
                     bitmap = Bitmap.createScaledBitmap(bitmap, newWidth, newHeight, false);
-                    canvas.drawBitmap(bitmap, (canvas.getWidth() - bitmap.getWidth()) / 2, 0,
+                    canvas.drawBitmap(bitmap, (canvas.getWidth() - bitmap.getWidth()) / 2f, 0,
                             new Paint());
                     mHolder.unlockCanvasAndPost(canvas);
                 }
@@ -866,8 +856,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback,
         mHandler.removeCallbacks(mHideNavigationRunnable);
         setTimeOnView(mTimeView, mMediaPlayer.getDuration());
         mDrawerLayout.openDrawer(Gravity.START);
-        Boolean b = false;
-        mPlayPauseButton.setTag(b);
+        mPlayPauseButton.setTag(false);
         mPlayPauseButton.setImageResource(R.drawable.media_player_play_button);
         mPreview.setSystemUiVisibility(0);
         mBottomControls.setVisibility(View.VISIBLE);

@@ -18,9 +18,9 @@ package com.sonymobile.android.media.testmediaplayer.filebrowsing;
 
 public class MediaSource {
 
-    private String mName;
+    private final String mName;
 
-    private String mSource;
+    private final String mSource;
 
     public MediaSource(String name, String source) {
         mName = name;

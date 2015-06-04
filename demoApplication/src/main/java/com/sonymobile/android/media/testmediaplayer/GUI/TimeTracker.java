@@ -28,16 +28,16 @@ import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
 
 public class TimeTracker {
-    private boolean LOGS_ENABLED = PlayerConfiguration.DEBUG || false;
+    private static final boolean LOGS_ENABLED = PlayerConfiguration.DEBUG || false;
 
     private static final String TAG = "DEMOAPPLICATION_TIMETRACKER";
-    private TextView mTextView;
-    private Timer timer;
+    private final TextView mTextView;
+    private final Timer timer;
     private MediaPlayer mMediaPlayer;
-    private Handler mHandler;
+    private final Handler mHandler;
     private TimerTaskUpdater taskUpdater;
 
-    private Runnable r;
+    private final Runnable r;
 
     public TimeTracker(MediaPlayer mp, TextView txt) {
         mMediaPlayer = mp;

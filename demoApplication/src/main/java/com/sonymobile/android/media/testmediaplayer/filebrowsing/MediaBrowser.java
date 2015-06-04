@@ -47,17 +47,18 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
 public class MediaBrowser {
 
-    private boolean LOGS_ENABLED = PlayerConfiguration.DEBUG || false;
+    private static final boolean LOGS_ENABLED = PlayerConfiguration.DEBUG || false;
 
     private File[] mFiles;
 
-    private ListView mListView;
+    private final ListView mListView;
 
     private String mCurrentPath;
 
@@ -75,9 +76,7 @@ public class MediaBrowser {
             "3GP"
     };
 
-    private ExpandableListViewAdapter mlistAdapter;
-
-    private ExpandableListView mExpandableListView;
+    private final ExpandableListView mExpandableListView;
 
     private List<String> mListDataHeader;
 
@@ -86,19 +85,19 @@ public class MediaBrowser {
     // HashMap< Section header , HashMap< Child display name , Link >>
     private HashMap<String, HashMap<String, String>> mAllSources;
 
-    private Context mContext;
+    private final Context mContext;
 
-    private MediaPlayer mMediaPlayer;
+    private final MediaPlayer mMediaPlayer;
 
-    private MainActivity mMainActivity;
+    private final MainActivity mMainActivity;
 
-    private DrawerLayout mDrawerLayout;
+    private final DrawerLayout mDrawerLayout;
 
     private ArrayAdapter mAdapter;
 
     private String mStartPath;
 
-    private LinearLayout mDebugLayout;
+    private final LinearLayout mDebugLayout;
 
     private TextView mDebugTitle;
 
@@ -117,9 +116,9 @@ public class MediaBrowser {
     }
 
     private void init() {
-        mListDataHeader = new ArrayList<String>();
-        mListDataChild = new HashMap<String, List<MediaSource>>();
-        mAllSources = new HashMap<String, HashMap<String, String>>();
+        mListDataHeader = new ArrayList<>();
+        mListDataChild = new HashMap<>();
+        mAllSources = new HashMap<>();
         readFromMediaStore();
         readFileFromPath(null);
         readFileFromPath(Environment.getExternalStorageDirectory()
@@ -128,8 +127,9 @@ public class MediaBrowser {
 
         mDebugTitle = (TextView)mDebugLayout.findViewById(R.id.activity_main_debug_media_title);
 
-        mlistAdapter = new ExpandableListViewAdapter(mContext, mListDataHeader, mListDataChild);
-        mExpandableListView.setAdapter(mlistAdapter);
+        ExpandableListViewAdapter listAdapter =
+                new ExpandableListViewAdapter(mContext, mListDataHeader, mListDataChild);
+        mExpandableListView.setAdapter(listAdapter);
         mExpandableListView.setOnChildClickListener(new OnChildClickListener() {
 
             @Override
@@ -160,7 +160,7 @@ public class MediaBrowser {
         };
         Cursor cursor = MediaStore.Video.query(mMainActivity.getContentResolver(),
                 MediaStore.Video.Media.EXTERNAL_CONTENT_URI, columns);
-        ArrayList<MediaSource> children = new ArrayList<MediaSource>();
+        ArrayList<MediaSource> children = new ArrayList<>();
         String[] tmpStrArr;
         String tmpStr;
         if (cursor.moveToFirst()) {
@@ -201,19 +201,19 @@ public class MediaBrowser {
             mStartPath = Environment.getExternalStorageDirectory().toString();
         }
         mFiles = file.listFiles();
-        ArrayList<String> nameList = new ArrayList<String>();
-        for (int i = 0; i < mFiles.length; i++) {
-            if (isFileExtensionSupported(mFiles[i].getName())) {
-                nameList.add(mFiles[i].getName());
+        ArrayList<String> nameList = new ArrayList<>();
+        for (File mFile : mFiles) {
+            if (isFileExtensionSupported(mFile.getName())) {
+                nameList.add(mFile.getName());
             }
         }
         String[] fileNames = new String[nameList.size()];
         for (int i = 0; i < nameList.size(); i++) {
             fileNames[i] = nameList.get(i);
         }
-        mAdapter = new ArrayAdapter<String>(mContext, R.layout.ondevice_list_item,
+        ArrayAdapter adapter = new ArrayAdapter<>(mContext, R.layout.ondevice_list_item,
                 fileNames);
-        mListView.setAdapter(mAdapter);
+        mListView.setAdapter(adapter);
         mListView.setOnItemClickListener(new OnItemClickListener() {
 
             @Override
@@ -259,17 +259,17 @@ public class MediaBrowser {
         mCurrentFile = file;
         mCurrentPath = file.getPath();
         mFiles = file.listFiles();
-        ArrayList<String> nameList = new ArrayList<String>();
-        for (int i = 0; i < mFiles.length; i++) {
-            if (isFileExtensionSupported(mFiles[i].getName())) {
-                nameList.add(mFiles[i].getName());
+        ArrayList<String> nameList = new ArrayList<>();
+        for (File mFile : mFiles) {
+            if (isFileExtensionSupported(mFile.getName())) {
+                nameList.add(mFile.getName());
             }
         }
         String[] fileNames = new String[nameList.size()];
         for (int i = 0; i < nameList.size(); i++) {
             fileNames[i] = nameList.get(i);
         }
-        ArrayAdapter adapter = new ArrayAdapter<String>(mContext, R.layout.ondevice_list_item,
+        ArrayAdapter adapter = new ArrayAdapter<>(mContext, R.layout.ondevice_list_item,
                 fileNames);
         mListView.setAdapter(adapter);
     }
@@ -304,7 +304,7 @@ public class MediaBrowser {
         if(path == null){
             try {
                 is = mContext.getResources().openRawResource(R.raw.sourcefile);
-                isr = new InputStreamReader(is);
+                isr = new InputStreamReader(is, StandardCharsets.UTF_8);
                 br = new BufferedReader(isr);
                 readData(br);
             } finally {
@@ -333,11 +333,10 @@ public class MediaBrowser {
 
     private void readData(BufferedReader br) {
         String line;
-        String[] infoParameters = new String[3];
         try {
             while ((line = br.readLine()) != null) {
                 if (line.length() > 2) {
-                    infoParameters = line.split(";");
+                    String[] infoParameters = line.split(";");
                     if (infoParameters.length < 3) {
                         continue;
                     }
@@ -346,7 +345,7 @@ public class MediaBrowser {
                                 .add(new MediaSource(infoParameters[1], infoParameters[2]));
                     } else {
                         mListDataHeader.add(infoParameters[0]);
-                        List<MediaSource> children = new ArrayList<MediaSource>();
+                        List<MediaSource> children = new ArrayList<>();
                         children.add(new MediaSource(infoParameters[1], infoParameters[2]));
                         mListDataChild.put(infoParameters[0], children);
                     }
@@ -354,7 +353,7 @@ public class MediaBrowser {
                         mAllSources.get(infoParameters[0])
                                 .put(infoParameters[1], infoParameters[2]);
                     } else {
-                        HashMap<String, String> child = new HashMap<String, String>();
+                        HashMap<String, String> child = new HashMap<>();
                         child.put(infoParameters[1], infoParameters[2]);
                         mAllSources.put(infoParameters[0], child);
                     }
@@ -383,7 +382,7 @@ public class MediaBrowser {
         }
     }
 
-    private boolean isFileExtensionSupported(String extension) {
+    private static boolean isFileExtensionSupported(String extension) {
         for (String s : SUPPORTED_FILE_EXTENSIONS) {
             if (extension.toUpperCase().endsWith(s)) {
                 return true;

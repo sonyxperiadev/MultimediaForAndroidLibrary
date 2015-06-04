@@ -334,7 +334,7 @@
         android:layout_above="@id/activity_main_browsing_alignbutton"
         android:visibility="gone"
         android:fitsSystemWindows="true"
-        ></ListView>
+        />
     
     <ExpandableListView 
         android:id="@+id/file_browsing_exp_list_view"
@@ -344,7 +344,7 @@
         android:fitsSystemWindows="true"
         
         android:layout_marginRight="1dip"
-        ></ExpandableListView>
+        />
     
          </RelativeLayout>       
          

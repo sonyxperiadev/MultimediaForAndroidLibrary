@@ -31,11 +31,11 @@ import android.widget.TextView;
 
 public class ExpandableListViewAdapter extends BaseExpandableListAdapter {
 
-    private Context mContext;
+    private final Context mContext;
 
-    private List<String> mListDataHeader;
+    private final List<String> mListDataHeader;
 
-    private HashMap<String, List<MediaSource>> mListDataChild;
+    private final HashMap<String, List<MediaSource>> mListDataChild;
 
     public ExpandableListViewAdapter(Context context, List<String> listDataHeader,
             HashMap<String, List<MediaSource>> listChildData) {

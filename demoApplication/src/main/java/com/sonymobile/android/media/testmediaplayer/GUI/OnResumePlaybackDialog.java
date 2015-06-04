@@ -24,7 +24,7 @@ import android.content.DialogInterface;
 
 public class OnResumePlaybackDialog {
 
-    private Context mContext;
+    private final Context mContext;
     private AlertDialog mAlertDialog;
 
     public OnResumePlaybackDialog(Context cont) {

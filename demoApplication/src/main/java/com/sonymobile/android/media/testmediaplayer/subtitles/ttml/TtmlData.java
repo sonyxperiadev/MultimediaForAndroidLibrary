@@ -17,11 +17,11 @@ package com.sonymobile.android.media.testmediaplayer.subtitles.ttml;
 
 public class TtmlData {
 
-    private String mText;
+    private final String mText;
 
-    private long mDurationMs;
+    private final long mDurationMs;
 
-    private int mNextIndex;
+    private final int mNextIndex;
 
     public TtmlData(String string, long duration, int nextIndex) {
         mText = string;
