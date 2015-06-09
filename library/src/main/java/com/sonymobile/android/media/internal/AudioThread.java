@@ -823,6 +823,11 @@ public final class AudioThread extends CodecThread implements Clock {
 
                     frame = removeFirstDecodedFrame();
                     addFrameToPool(frame);
+
+                    try {
+                        mRenderingLock.wait(1);
+                    } catch (InterruptedException e) {
+                    }
                 } else {
                     // No frames available, let us wait....
                     try {
