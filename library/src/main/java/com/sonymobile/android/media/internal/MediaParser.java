@@ -337,8 +337,6 @@ abstract public class MediaParser implements MetaDataParser, MetaData {
      */
     public abstract boolean canParse();
 
-    protected abstract Track createTrack();
-
     /**
      * Checks if there is data available.
      *

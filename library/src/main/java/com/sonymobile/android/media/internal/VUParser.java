@@ -869,10 +869,4 @@ public class VUParser extends ISOBMFFParser {
             return accessUnit;
         }
     }
-
-    @Override
-    public Track createTrack() {
-        return new VUIsoTrack();
-    }
-
 }

@@ -3757,8 +3757,7 @@ public class ISOBMFFParser extends MediaParser {
         return false;
     }
 
-    @Override
-    protected Track createTrack() {
+    private Track createTrack() {
         return new IsoTrack();
     }
 
