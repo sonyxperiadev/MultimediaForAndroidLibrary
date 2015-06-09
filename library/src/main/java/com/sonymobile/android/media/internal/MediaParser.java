@@ -48,7 +48,7 @@ abstract public class MediaParser implements MetaDataParser, MetaData {
     protected boolean mParseResult;
 
     public MediaParser() {
-
+        mMetaDataValues = new Hashtable<>();
     }
 
     /**
@@ -174,6 +174,66 @@ abstract public class MediaParser implements MetaDataParser, MetaData {
         if (value != null) {
             mMetaDataValues.put(key, value);
         }
+    }
+
+    /* MetaData interface functions */
+
+    public int getInteger(String key) {
+        if (mMetaDataValues.containsKey(key)) {
+            Integer val = (Integer)mMetaDataValues.get(key);
+            return val.intValue();
+        }
+        return Integer.MIN_VALUE;
+    }
+
+    public long getLong(String key) {
+        if (mMetaDataValues.containsKey(key)) {
+            Long val = (Long)(mMetaDataValues.get(key));
+            return val.longValue();
+        }
+        return Long.MIN_VALUE;
+    }
+
+    public float getFloat(String key) {
+        if (mMetaDataValues.containsKey(key)) {
+            Float val = (Float)(mMetaDataValues.get(key));
+            return val.floatValue();
+        }
+        return Float.MIN_VALUE;
+    }
+
+    public String getString(String key) {
+        Object value = mMetaDataValues.get(key);
+        if (value == null) {
+            return null;
+        }
+        return value.toString();
+    }
+
+    public String getString(String key1, String key2) {
+        return null;
+    }
+
+    public byte[] getByteBuffer(String key) {
+        return (byte[])(mMetaDataValues.get(key));
+    }
+
+    public byte[] getByteBuffer(String key1, String key2) {
+        return null;
+    }
+
+    public String[] getStringArray(String key) {
+        if (mMetaDataValues.containsKey(key)) {
+            Object[] values = (Object[])mMetaDataValues.get(key);
+            String[] strings = new String[values.length];
+            System.arraycopy(values, 0, strings, 0, values.length);
+            return strings;
+        }
+        return null;
+    }
+
+    public boolean containsKey(String key) {
+        return mMetaDataValues.containsKey(key);
     }
 
     /**
