@@ -142,7 +142,7 @@ public final class SimpleSource extends MediaSource {
                         HttpBufferedDataSource httpBufferedDataSource =
                                 (HttpBufferedDataSource) mMediaParser.mDataSource;
                         if (httpBufferedDataSource.getBufferedSize() <
-                                ((double)(httpBufferedDataSource.length() /
+                                (((double)httpBufferedDataSource.length() /
                                         mMediaParser.getDurationUs()) *
                                         Configuration.HTTP_MIN_BUFFERING_DURATION_US)
                                 && !httpBufferedDataSource.isAtEndOfStream()) {
