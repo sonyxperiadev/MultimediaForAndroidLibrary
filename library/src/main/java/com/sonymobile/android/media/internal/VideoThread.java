@@ -397,7 +397,10 @@ public final class VideoThread extends VideoCodecThread {
         }
 
         mSetupCompleted = true;
-        mSkipToIframe = true;
+
+        if (mime.equalsIgnoreCase(MimeType.AVC) || mime.equalsIgnoreCase(MimeType.HEVC)) {
+            mSkipToIframe = true;
+        }
     }
 
     private void doStart() {
