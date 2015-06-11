@@ -319,13 +319,24 @@ public final class DASHSession {
                             break;
                         }
                         case FETCHER_ERROR: {
-                            if (LOGS_ENABLED) Log.e(TAG, "Fetcher reported error");
-                            PacketSource packetSource = thiz.mPacketSources.get(type);
+                            PacketSource audioPacketSource = thiz.mPacketSources.
+                                    get(TrackType.AUDIO);
+                            PacketSource videoPacketSource = thiz.mPacketSources.
+                                    get(TrackType.VIDEO);
 
-                            thiz.mCallbackHandler.obtainMessage(DASHSource.MSG_ERROR)
-                                    .sendToTarget();
-                            packetSource.queueAccessUnit(AccessUnit.ACCESS_UNIT_ERROR);
-                            thiz.mFetchers.remove(type);
+                            boolean audioOnly = thiz.mMPDParser.
+                                    getRepresentation(TrackType.VIDEO) == null;
+
+                            if (!audioPacketSource.hasBufferAvailable() || (!audioOnly &&
+                                    !videoPacketSource.hasBufferAvailable())) {
+                                if (LOGS_ENABLED) Log.e(TAG, "Fetcher reported error");
+                                PacketSource packetSource = thiz.mPacketSources.get(type);
+                                thiz.mCallbackHandler.obtainMessage(DASHSource.MSG_ERROR)
+                                        .sendToTarget();
+                                packetSource.queueAccessUnit(AccessUnit.ACCESS_UNIT_ERROR);
+                                thiz.mFetchers.remove(type);
+                            }
+
                             break;
                         }
                         case FETCHER_DRM_INFO: {

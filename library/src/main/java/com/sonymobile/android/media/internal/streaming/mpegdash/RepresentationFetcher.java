@@ -432,15 +432,17 @@ public class RepresentationFetcher {
                         long timelineTimeUs = segmentTimelineTemplateTicks * 1000000L
                                 / mRepresentation.segmentTemplate.timescale;
 
-                        if (mSeek) {
-                            if (mSeekTimeUs >= timelineTimeUs
-                                    && mSeekTimeUs < timelineTimeUs + segmentDurationUs) {
-                                mNextTimeUs = timelineTimeUs + segmentDurationUs;
-                                found = true;
-                                break;
+                        if ((mSeek && mSeekTimeUs >= timelineTimeUs
+                                && mSeekTimeUs < timelineTimeUs + segmentDurationUs) ||
+                                timelineTimeUs >= mNextTimeUs) {
+                            try {
+                                source = DataSource.create(getTemplatedUri(
+                                        mRepresentation.segmentTemplate.media,
+                                        segmentTimelineTemplateTicks), bandwidthEstimator, true);
+                            } catch (IOException e) {
+                                return null;
                             }
-                        }
-                        if (timelineTimeUs >= mNextTimeUs) {
+
                             mNextTimeUs = timelineTimeUs + segmentDurationUs;
                             found = true;
                             break;
@@ -464,13 +466,6 @@ public class RepresentationFetcher {
 
                 mLastFragmentUri = getTemplatedUri(mRepresentation.segmentTemplate.media,
                         segmentTimelineTemplateTicks);
-                try {
-                    source = DataSource.create(
-                            getTemplatedUri(mRepresentation.segmentTemplate.media,
-                                    segmentTimelineTemplateTicks), bandwidthEstimator, true);
-                } catch (IOException e) {
-                    return null;
-                }
 
                 mCurrentTimeUs = segmentTimelineTemplateTicks * 1000000L
                         / mRepresentation.segmentTemplate.timescale;
@@ -525,7 +520,6 @@ public class RepresentationFetcher {
                                     if (mSeekTimeUs >= timelineTime
                                             && mSeekTimeUs < timelineTime + segmentDurationUs) {
                                         found = true;
-                                        mNextTimeUs = timelineTime + segmentDurationUs;
                                         try {
                                             source = DataSource.create(
                                                     getTemplatedUri(
@@ -536,10 +530,10 @@ public class RepresentationFetcher {
                                         } catch (IOException e) {
                                             return null;
                                         }
+                                        mNextTimeUs = timelineTime + segmentDurationUs;
                                     }
                                 } else if (timelineTime >= mNextTimeUs) {
                                     found = true;
-                                    mNextTimeUs = timelineTime + segmentDurationUs;
 
                                     mLastFragmentUri = getTemplatedUri(
                                             mRepresentation.segmentTemplate.media,
@@ -554,6 +548,7 @@ public class RepresentationFetcher {
                                     } catch (IOException e) {
                                         return null;
                                     }
+                                    mNextTimeUs = timelineTime + segmentDurationUs;
                                     break;
                                 }
 
@@ -565,7 +560,7 @@ public class RepresentationFetcher {
                             }
                         }
                     } else {
-                        mNextTimeUs = subsegment.timeUs + subsegment.durationUs;
+
                         mLastFragmentUri =
                                 getTemplatedUri(mRepresentation.segmentTemplate.media);
                         try {
@@ -575,6 +570,7 @@ public class RepresentationFetcher {
                         } catch (IOException e) {
                             return null;
                         }
+                        mNextTimeUs = subsegment.timeUs + subsegment.durationUs;
                     }
 
                     if (i == mSegmentIndex.size() - 1) {
@@ -583,7 +579,7 @@ public class RepresentationFetcher {
                         mSegmentIndex = null;
                     }
                 } else if (mRepresentation.segmentBase != null) {
-                    mNextTimeUs = subsegment.timeUs + subsegment.durationUs;
+
                     mLastFragmentUri = mRepresentation.segmentBase.url;
                     try {
                         source = DataSource.create(mRepresentation.segmentBase.url,
@@ -591,7 +587,7 @@ public class RepresentationFetcher {
                     } catch (IOException e) {
                         return null;
                     }
-
+                    mNextTimeUs = subsegment.timeUs + subsegment.durationUs;
                     if (i == mSegmentIndex.size() - 1) {
                         Message callback = mSession.getFetcherCallbackMessage(mType);
                         callback.arg1 = DASHSession.FETCHER_EOS;
@@ -610,13 +606,6 @@ public class RepresentationFetcher {
                 mCurrentTimeUs = subsegment.timeUs;
                 break;
             }
-        }
-
-        if (source == null) {
-            Message callback = mSession.getFetcherCallbackMessage(mType);
-            callback.arg1 = DASHSession.FETCHER_EOS;
-            callback.sendToTarget();
-            mEOS = true;
         }
 
         return source;
