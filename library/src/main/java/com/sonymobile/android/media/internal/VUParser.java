@@ -221,7 +221,7 @@ public class VUParser extends ISOBMFFParser {
                 mMtsdOffset = header.startOffset;
                 mNeedsMTSD = false;
             } else if (uuidUserType.equals(UUID_USMT)) {
-                long boxEndOffset = mCurrentOffset + header.boxDataSize;
+                long boxEndOffset = mCurrentOffset + header.boxDataSize - 16;
                 // USMT box
                 while (mCurrentOffset < boxEndOffset) {
                     BoxHeader nextBoxHeader = getNextBoxHeader();
