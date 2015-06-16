@@ -66,9 +66,11 @@ public class DirectDataSource extends DataSource {
     public DirectDataSource(String uri) {
         try {
             if (uri.startsWith("/") || uri.startsWith("file")) {
-                mRandomAccessFile = new RandomAccessFile(new File(uri), "r");
+                File file = new File(uri);
+                long length = file.length();
+                mRandomAccessFile = new RandomAccessFile(file, "r");
 
-                setup(mRandomAccessFile.getFD(), -1, -1);
+                setup(mRandomAccessFile.getFD(), 0, length);
             }
 
         } catch (FileNotFoundException e) {
@@ -101,20 +103,21 @@ public class DirectDataSource extends DataSource {
 
     @Override
     public int readAt(long offset, byte[] buffer, int size) throws IOException {
-        if (offset >= mLength) {
-            return -1;
+        if (offset + size > mLength) {
+            throw new IOException("Offset larger than length");
         }
         if (size > buffer.length) {
             throw new IllegalArgumentException("Size is larger than buffer");
         }
 
-        int bytesToRead = size;
-        if (offset + bytesToRead >= mLength) {
-            bytesToRead = (int)(mLength - offset);
-        }
-        ByteBuffer bBuffer = ByteBuffer.wrap(buffer, 0, bytesToRead);
+        ByteBuffer bBuffer = ByteBuffer.wrap(buffer, 0, size);
         int read = mFileChannel.read(bBuffer, offset + mStartOffset);
         mCurrentPosition = offset + read;
+
+        if (read < size) {
+            throw new IOException("Not enough data read");
+        }
+
         return read;
     }
 
@@ -126,55 +129,29 @@ public class DirectDataSource extends DataSource {
 
     @Override
     public int readByte() throws IOException {
-        if (mCurrentPosition >= mLength) {
-            return -1;
-        }
         byte[] data = new byte[1];
-        int read = readAt(mCurrentPosition, data, 1);
-        if (read > 0) {
-            return data[0];
-        }
-
-        return -1;
+        readAt(mCurrentPosition, data, 1);
+        return data[0];
     }
 
     @Override
     public short readShort() throws IOException, EOFException {
-        if (mCurrentPosition + SIZE_SHORT >= mLength) {
-            return -1;
-        }
         byte[] shortBuffer = new byte[SIZE_SHORT];
-        int read = readAt(mCurrentPosition, shortBuffer, shortBuffer.length);
-        if (read <= 0) {
-            // Since we know that is a error it should fit fine in a short
-            return (short)read;
-        }
+        readAt(mCurrentPosition, shortBuffer, shortBuffer.length);
         return peekShort(shortBuffer, 0);
     }
 
     @Override
     public int readInt() throws IOException, EOFException {
-        if (mCurrentPosition + SIZE_INT >= mLength) {
-            return -1;
-        }
         byte[] intBuffer = new byte[SIZE_INT];
-        int read = readAt(mCurrentPosition, intBuffer, intBuffer.length);
-        if (read <= 0) {
-            return read;
-        }
+        readAt(mCurrentPosition, intBuffer, intBuffer.length);
         return peekInt(intBuffer, 0);
     }
 
     @Override
     public long readLong() throws IOException, EOFException {
-        if (mCurrentPosition + SIZE_LONG >= mLength) {
-            return -1;
-        }
         byte[] longBuffer = new byte[SIZE_LONG];
-        int read = readAt(mCurrentPosition, longBuffer, longBuffer.length);
-        if (read <= 0) {
-            return read;
-        }
+        readAt(mCurrentPosition, longBuffer, longBuffer.length);
         return peekLong(longBuffer, 0);
     }
 
