@@ -51,7 +51,9 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 
@@ -157,12 +159,14 @@ public class MediaBrowser {
                 LinearLayout layout = (LinearLayout)v;
                 TextView tv = (TextView)layout.findViewById(R.id.expand_list_item);
                 mDebugTitle.setText(mListDataHeader.get(groupPosition) + " / " + tv.getText());
-                if (groupPosition == 0 && mListDataHeader.get(groupPosition).equals("Local files")) {
-                    startMediaPlayer(mAllSources.get(mListDataHeader.get(groupPosition)).get(
-                            tv.getText()), true);
+                if (groupPosition == 0 && mListDataHeader.get(groupPosition).equals(LOCAL_FILES)) {
+                    startMediaPlayer(
+                            mAllSources.get(mListDataHeader.get(groupPosition)).get(tv.getText()),
+                            true);
                 } else {
-                    startMediaPlayer(mAllSources.get(mListDataHeader.get(groupPosition)).get(
-                            tv.getText()), false);
+                    startMediaPlayer(
+                            mAllSources.get(mListDataHeader.get(groupPosition)).get(tv.getText()),
+                            false);
 
                 }
                 return false;
@@ -251,13 +255,15 @@ public class MediaBrowser {
             mStartPath = Environment.getExternalStorageDirectory().toString();
         }
         mFiles = file.listFiles();
+        Arrays.sort(mFiles, new FileComparator());
         ArrayList<String> nameList = new ArrayList<String>();
         for (File tempFile : mFiles) {
-            if (isFileExtensionSupported(tempFile.getName()) || (tempFile.isDirectory())){
+            if (isFileExtensionSupported(tempFile.getName())) {
                 nameList.add(tempFile.getName());
+            } else if (tempFile.isDirectory()) {
+                nameList.add(tempFile.getName() + "/");
             }
         }
-        Collections.sort(nameList);
 
         String[] fileNames = new String[nameList.size()];
         for (int i = 0; i < nameList.size(); i++) {
@@ -311,13 +317,15 @@ public class MediaBrowser {
         mCurrentFile = file;
         mCurrentPath = file.getPath();
         mFiles = file.listFiles();
+        Arrays.sort(mFiles, new FileComparator());
         ArrayList<String> nameList = new ArrayList<String>();
         for (File tempFile : mFiles) {
-            if (isFileExtensionSupported(tempFile.getName()) || (tempFile.isDirectory())){
+            if (isFileExtensionSupported(tempFile.getName())) {
                 nameList.add(tempFile.getName());
+            } else if (tempFile.isDirectory()) {
+                nameList.add(tempFile.getName() + "/");
             }
         }
-        Collections.sort(nameList);
         String[] fileNames = new String[nameList.size()];
         for (int i = 0; i < nameList.size(); i++) {
             fileNames[i] = nameList.get(i);
@@ -442,5 +450,20 @@ public class MediaBrowser {
             }
         }
         return false;
+    }
+
+    private class FileComparator implements Comparator<File> {
+
+        @Override
+        public int compare(File file, File file2) {
+            if (file.isDirectory()) {
+                if (!file2.isDirectory()) {
+                    return -1;
+                }
+            } else if (file2.isDirectory()) {
+                return 1;
+            }
+            return file.compareTo(file2);
+        }
     }
 }
