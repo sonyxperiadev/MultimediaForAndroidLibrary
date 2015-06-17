@@ -212,6 +212,9 @@ public class HttpBufferedDataSource extends BufferedDataSource {
     public int getBuffering() {
         int percentage = 0;
         try {
+            if (mBis == null) {
+                return 0;
+            }
             int numBytesAvailable = mBis.available();
             percentage = (int)(100 * (double)(mCurrentOffset + numBytesAvailable)
                     / mContentLength);
