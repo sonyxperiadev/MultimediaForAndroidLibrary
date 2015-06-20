@@ -528,8 +528,12 @@ public final class Player {
                         thiz.mPrepareHandler = (Handler)msg.obj;
                     }
                     if (thiz.mDataSourceFd != null) {
-                        thiz.mSource = new SimpleSource(thiz.mDataSourceFd, thiz.mDataSourceOffset,
-                                thiz.mDataSourceLength, thiz.mEventHandler);
+                        try {
+                            thiz.mSource = new SimpleSource(thiz.mDataSourceFd, thiz.mDataSourceOffset,
+                                    thiz.mDataSourceLength, thiz.mEventHandler);
+                        } catch (IllegalArgumentException e) {
+                            // Ignore will be handled below.
+                        }
                     } else {
                         if (HttpSnifferSource.canHandle(thiz.mDataSourcePath)) {
                             thiz.mSource = new HttpSnifferSource(thiz.mDataSourcePath,
@@ -538,15 +542,11 @@ public final class Player {
                             thiz.mSource = new DASHSource(thiz.mDataSourcePath, thiz.mEventHandler,
                                     thiz.mMaxBufferSize);
                         } else {
-                            try {
-                                thiz.mSource = new SimpleSource(thiz.mDataSourcePath,
-                                        thiz.mDataSourceOffset,
-                                        thiz.mDataSourceLength,
-                                        thiz.mEventHandler,
-                                        thiz.mMaxBufferSize);
-                            } catch (IllegalArgumentException e) {
-                                // Ignore will be handled below.
-                            }
+                            thiz.mSource = new SimpleSource(thiz.mDataSourcePath,
+                                    thiz.mDataSourceOffset,
+                                    thiz.mDataSourceLength,
+                                    thiz.mEventHandler,
+                                    thiz.mMaxBufferSize);
                         }
                     }
 
