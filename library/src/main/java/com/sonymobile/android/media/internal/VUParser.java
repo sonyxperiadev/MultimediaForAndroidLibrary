@@ -91,11 +91,6 @@ public class VUParser extends ISOBMFFParser {
         if (LOGS_ENABLED) Log.v(TAG, "create VUParser from path");
     }
 
-    public VUParser(FileDescriptor fd, long offset, long length) {
-        super(fd, offset, length);
-        if (LOGS_ENABLED) Log.v(TAG, "create VUParser from FileDescriptor");
-    }
-
     @Override
     public boolean parse() {
         if (mIsParsed) {

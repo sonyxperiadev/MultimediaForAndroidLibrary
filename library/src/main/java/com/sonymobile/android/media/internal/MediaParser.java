@@ -98,22 +98,6 @@ abstract public class MediaParser implements MetaDataParser, MetaData {
     }
 
     /**
-     * Create a new MediaParser. User is responsible for calling release() on
-     * the parser after usage and also provide a valid FileDescriptor during the
-     * entire life cycle of the MediaParser as well as closing the provided
-     * FileDescriptor after usage.
-     *
-     * @param fd FileDescriptor to the content.
-     * @param offset to the content.
-     * @param length of the content.
-     */
-    public MediaParser(FileDescriptor fd, long offset, long length) {
-        mDataSource = DataSource.create(fd, offset, length);
-        mTracks = new ArrayList<>();
-        mMetaDataValues = new Hashtable<>();
-    }
-
-    /**
      * Parses the media.
      *
      * @return true if successful, false if not.

@@ -38,10 +38,18 @@ public class MediaParserFactory {
 
     public static MediaParser createParser(FileDescriptor fd, Long offset, Long length) {
         Class[] parameterTypes = {
-                FileDescriptor.class, Long.TYPE, Long.TYPE
+                DataSource.class
         };
 
-        MediaParser parser = null;
+        MediaParser selectedParser = null;
+        DataSource dataSource;
+        try {
+            dataSource = DataSource.create(fd, offset, length);
+        } catch (IllegalArgumentException e) {
+            if (LOGS_ENABLED) Log.e(TAG, "Could not create DataSource", e);
+            return null;
+        }
+
         for (Class registeredParser : registeredParsers) {
             Constructor c;
             try {
@@ -51,36 +59,38 @@ public class MediaParserFactory {
                 continue;
             }
             try {
-                parser = (MediaParser) c.newInstance(fd, offset, length);
+                MediaParser parser = (MediaParser) c.newInstance(dataSource);
                 if (parser.canParse()) {
                     if (parser.parse()) {
-                        return parser;
+                        selectedParser = parser;
+                        break;
                     }
                 }
-                parser.release();
             } catch (InstantiationException e) {
                 if (LOGS_ENABLED) Log.e(TAG, "Unable to instantiate parser class", e);
-                if (parser != null) {
-                    parser.release();
-                }
             } catch (IllegalAccessException e) {
                 if (LOGS_ENABLED) Log.e(TAG, "Illegal access to parser class constructor", e);
-                if (parser != null) {
-                    parser.release();
-                }
             } catch (IllegalArgumentException e) {
                 if (LOGS_ENABLED) Log.e(TAG, "Illegal argument when creating parser", e);
-                if (parser != null) {
-                    parser.release();
-                }
             } catch (InvocationTargetException e) {
                 if (LOGS_ENABLED) Log.e(TAG, "Unable to invoke parser constructor", e);
-                if (parser != null) {
-                    parser.release();
-                }
+            }
+            try {
+                dataSource.reset();
+            } catch (IOException e) {
+                dataSource = DataSource.create(fd, offset, length);
             }
         }
-        return null;
+
+        if (selectedParser == null) {
+            try {
+                dataSource.close();
+            } catch (IOException e) {
+                if (LOGS_ENABLED) Log.e(TAG, "Exception closing datasource", e);
+            }
+        }
+
+        return selectedParser;
     }
 
     public static MediaParser createParser(String path,

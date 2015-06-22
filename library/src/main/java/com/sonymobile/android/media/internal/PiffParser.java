@@ -69,11 +69,6 @@ public class PiffParser extends ISOBMFFParser {
         if (LOGS_ENABLED) Log.v(TAG, "create PiffParser from path");
     }
 
-    public PiffParser(FileDescriptor fd, long offset, long length) {
-        super(fd, offset, length);
-        if (LOGS_ENABLED) Log.v(TAG, "create PiffParser from FileDescriptor");
-    }
-
     @Override
     public boolean parse() {
         if (mIsParsed) {
