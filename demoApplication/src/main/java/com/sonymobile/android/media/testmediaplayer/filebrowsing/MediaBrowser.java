@@ -29,6 +29,7 @@ import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -104,9 +105,6 @@ public class MediaBrowser {
 
     private HashMap<String, List<MediaSource>> mListDataChild;
 
-    // HashMap< Section header , HashMap< Child display name , Link >>
-    private HashMap<String, HashMap<String, String>> mAllSources;
-
     private final Context mContext;
 
     private final MediaPlayer mMediaPlayer;
@@ -140,9 +138,17 @@ public class MediaBrowser {
     private void init() {
         mListDataHeader = new ArrayList<>();
         mListDataChild = new HashMap<>();
-        mAllSources = new HashMap<>();
-        readFromMediaStoreVideo();
-        readFromMediaStoreAudio();
+
+        ArrayList<MediaSource> filesFromMediaStore = new ArrayList<>();
+        readFromMediaStoreVideo(filesFromMediaStore);
+        readFromMediaStoreAudio(filesFromMediaStore);
+
+        if (filesFromMediaStore.size() > 0) {
+            mListDataHeader.add(LOCAL_FILES);
+            Collections.sort(filesFromMediaStore);
+            mListDataChild.put(LOCAL_FILES, filesFromMediaStore);
+        }
+
         readInternalSourceFile();
         readExternalSourceFile();
         prepareListData();
@@ -162,11 +168,11 @@ public class MediaBrowser {
                 mDebugTitle.setText(mListDataHeader.get(groupPosition) + " / " + tv.getText());
                 if (groupPosition == 0 && mListDataHeader.get(groupPosition).equals(LOCAL_FILES)) {
                     startMediaPlayer(
-                            mAllSources.get(mListDataHeader.get(groupPosition)).get(tv.getText()),
+                            mListDataChild.get(mListDataHeader.get(groupPosition)).get(childPosition).getSource(),
                             true);
                 } else {
                     startMediaPlayer(
-                            mAllSources.get(mListDataHeader.get(groupPosition)).get(tv.getText()),
+                            mListDataChild.get(mListDataHeader.get(groupPosition)).get(childPosition).getSource(),
                             false);
 
                 }
@@ -176,7 +182,7 @@ public class MediaBrowser {
         });
     }
 
-    private void readFromMediaStoreVideo() {
+    private void readFromMediaStoreVideo(ArrayList<MediaSource> results) {
 
         String columns[] = {
                 MediaStore.Video.VideoColumns._ID, MediaStore.Video.VideoColumns.DATA,
@@ -184,31 +190,25 @@ public class MediaBrowser {
         };
         Cursor cursor = MediaStore.Video.query(mMainActivity.getContentResolver(),
                 MediaStore.Video.Media.EXTERNAL_CONTENT_URI, columns);
-        ArrayList<MediaSource> children = new ArrayList<>();
         if (cursor.moveToFirst()) {
-            mListDataHeader.add(LOCAL_FILES);
-            mAllSources.put(LOCAL_FILES, new HashMap<String, String>());
             do {
                 String mime = cursor.getString(2);
                 for (String s : SUPPORTED_MIMETYPES) {
                     if (s.equals(mime)) {
                         String titleWithFiletype = cursor.getString(1).substring(
                                 cursor.getString(1).lastIndexOf("/") + 1);
-                        children.add(new MediaSource(titleWithFiletype,
-                                cursor.getString(1)));
-                        mAllSources.get(LOCAL_FILES).put(titleWithFiletype,
+                        results.add(new MediaSource(titleWithFiletype,
                                 ContentUris.withAppendedId(
                                         MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
-                                        cursor.getLong(0)).toString());
+                                        cursor.getLong(0)).toString()));
                     }
                 }
             } while (cursor.moveToNext());
-            mListDataChild.put(LOCAL_FILES, children);
         }
         cursor.close();
     }
 
-    private void readFromMediaStoreAudio() {
+    private void readFromMediaStoreAudio(ArrayList<MediaSource> results) {
 
         String columns[] = {
                 MediaStore.Audio.AudioColumns._ID, MediaStore.Audio.AudioColumns.DATA,
@@ -216,7 +216,6 @@ public class MediaBrowser {
         };
         Cursor cursor = mMainActivity.getContentResolver().query(MediaStore.Audio.Media
                 .EXTERNAL_CONTENT_URI, columns, null, null, null);
-        ArrayList<MediaSource> children = new ArrayList<>();
         if (cursor.moveToFirst()) {
             do {
                 String mime = cursor.getString(2);
@@ -225,20 +224,13 @@ public class MediaBrowser {
                         String titleWithFiletype = cursor.getString(1).substring(
                                 cursor.getString(1).lastIndexOf("/") + 1);
 
-                        children.add(new MediaSource(titleWithFiletype,
-                                cursor.getString(1)));
-                        mAllSources.get(LOCAL_FILES).put(titleWithFiletype, ContentUris.withAppendedId(
-                                MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
-                                cursor.getLong(0)).toString());
+                        results.add(new MediaSource(titleWithFiletype,
+                                ContentUris.withAppendedId(
+                                        MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
+                                        cursor.getLong(0)).toString()));
                     }
                 }
             } while (cursor.moveToNext());
-            ArrayList<MediaSource> localList =
-                    (ArrayList<MediaSource>)mListDataChild.get(LOCAL_FILES);
-            if (localList != null) {
-                children.addAll(localList);
-            }
-            mListDataChild.put(LOCAL_FILES, children);
         }
         cursor.close();
     }
@@ -426,14 +418,6 @@ public class MediaBrowser {
                         List<MediaSource> children = new ArrayList<>();
                         children.add(new MediaSource(infoParameters[1], infoParameters[2]));
                         mListDataChild.put(infoParameters[0], children);
-                    }
-                    if (mAllSources.containsKey(infoParameters[0])) {
-                        mAllSources.get(infoParameters[0])
-                                .put(infoParameters[1], infoParameters[2]);
-                    } else {
-                        HashMap<String, String> child = new HashMap<>();
-                        child.put(infoParameters[1], infoParameters[2]);
-                        mAllSources.put(infoParameters[0], child);
                     }
                 }
             }
