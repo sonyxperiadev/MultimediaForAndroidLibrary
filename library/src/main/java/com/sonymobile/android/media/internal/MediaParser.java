@@ -244,4 +244,39 @@ abstract public class MediaParser implements MetaDataParser, MetaData {
      */
     public abstract boolean hasDataAvailable(TrackType type) throws IOException;
 
+    /**
+     * Query the source about how much data is played and buffered
+     *
+     * @return percentage of the file duration that is played or buffered
+     */
+    public int getBuffering() {
+        if (mDataSource == null || !(mDataSource instanceof HttpBufferedDataSource)) {
+            return 100;
+        }
+
+        return ((HttpBufferedDataSource)mDataSource).getBuffering();
+    }
+
+    /**
+     * Check if the playback needs to be stalled to wait for more data
+     *
+     * @return true if more data is needed before playback can continue, false otherwise.
+     */
+    public boolean needMoreBuffer() {
+        try {
+            if (mDataSource instanceof HttpBufferedDataSource) {
+                HttpBufferedDataSource httpBufferedDataSource =
+                        (HttpBufferedDataSource) mDataSource;
+                return httpBufferedDataSource.getBufferedSize() <
+                        (((double)httpBufferedDataSource.length() /
+                                getDurationUs()) *
+                                Configuration.HTTP_MIN_BUFFERING_DURATION_US)
+                        && !httpBufferedDataSource.isAtEndOfStream();
+            }
+        } catch (IOException e) {
+        }
+
+        return false;
+    }
+
 }

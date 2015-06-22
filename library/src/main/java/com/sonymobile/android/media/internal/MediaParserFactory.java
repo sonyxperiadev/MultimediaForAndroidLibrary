@@ -47,6 +47,14 @@ public class MediaParserFactory {
 
         MediaParser selectedParser = createParser(dataSource);
 
+        if (Configuration.ENABLE_PLATFORM_PARSER && selectedParser == null) {
+            selectedParser = new PlatformParser(fd, offset, length);
+            if (!selectedParser.parse()) {
+                selectedParser.release();
+                return null;
+            }
+        }
+
         return selectedParser;
     }
 
@@ -105,6 +113,14 @@ public class MediaParserFactory {
 
         MediaParser selectedParser = createParser(dataSource);
 
+        if (Configuration.ENABLE_PLATFORM_PARSER && selectedParser == null) {
+            selectedParser = new PlatformParser(urlConnection.getURL().toString(), maxBufferSize);
+            if (!selectedParser.parse()) {
+                selectedParser.release();
+                return null;
+            }
+        }
+
         return selectedParser;
     }
 
@@ -124,6 +140,14 @@ public class MediaParserFactory {
         }
 
         MediaParser selectedParser = createParser(dataSource);
+
+        if (Configuration.ENABLE_PLATFORM_PARSER && selectedParser == null) {
+            selectedParser = new PlatformParser(path, maxBufferSize);
+            if (!selectedParser.parse()) {
+                selectedParser.release();
+                return null;
+            }
+        }
 
         return selectedParser;
     }

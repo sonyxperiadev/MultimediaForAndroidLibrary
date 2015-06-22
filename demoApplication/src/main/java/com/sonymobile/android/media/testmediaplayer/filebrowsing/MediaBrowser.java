@@ -73,28 +73,6 @@ public class MediaBrowser {
 
     private static final String TAG = "DEMOAPPLICATION_BROWSER";
 
-    private static final String[] SUPPORTED_FILE_EXTENSIONS = {
-            "MP4",
-            "MNV",
-            "ISMV",
-            "ISMA",
-            "M4V",
-            "M4A",
-            "3GP",
-            "3GPP",
-            "M4B",
-            "3G2",
-            "3GA"
-    };
-
-    private static final String[] SUPPORTED_MIMETYPES = {
-            "video/mp4",
-            "video/3gpp",
-            "video/ismv",
-            "audio/isma",
-            "video/vnd.sony.mnv",
-            "audio/mp4"
-    };
 
     private final ExpandableListView mExpandableListView;
 
@@ -166,8 +144,7 @@ public class MediaBrowser {
     private void readFromMediaStoreVideo() {
 
         String columns[] = {
-                MediaStore.Video.VideoColumns._ID, MediaStore.Video.VideoColumns.DATA,
-                MediaStore.Video.VideoColumns.MIME_TYPE
+                MediaStore.Video.VideoColumns._ID, MediaStore.Video.VideoColumns.DATA
         };
         Cursor cursor = MediaStore.Video.query(mMainActivity.getContentResolver(),
                 MediaStore.Video.Media.EXTERNAL_CONTENT_URI, columns);
@@ -175,17 +152,12 @@ public class MediaBrowser {
             mListDataHeader.add("MediaStore Video");
             ArrayList<MediaSource> children = new ArrayList<>();
             do {
-                String mime = cursor.getString(2);
-                for (String s : SUPPORTED_MIMETYPES) {
-                    if (s.equals(mime)) {
-                        String titleWithFiletype = cursor.getString(1).substring(
-                                cursor.getString(1).lastIndexOf("/") + 1);
-                        children.add(new MediaSource(titleWithFiletype,
-                                ContentUris.withAppendedId(
-                                        MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
-                                        cursor.getLong(0)).toString()));
-                    }
-                }
+                String titleWithFiletype = cursor.getString(1).substring(
+                        cursor.getString(1).lastIndexOf("/") + 1);
+                children.add(new MediaSource(titleWithFiletype,
+                        ContentUris.withAppendedId(
+                                MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
+                                cursor.getLong(0)).toString()));
             } while (cursor.moveToNext());
             mListDataChild.put("MediaStore Video", children);
         }
@@ -204,18 +176,13 @@ public class MediaBrowser {
             mListDataHeader.add("MediaStore Audio");
             ArrayList<MediaSource> children = new ArrayList<>();
             do {
-                String mime = cursor.getString(2);
-                for (String s : SUPPORTED_MIMETYPES) {
-                    if (s.equals(mime)) {
-                        String titleWithFiletype = cursor.getString(1).substring(
-                                cursor.getString(1).lastIndexOf("/") + 1);
+                String titleWithFiletype = cursor.getString(1).substring(
+                        cursor.getString(1).lastIndexOf("/") + 1);
 
-                        children.add(new MediaSource(titleWithFiletype,
-                                ContentUris.withAppendedId(
-                                        MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
-                                        cursor.getLong(0)).toString()));
-                    }
-                }
+                children.add(new MediaSource(titleWithFiletype,
+                        ContentUris.withAppendedId(
+                                MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
+                                cursor.getLong(0)).toString()));
             } while (cursor.moveToNext());
             mListDataChild.put("MediaStore Audio", children);
         }
@@ -315,7 +282,7 @@ public class MediaBrowser {
                 if (tempFile.listFiles().length > 0) {
                     nameList.add(tempFile.getName() + "/");
                 }
-            } else if (isFileExtensionSupported(tempFile.getName())) {
+            } else {
                 nameList.add(tempFile.getName());
             }
         }
@@ -429,15 +396,6 @@ public class MediaBrowser {
             mCurrentPath = path;
             mCurrentFile = new File(path);
         }
-    }
-
-    private static boolean isFileExtensionSupported(String extension) {
-        for (String s : SUPPORTED_FILE_EXTENSIONS) {
-            if (extension.toUpperCase().endsWith(s)) {
-                return true;
-            }
-        }
-        return false;
     }
 
     private class FileComparator implements Comparator<File> {
