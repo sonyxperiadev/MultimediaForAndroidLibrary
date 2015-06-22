@@ -33,13 +33,13 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 
+import android.content.ContentUris;
 import android.content.Context;
 import android.database.Cursor;
+import android.net.Uri;
 import android.os.Environment;
 import android.os.storage.StorageManager;
 import android.provider.MediaStore;
-import android.provider.MediaStore.Audio;
-import android.provider.MediaStore.Audio.Media;
 import android.support.v4.widget.DrawerLayout;
 import android.util.Log;
 import android.view.Gravity;
@@ -179,26 +179,27 @@ public class MediaBrowser {
     private void readFromMediaStoreVideo() {
 
         String columns[] = {
-                MediaStore.Video.VideoColumns.TITLE, MediaStore.Video.VideoColumns._ID,
-                MediaStore.Video.VideoColumns.MIME_TYPE, MediaStore.Video.VideoColumns.DATA
+                MediaStore.Video.VideoColumns._ID, MediaStore.Video.VideoColumns.DATA,
+                MediaStore.Video.VideoColumns.MIME_TYPE
         };
         Cursor cursor = MediaStore.Video.query(mMainActivity.getContentResolver(),
                 MediaStore.Video.Media.EXTERNAL_CONTENT_URI, columns);
         ArrayList<MediaSource> children = new ArrayList<>();
-        String[] tmpStrArr;
-        String tmpStr;
         if (cursor.moveToFirst()) {
             mListDataHeader.add(LOCAL_FILES);
             mAllSources.put(LOCAL_FILES, new HashMap<String, String>());
             do {
-                tmpStr = cursor.getString(2);
+                String mime = cursor.getString(2);
                 for (String s : SUPPORTED_MIMETYPES) {
-                    if (s.equals(tmpStr)) {
-                        String titleWithFiletype = cursor.getString(3).substring(
-                                cursor.getString(3).lastIndexOf("/") + 1);
+                    if (s.equals(mime)) {
+                        String titleWithFiletype = cursor.getString(1).substring(
+                                cursor.getString(1).lastIndexOf("/") + 1);
                         children.add(new MediaSource(titleWithFiletype,
-                                cursor.getString(3)));
-                        mAllSources.get(LOCAL_FILES).put(titleWithFiletype, cursor.getString(3));
+                                cursor.getString(1)));
+                        mAllSources.get(LOCAL_FILES).put(titleWithFiletype,
+                                ContentUris.withAppendedId(
+                                        MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
+                                        cursor.getLong(0)).toString());
                     }
                 }
             } while (cursor.moveToNext());
@@ -210,24 +211,25 @@ public class MediaBrowser {
     private void readFromMediaStoreAudio() {
 
         String columns[] = {
-                MediaStore.Audio.AudioColumns.TITLE, MediaStore.Audio.AudioColumns._ID,
-                MediaStore.Audio.AudioColumns.MIME_TYPE, MediaStore.Audio.AudioColumns.DATA
+                MediaStore.Audio.AudioColumns._ID, MediaStore.Audio.AudioColumns.DATA,
+                MediaStore.Audio.AudioColumns.MIME_TYPE
         };
         Cursor cursor = mMainActivity.getContentResolver().query(MediaStore.Audio.Media
                 .EXTERNAL_CONTENT_URI, columns, null, null, null);
-        ArrayList<MediaSource> children = new ArrayList<MediaSource>();
-        String[] tmpStrArr;
-        String tmpStr;
+        ArrayList<MediaSource> children = new ArrayList<>();
         if (cursor.moveToFirst()) {
             do {
-                tmpStr = cursor.getString(2);
+                String mime = cursor.getString(2);
                 for (String s : SUPPORTED_MIMETYPES) {
-                    if (s.equals(tmpStr)) {
-                        String titleWithFiletype = cursor.getString(3).substring(
-                                cursor.getString(3).lastIndexOf("/") + 1);
+                    if (s.equals(mime)) {
+                        String titleWithFiletype = cursor.getString(1).substring(
+                                cursor.getString(1).lastIndexOf("/") + 1);
+
                         children.add(new MediaSource(titleWithFiletype,
-                                cursor.getString(3)));
-                        mAllSources.get(LOCAL_FILES).put(titleWithFiletype, cursor.getString(3));
+                                cursor.getString(1)));
+                        mAllSources.get(LOCAL_FILES).put(titleWithFiletype, ContentUris.withAppendedId(
+                                MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
+                                cursor.getLong(0)).toString());
                     }
                 }
             } while (cursor.moveToNext());
@@ -293,10 +295,7 @@ public class MediaBrowser {
         try {
             if (LOGS_ENABLED) Log.d(TAG, "Setting datasource to: " + path);
             if (useUri) {
-                // Method not used until fixed in framework
-                // mMediaPlayer.setDataSource(mContext,
-                // MediaStore.Video.Media.getContentUri(path));
-                mMediaPlayer.setDataSource(path);
+                mMediaPlayer.setDataSource(mContext, Uri.parse(path));
             } else {
                 mMediaPlayer.setDataSource(path);
             }
