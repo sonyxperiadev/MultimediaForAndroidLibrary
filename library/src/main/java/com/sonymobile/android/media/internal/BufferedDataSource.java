@@ -269,7 +269,7 @@ public abstract class BufferedDataSource extends DataSource {
     }
 
     @Override
-    public void reset() throws IOException {
+    public void reset() {
         // Interested subclasses should override this.
     }
 

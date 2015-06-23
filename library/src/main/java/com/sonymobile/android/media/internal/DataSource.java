@@ -164,7 +164,7 @@ public abstract class DataSource implements Closeable {
         // Empty implementation, interested subclasses should override.
     }
 
-    public abstract void reset() throws IOException;
+    public abstract void reset();
 
     public abstract int readAt(long offset, byte[] buffer, int size) throws IOException;
 
