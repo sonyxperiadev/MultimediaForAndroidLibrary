@@ -517,14 +517,6 @@ public class ISOBMFFParser extends MediaParser {
     }
 
     @Override
-    public MediaFormat getTrackMediaFormat(int trackIndex) {
-        if (trackIndex < 0 || trackIndex >= mTracks.size()) {
-            return null;
-        }
-        return mTracks.get(trackIndex).getMediaFormat();
-    }
-
-    @Override
     public synchronized AccessUnit dequeueAccessUnit(TrackType type) {
         IsoTrack currentTrack;
 

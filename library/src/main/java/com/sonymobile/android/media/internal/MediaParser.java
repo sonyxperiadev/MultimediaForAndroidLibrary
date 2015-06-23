@@ -221,20 +221,6 @@ abstract public class MediaParser implements MetaDataParser, MetaData {
     }
 
     /**
-     * Get the track media format.
-     *
-     * @param trackIndex of the track.
-     * @return MediaFormat for the track. If no track is found for the specified
-     *         index null is returned.
-     */
-    public MediaFormat getTrackMediaFormat(int trackIndex) {
-        if (trackIndex < 0 || trackIndex >= mTracks.size()) {
-            return null;
-        }
-        return mTracks.get(trackIndex).getMediaFormat();
-    }
-
-    /**
      * Dequeues an AccessUnit. This should never be called by the application.
      *
      * @param type the TrackType to dequeue
