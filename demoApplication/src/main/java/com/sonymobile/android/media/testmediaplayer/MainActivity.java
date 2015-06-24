@@ -930,7 +930,6 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback,
         mSubtitleView.setText("Error " + errorCodeToString(what));
         mIsBuffering = false;
         toggleLoading(false);
-        mDrawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED);
         mIsPrepared = false;
         mSeekBarUpdater.deactivate();
         mTimeTracker.stopUpdating();
