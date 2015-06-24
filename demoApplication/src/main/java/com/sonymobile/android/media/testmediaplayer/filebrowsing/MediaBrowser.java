@@ -29,7 +29,6 @@ import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -74,8 +73,6 @@ public class MediaBrowser {
 
     private static final String TAG = "DEMOAPPLICATION_BROWSER";
 
-    private static final String LOCAL_FILES = "Local files";
-
     private static final String[] SUPPORTED_FILE_EXTENSIONS = {
             "MP4",
             "MNV",
@@ -113,7 +110,6 @@ public class MediaBrowser {
 
     private final DrawerLayout mDrawerLayout;
 
-    private ArrayAdapter mAdapter;
 
     private final LinearLayout mDebugLayout;
 
@@ -138,17 +134,8 @@ public class MediaBrowser {
     private void init() {
         mListDataHeader = new ArrayList<>();
         mListDataChild = new HashMap<>();
-
-        ArrayList<MediaSource> filesFromMediaStore = new ArrayList<>();
-        readFromMediaStoreVideo(filesFromMediaStore);
-        readFromMediaStoreAudio(filesFromMediaStore);
-
-        if (filesFromMediaStore.size() > 0) {
-            mListDataHeader.add(LOCAL_FILES);
-            Collections.sort(filesFromMediaStore);
-            mListDataChild.put(LOCAL_FILES, filesFromMediaStore);
-        }
-
+        readFromMediaStoreVideo();
+        readFromMediaStoreAudio();
         readInternalSourceFile();
         readExternalSourceFile();
         prepareListData();
@@ -166,23 +153,17 @@ public class MediaBrowser {
                 LinearLayout layout = (LinearLayout)v;
                 TextView tv = (TextView)layout.findViewById(R.id.expand_list_item);
                 mDebugTitle.setText(mListDataHeader.get(groupPosition) + " / " + tv.getText());
-                if (groupPosition == 0 && mListDataHeader.get(groupPosition).equals(LOCAL_FILES)) {
-                    startMediaPlayer(
-                            mListDataChild.get(mListDataHeader.get(groupPosition)).get(childPosition).getSource(),
-                            true);
-                } else {
-                    startMediaPlayer(
-                            mListDataChild.get(mListDataHeader.get(groupPosition)).get(childPosition).getSource(),
-                            false);
-
-                }
-                return false;
+                startMediaPlayer(
+                        mListDataChild.get(
+                                mListDataHeader.get(groupPosition)).get(childPosition).getSource(),
+                        mListDataHeader.get(groupPosition).startsWith("MediaStore"));
+                return true;
             }
 
         });
     }
 
-    private void readFromMediaStoreVideo(ArrayList<MediaSource> results) {
+    private void readFromMediaStoreVideo() {
 
         String columns[] = {
                 MediaStore.Video.VideoColumns._ID, MediaStore.Video.VideoColumns.DATA,
@@ -191,24 +172,27 @@ public class MediaBrowser {
         Cursor cursor = MediaStore.Video.query(mMainActivity.getContentResolver(),
                 MediaStore.Video.Media.EXTERNAL_CONTENT_URI, columns);
         if (cursor.moveToFirst()) {
+            mListDataHeader.add("MediaStore Video");
+            ArrayList<MediaSource> children = new ArrayList<>();
             do {
                 String mime = cursor.getString(2);
                 for (String s : SUPPORTED_MIMETYPES) {
                     if (s.equals(mime)) {
                         String titleWithFiletype = cursor.getString(1).substring(
                                 cursor.getString(1).lastIndexOf("/") + 1);
-                        results.add(new MediaSource(titleWithFiletype,
+                        children.add(new MediaSource(titleWithFiletype,
                                 ContentUris.withAppendedId(
                                         MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
                                         cursor.getLong(0)).toString()));
                     }
                 }
             } while (cursor.moveToNext());
+            mListDataChild.put("MediaStore Video", children);
         }
         cursor.close();
     }
 
-    private void readFromMediaStoreAudio(ArrayList<MediaSource> results) {
+    private void readFromMediaStoreAudio() {
 
         String columns[] = {
                 MediaStore.Audio.AudioColumns._ID, MediaStore.Audio.AudioColumns.DATA,
@@ -217,6 +201,8 @@ public class MediaBrowser {
         Cursor cursor = mMainActivity.getContentResolver().query(MediaStore.Audio.Media
                 .EXTERNAL_CONTENT_URI, columns, null, null, null);
         if (cursor.moveToFirst()) {
+            mListDataHeader.add("MediaStore Audio");
+            ArrayList<MediaSource> children = new ArrayList<>();
             do {
                 String mime = cursor.getString(2);
                 for (String s : SUPPORTED_MIMETYPES) {
@@ -224,13 +210,14 @@ public class MediaBrowser {
                         String titleWithFiletype = cursor.getString(1).substring(
                                 cursor.getString(1).lastIndexOf("/") + 1);
 
-                        results.add(new MediaSource(titleWithFiletype,
+                        children.add(new MediaSource(titleWithFiletype,
                                 ContentUris.withAppendedId(
                                         MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
                                         cursor.getLong(0)).toString()));
                     }
                 }
             } while (cursor.moveToNext());
+            mListDataChild.put("MediaStore Audio", children);
         }
         cursor.close();
     }

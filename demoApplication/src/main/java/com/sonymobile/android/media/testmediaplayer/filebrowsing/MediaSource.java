@@ -16,7 +16,7 @@
 
 package com.sonymobile.android.media.testmediaplayer.filebrowsing;
 
-public class MediaSource implements Comparable<MediaSource> {
+public class MediaSource {
 
     private final String mName;
 
@@ -33,10 +33,5 @@ public class MediaSource implements Comparable<MediaSource> {
 
     public String getSource() {
         return mSource;
-    }
-
-    @Override
-    public int compareTo(MediaSource mediaSource) {
-        return mName.compareToIgnoreCase(mediaSource.mName);
     }
 }
