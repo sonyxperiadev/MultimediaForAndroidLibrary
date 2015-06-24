@@ -41,8 +41,6 @@ abstract public class MediaParser implements MetaDataParser, MetaData {
 
     protected Hashtable<String, Object> mMetaDataValues;
 
-    protected ArrayList<Track> mTracks;
-
     protected boolean mIsParsed;
 
     protected boolean mParseResult;
@@ -59,7 +57,6 @@ abstract public class MediaParser implements MetaDataParser, MetaData {
      */
     public MediaParser(DataSource source) {
         mDataSource = source;
-        mTracks = new ArrayList<>();
         mMetaDataValues = new Hashtable<>();
     }
 
@@ -75,7 +72,6 @@ abstract public class MediaParser implements MetaDataParser, MetaData {
             maxBufferSize = Configuration.DEFAULT_HTTP_BUFFER_SIZE;
         }
         mDataSource = DataSource.create(uri, maxBufferSize, false);
-        mTracks = new ArrayList<>();
         mMetaDataValues = new Hashtable<>();
     }
 
@@ -93,7 +89,6 @@ abstract public class MediaParser implements MetaDataParser, MetaData {
             maxBufferSize = Configuration.DEFAULT_HTTP_BUFFER_SIZE;
         }
         mDataSource = DataSource.create(uri, offset, (int)length, maxBufferSize, null, null, false);
-        mTracks = new ArrayList<>();
         mMetaDataValues = new Hashtable<>();
     }
 
@@ -110,9 +105,7 @@ abstract public class MediaParser implements MetaDataParser, MetaData {
      * @return the track count.
      */
     @Override
-    public int getTrackCount() {
-        return mTracks.size();
-    }
+    public abstract int getTrackCount();
 
     /**
      * Get the meta data.
@@ -132,13 +125,7 @@ abstract public class MediaParser implements MetaDataParser, MetaData {
      *         null is returned.
      */
     @Override
-    public MetaData getTrackMetaData(int index) {
-        Track t = mTracks.get(index);
-        if (t != null) {
-            return t.getMetaData();
-        }
-        return null;
-    }
+    public abstract MetaData getTrackMetaData(int index);
 
     /**
      * Releases this parser and closes open resources used by it.
@@ -227,32 +214,6 @@ abstract public class MediaParser implements MetaDataParser, MetaData {
      * @return the AccessUnit that's dequeued.
      */
     public abstract AccessUnit dequeueAccessUnit(TrackType type);
-
-    /**
-     * Interface definition for a generic track.
-     */
-    public interface Track {
-        /**
-         * Get the meta data.
-         *
-         * @return A MetaData object.
-         */
-        public MetaData getMetaData();
-
-        /**
-         * Get the media format.
-         *
-         * @return MediaFormat for the track.
-         */
-        public MediaFormat getMediaFormat();
-
-        /**
-         * Get the track type.
-         *
-         * @return TrackType for this track. See {@link TrackType}.
-         */
-        public TrackType getTrackType();
-    }
 
     /**
      * Get the duration in microseconds.

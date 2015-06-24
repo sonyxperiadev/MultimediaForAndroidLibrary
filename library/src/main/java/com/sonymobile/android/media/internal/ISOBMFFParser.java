@@ -319,6 +319,8 @@ public class ISOBMFFParser extends MediaParser {
 
     protected int mNALLengthSize;
 
+    protected final ArrayList<IsoTrack> mTracks = new ArrayList<>(2);
+
     private static final int[] ISOBMFF_COMPATIBLE_BRANDS = {
             fourCC('i', 's', 'o', 'm'), fourCC('m', 'p', '4', '1'), fourCC('m', 'p', '4', '2'),
             fourCC('a', 'v', 'c', '1'), fourCC('3', 'g', 'p', '5'), fourCC('h', 'v', 'c', '1')
@@ -469,6 +471,20 @@ public class ISOBMFFParser extends MediaParser {
         return parseOK;
     }
 
+    @Override
+    public int getTrackCount() {
+        return mTracks.size();
+    }
+
+    @Override
+    public MetaData getTrackMetaData(int index) {
+        IsoTrack t = mTracks.get(index);
+        if (t != null) {
+            return t.getMetaData();
+        }
+        return null;
+    }
+
     protected void updateAspectRatio() {
         if (mCurrentVideoTrack != null) {
             MediaFormat videoFormat = mCurrentVideoTrack.getMediaFormat();
@@ -502,7 +518,7 @@ public class ISOBMFFParser extends MediaParser {
     private void updateRotation() {
         if (getMetaData().containsKey(MetaData.KEY_ROTATION_DEGREES)) {
             int rotationAngle = getMetaData().getInteger(MetaData.KEY_ROTATION_DEGREES);
-            for (Track track : mTracks) {
+            for (IsoTrack track : mTracks) {
                 if (track.getTrackType() == TrackType.VIDEO) {
                     track.getMediaFormat()
                             .setInteger(MetaData.KEY_ROTATION_DEGREES, rotationAngle);
@@ -613,7 +629,7 @@ public class ISOBMFFParser extends MediaParser {
                 int numMfraTracks = mMfraTracks.size();
                 if (numMfraTracks > 0) {
                     for (int i = 0; i < numTracks; i++) {
-                        IsoTrack track = (IsoTrack)mTracks.get(i);
+                        IsoTrack track = mTracks.get(i);
                         for (int j = 0; j < numMfraTracks; j++) {
                             IsoTrack t = mMfraTracks.get(j);
                             if (t.getTrackId() == track.getTrackId()) {
@@ -636,7 +652,7 @@ public class ISOBMFFParser extends MediaParser {
                     + " Subtitle track " + getSelectedTrackIndex(TrackType.SUBTITLE));
 
             for (int i = 0; i < numTracks; i++) {
-                IsoTrack track = (IsoTrack)mTracks.get(i);
+                IsoTrack track = mTracks.get(i);
                 if (track.getMediaFormat() == null) {
                     if (LOGS_ENABLED)
                         Log.v(TAG, "Track " + i + " is unhandled, type " + track.getTrackType());
@@ -701,7 +717,7 @@ public class ISOBMFFParser extends MediaParser {
                 parseOK = parseBox(nextBoxHeader);
             }
             if (parseOK) {
-                IsoTrack currentTrack = (IsoTrack)mTracks.get(mTracks.size() - 1);
+                IsoTrack currentTrack = mTracks.get(mTracks.size() - 1);
                 SampleTable sampleTable = currentTrack.getSampleTable();
                 sampleTable.setTimescale(currentTrack.getTimeScale());
 
@@ -1011,7 +1027,7 @@ public class ISOBMFFParser extends MediaParser {
                 IsoTrack track = null;
                 int numTracks = mTracks.size();
                 for (int i = 0; i < numTracks; i++) {
-                    IsoTrack t = (IsoTrack)(mTracks.get(i));
+                    IsoTrack t = mTracks.get(i);
                     if (t.getTrackId() == trackId) {
                         track = t;
                         break;
@@ -1019,7 +1035,7 @@ public class ISOBMFFParser extends MediaParser {
                 }
 
                 if (track == null) {
-                    track = (IsoTrack)createTrack();
+                    track = createTrack();
                     track.setTrackId(trackId);
                     mTracks.add(track);
                 }
@@ -1845,7 +1861,7 @@ public class ISOBMFFParser extends MediaParser {
                 byte[][] kids = new byte[mTracks.size()][];
 
                 for (int i = 0; i < mTracks.size(); i++) {
-                    kids[i] = ((IsoTrack)mTracks.get(i)).mKID;
+                    kids[i] = (mTracks.get(i)).mKID;
                 }
 
                 String psshJson = Util.getMarlinPSSHTable(psshBox, kids);
@@ -1949,7 +1965,7 @@ public class ISOBMFFParser extends MediaParser {
             IsoTrack track = null;
             int numTracks = mTracks.size();
             for (int i = 0; i < numTracks; i++) {
-                IsoTrack t = (IsoTrack)(mTracks.get(i));
+                IsoTrack t = mTracks.get(i);
                 if (t.getTrackId() == trackId) {
                     track = t;
                     break;
@@ -1958,7 +1974,7 @@ public class ISOBMFFParser extends MediaParser {
             if (track != null) {
                 track.setTfraList(tfraList);
             } else {
-                track = (IsoTrack)createTrack();
+                track = createTrack();
                 track.setTrackId(trackId);
                 track.setTfraList(tfraList);
                 mMfraTracks.add(track);
@@ -2071,7 +2087,7 @@ public class ISOBMFFParser extends MediaParser {
             IsoTrack track = null;
             int numTracks = mTracks.size();
             for (int i = 0; i < numTracks; i++) {
-                IsoTrack t = (IsoTrack)(mTracks.get(i));
+                IsoTrack t = mTracks.get(i);
                 if (t.getTrackId() == trackId) {
                     track = t;
                     break;
@@ -2322,15 +2338,15 @@ public class ISOBMFFParser extends MediaParser {
         }
 
         boolean foundTrack = false;
-        for (Track track : mTracks) {
-            if (((IsoTrack)track).getTrackId() == trackId) {
-                mCurrentTrack = (IsoTrack)track;
+        for (IsoTrack track : mTracks) {
+            if (track.getTrackId() == trackId) {
+                mCurrentTrack = track;
                 foundTrack = true;
             }
         }
 
         if (!foundTrack) {
-            mCurrentTrack = (IsoTrack)createTrack();
+            mCurrentTrack = createTrack();
             mCurrentTrack.setTrackId(trackId);
             mTracks.add(mCurrentTrack);
         }
@@ -2591,9 +2607,9 @@ public class ISOBMFFParser extends MediaParser {
             int version = (versionFlags >> 24) & 0xFF;
             int referenceId = mDataSource.readInt();
             IsoTrack sidxTrack = null;
-            for (Track t : mTracks) {
-                if (((IsoTrack)t).getTrackId() == referenceId) {
-                    sidxTrack = (IsoTrack) t;
+            for (IsoTrack t : mTracks) {
+                if (t.getTrackId() == referenceId) {
+                    sidxTrack = t;
                     break;
                 }
             }
@@ -2809,7 +2825,7 @@ public class ISOBMFFParser extends MediaParser {
         long startOffset;
     }
 
-    public class IsoTrack implements Track {
+    public class IsoTrack {
         protected final MetaDataImpl mMetaData;
 
         protected final SampleTable mSampleTable;
@@ -3080,7 +3096,6 @@ public class ISOBMFFParser extends MediaParser {
             mType = trackType;
         }
 
-        @Override
         public TrackType getTrackType() {
             return mType;
         }
@@ -3117,7 +3132,6 @@ public class ISOBMFFParser extends MediaParser {
             return mTrackIndex;
         }
 
-        @Override
         public MetaDataImpl getMetaData() {
             return mMetaData;
         }
@@ -3138,7 +3152,6 @@ public class ISOBMFFParser extends MediaParser {
             mMediaFormat = format;
         }
 
-        @Override
         public MediaFormat getMediaFormat() {
             return mMediaFormat;
         }
@@ -3528,7 +3541,7 @@ public class ISOBMFFParser extends MediaParser {
     public long getDurationUs() {
         long durationUs = 0;
         for (int i = 0; i < mTracks.size(); i++) {
-            long trackDurationUs = ((IsoTrack)mTracks.get(i)).getDurationUs();
+            long trackDurationUs = mTracks.get(i).getDurationUs();
             if (trackDurationUs > durationUs) {
                 durationUs = trackDurationUs;
             }
@@ -3559,7 +3572,7 @@ public class ISOBMFFParser extends MediaParser {
         TrackInfo[] trackInfos = new TrackInfo[numTracks];
 
         for (int i = 0; i < numTracks; i++) {
-            IsoTrack track = (IsoTrack)mTracks.get(i);
+            IsoTrack track = mTracks.get(i);
             TrackType trackType = track.getTrackType();
             if (trackType != TrackType.UNKNOWN) {
                 MediaFormat mediaFormat = track.getMediaFormat();
@@ -3619,7 +3632,7 @@ public class ISOBMFFParser extends MediaParser {
             return TrackType.UNKNOWN;
         }
 
-        IsoTrack track = (IsoTrack)mTracks.get(index);
+        IsoTrack track = mTracks.get(index);
         TrackType trackType = track.getTrackType();
 
         if (trackType == TrackType.AUDIO) {
@@ -3741,7 +3754,7 @@ public class ISOBMFFParser extends MediaParser {
         return false;
     }
 
-    private Track createTrack() {
+    private IsoTrack createTrack() {
         return new IsoTrack();
     }
 
