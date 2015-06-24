@@ -928,6 +928,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback,
     @Override
     public boolean onError(MediaPlayer mp, int what, int extra) {
         mSubtitleView.setText("Error " + errorCodeToString(what));
+        mSubtitleView.setLayoutParams(mSubtitleLayoutBottom);
         mIsBuffering = false;
         toggleLoading(false);
         mIsPrepared = false;
