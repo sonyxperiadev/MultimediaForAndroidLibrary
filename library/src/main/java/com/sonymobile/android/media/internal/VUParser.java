@@ -81,16 +81,6 @@ public class VUParser extends ISOBMFFParser {
         if (LOGS_ENABLED) Log.v(TAG, "create VUParser from source");
     }
 
-    public VUParser(String path, int maxBufferSize) throws IOException {
-        super(path, maxBufferSize);
-        if (LOGS_ENABLED) Log.v(TAG, "create VUParser from path");
-    }
-
-    public VUParser(String path, long offset, long length, int maxBufferSize) throws IOException {
-        super(path, offset, length, maxBufferSize);
-        if (LOGS_ENABLED) Log.v(TAG, "create VUParser from path");
-    }
-
     @Override
     public boolean parse() {
         if (mIsParsed) {

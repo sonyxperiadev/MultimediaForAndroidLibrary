@@ -61,38 +61,6 @@ abstract public class MediaParser implements MetaDataParser, MetaData {
     }
 
     /**
-     * Create a new MediaParser. User is responsible for calling release() on
-     * the parser after usage.
-     *
-     * @param uri to the content.
-     * @param maxBufferSize for http content.
-     */
-    public MediaParser(String uri, int maxBufferSize) throws IOException {
-        if (maxBufferSize == -1) {
-            maxBufferSize = Configuration.DEFAULT_HTTP_BUFFER_SIZE;
-        }
-        mDataSource = DataSource.create(uri, maxBufferSize, false);
-        mMetaDataValues = new Hashtable<>();
-    }
-
-    /**
-     * Create a new MediaParser. User is responsible for calling release() on
-     * the parser after usage.
-     *
-     * @param uri to the content.
-     * @param offset to the content.
-     * @param length of the content.
-     * @param maxBufferSize for http content.
-     */
-    public MediaParser(String uri, long offset, long length, int maxBufferSize) throws IOException {
-        if (maxBufferSize == -1) {
-            maxBufferSize = Configuration.DEFAULT_HTTP_BUFFER_SIZE;
-        }
-        mDataSource = DataSource.create(uri, offset, (int)length, maxBufferSize, null, null, false);
-        mMetaDataValues = new Hashtable<>();
-    }
-
-    /**
      * Parses the media.
      *
      * @return true if successful, false if not.

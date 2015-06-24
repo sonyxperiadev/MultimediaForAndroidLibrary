@@ -59,16 +59,6 @@ public class PiffParser extends ISOBMFFParser {
         if (LOGS_ENABLED) Log.v(TAG, "create PiffParser from source");
     }
 
-    public PiffParser(String path, int maxBufferSize) throws IOException {
-        super(path, maxBufferSize);
-        if (LOGS_ENABLED) Log.v(TAG, "create PiffParser from path");
-    }
-
-    public PiffParser(String path, long offset, long length, int maxBufferSize) throws IOException {
-        super(path, offset, length, maxBufferSize);
-        if (LOGS_ENABLED) Log.v(TAG, "create PiffParser from path");
-    }
-
     @Override
     public boolean parse() {
         if (mIsParsed) {
