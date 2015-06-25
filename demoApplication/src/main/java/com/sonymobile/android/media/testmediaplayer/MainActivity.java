@@ -774,6 +774,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback,
         if (LOGS_ENABLED) Log.d(TAG, "onPreparedListener, State: " + mMediaPlayer.getState());
         setTimeOnView(mDurationView, mMediaPlayer.getDuration());
         mDrawerLayout.closeDrawer(Gravity.START);
+        mPlayPauseButton.setTag(false);
         onPlayPauseClicked(null);
         mIsPrepared = true;
         MetaData metadata = mMediaPlayer.getMediaMetaData();
