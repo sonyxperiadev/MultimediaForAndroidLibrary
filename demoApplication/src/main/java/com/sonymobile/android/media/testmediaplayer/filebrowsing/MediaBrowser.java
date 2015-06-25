@@ -16,14 +16,27 @@
 
 package com.sonymobile.android.media.testmediaplayer.filebrowsing;
 
-import com.sonymobile.android.media.MediaPlayer;
-import com.sonymobile.android.media.testmediaplayer.R;
-import com.sonymobile.android.media.testmediaplayer.MainActivity;
-import com.sonymobile.android.media.testmediaplayer.PlayerConfiguration;
+import java.io.BufferedReader;
+import java.io.Closeable;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
 
 import android.content.Context;
 import android.database.Cursor;
 import android.os.Environment;
+import android.os.storage.StorageManager;
 import android.provider.MediaStore;
 import android.provider.MediaStore.Audio;
 import android.provider.MediaStore.Audio.Media;
@@ -41,21 +54,10 @@ import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 
-import java.io.BufferedReader;
-import java.io.Closeable;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
+import com.sonymobile.android.media.MediaPlayer;
+import com.sonymobile.android.media.testmediaplayer.MainActivity;
+import com.sonymobile.android.media.testmediaplayer.PlayerConfiguration;
+import com.sonymobile.android.media.testmediaplayer.R;
 
 public class MediaBrowser {
 
@@ -115,13 +117,13 @@ public class MediaBrowser {
 
     private ArrayAdapter mAdapter;
 
-    private String mStartPath;
-
     private final LinearLayout mDebugLayout;
 
     private TextView mDebugTitle;
 
     private boolean mListAdapterNotSet;
+
+    private ArrayList<String> mVolumes;
 
     public MediaBrowser(Context cont, ExpandableListView elv, ListView listv,
             MediaPlayer mp, MainActivity ma, DrawerLayout dl, LinearLayout debugLayout) {
@@ -141,9 +143,8 @@ public class MediaBrowser {
         mAllSources = new HashMap<>();
         readFromMediaStoreVideo();
         readFromMediaStoreAudio();
-        readFileFromPath(null);
-        readFileFromPath(Environment.getExternalStorageDirectory()
-                + "/demoapplication_links.txt");
+        readInternalSourceFile();
+        readExternalSourceFile();
         prepareListData();
 
         mDebugTitle = (TextView)mDebugLayout.findViewById(R.id.activity_main_debug_media_title);
@@ -242,36 +243,31 @@ public class MediaBrowser {
 
     private void prepareListData() {
 
-        mCurrentPath = "/sdcard1/";
-        mStartPath = "/sdcard1/";
-        File file = new File("/sdcard1/");
-        File[] mTempFiles = file.listFiles();
-        if (mTempFiles == null) {
-            if (LOGS_ENABLED) Log.d(TAG, "mTempFiles is null");
-        }
-        if (!file.exists() || mTempFiles == null) {
-            file = new File(Environment.getExternalStorageDirectory().toString());
-            mCurrentPath = Environment.getExternalStorageDirectory().toString();
-            mStartPath = Environment.getExternalStorageDirectory().toString();
-        }
-        mFiles = file.listFiles();
-        Arrays.sort(mFiles, new FileComparator());
-        ArrayList<String> nameList = new ArrayList<String>();
-        for (File tempFile : mFiles) {
-            if (isFileExtensionSupported(tempFile.getName())) {
-                nameList.add(tempFile.getName());
-            } else if (tempFile.isDirectory()) {
-                nameList.add(tempFile.getName() + "/");
+        StorageManager sman = (StorageManager)mContext.getSystemService(Context.STORAGE_SERVICE);
+
+        mVolumes = new ArrayList<>();
+        try {
+            Method getVolumePaths = StorageManager.class.getMethod("getVolumePaths", null);
+
+            String[] paths = (String[])getVolumePaths.invoke(sman);
+
+            for (String path : paths) {
+                File f = new File(path);
+                if (f.canRead() && f.exists() && f.isDirectory() && f.listFiles().length > 0) {
+                    mVolumes.add(path + "/");
+                }
             }
+        } catch (NoSuchMethodException e) {
+        } catch (InvocationTargetException e) {
+        } catch (IllegalAccessException e) {
         }
 
-        String[] fileNames = new String[nameList.size()];
-        for (int i = 0; i < nameList.size(); i++) {
-            fileNames[i] = nameList.get(i);
+        if (mVolumes.isEmpty()) {
+            mVolumes.add(Environment.getExternalStorageDirectory().getPath());
         }
-        ArrayAdapter adapter = new ArrayAdapter<>(mContext, R.layout.ondevice_list_item,
-                fileNames);
-        mListView.setAdapter(adapter);
+
+        navigateToVolumes();
+
         mListView.setOnItemClickListener(new OnItemClickListener() {
 
             @Override
@@ -279,7 +275,7 @@ public class MediaBrowser {
                 TextView fileNameView = (TextView)arg1;
                 String theFileName = (String)fileNameView.getText();
                 mDebugTitle.setText(theFileName);
-                File theFile = new File(mCurrentPath + "/" + theFileName);
+                File theFile = new File(mCurrentPath + theFileName);
                 if (theFile.isDirectory()) {
                     navigate(theFile);
                 } else {
@@ -313,17 +309,36 @@ public class MediaBrowser {
         }
     }
 
+    private void navigateToVolumes() {
+        if (mVolumes.size() == 1) {
+            navigate(new File(mVolumes.get(0)));
+            return;
+        }
+
+        mCurrentPath = "";
+
+        String[] fileNames = new String[mVolumes.size()];
+        for (int i = 0; i < mVolumes.size(); i++) {
+            fileNames[i] = mVolumes.get(i);
+        }
+        ArrayAdapter adapter = new ArrayAdapter<>(mContext, R.layout.ondevice_list_item,
+                fileNames);
+        mListView.setAdapter(adapter);
+    }
+
     protected void navigate(File file) {
         mCurrentFile = file;
-        mCurrentPath = file.getPath();
+        mCurrentPath = file.getPath() + "/";
         mFiles = file.listFiles();
         Arrays.sort(mFiles, new FileComparator());
-        ArrayList<String> nameList = new ArrayList<String>();
+        ArrayList<String> nameList = new ArrayList<>();
         for (File tempFile : mFiles) {
-            if (isFileExtensionSupported(tempFile.getName())) {
+            if (tempFile.isDirectory()) {
+                if (tempFile.listFiles().length > 0) {
+                    nameList.add(tempFile.getName() + "/");
+                }
+            } else if (isFileExtensionSupported(tempFile.getName())) {
                 nameList.add(tempFile.getName());
-            } else if (tempFile.isDirectory()) {
-                nameList.add(tempFile.getName() + "/");
             }
         }
         String[] fileNames = new String[nameList.size()];
@@ -338,9 +353,10 @@ public class MediaBrowser {
 
     public void onBackPressed() {
         if (LOGS_ENABLED)
-            Log.d("FileBrowsingActivity", "onBackPressed, currentPath: " + mCurrentPath);
-        if (!mCurrentPath.equals(mStartPath)
-                && !mCurrentPath.equals("/")) {
+            Log.d(TAG, "onBackPressed, currentPath: " + mCurrentPath);
+        if (mVolumes.contains(mCurrentPath)) {
+            navigateToVolumes();
+        } else if (!mCurrentPath.isEmpty()) {
             navigate(mCurrentFile.getParentFile());
         }
     }
@@ -357,37 +373,39 @@ public class MediaBrowser {
         }
     }
 
-    private void readFileFromPath(String path) {
-        Log.d(TAG, "externalStorage: " + Environment.getExternalStorageDirectory());
+    private void readInternalSourceFile() {
         InputStream is = null;
         InputStreamReader isr = null;
         BufferedReader br = null;
-        if(path == null){
+        try {
+            is = mContext.getResources().openRawResource(R.raw.sourcefile);
+            isr = new InputStreamReader(is, StandardCharsets.UTF_8);
+            br = new BufferedReader(isr);
+            readData(br);
+        } finally {
+            close(br);
+            close(isr);
+            close(is);
+        }
+    }
+
+    private void readExternalSourceFile() {
+        InputStream is = null;
+        InputStreamReader isr = null;
+        BufferedReader br = null;
+        File file = new File(Environment.getExternalStorageDirectory()
+                + "/demoapplication_links.txt");
+        if (file.exists()) {
             try {
-                is = mContext.getResources().openRawResource(R.raw.sourcefile);
-                isr = new InputStreamReader(is, StandardCharsets.UTF_8);
+                is = new FileInputStream(file);
+                isr = new InputStreamReader(is);
                 br = new BufferedReader(isr);
                 readData(br);
+            } catch (FileNotFoundException e) {
             } finally {
                 close(br);
                 close(isr);
                 close(is);
-            }
-        } else {
-            File file = new File(path);
-            if (file.exists()) {
-                try {
-                    is = new FileInputStream(file);
-                    isr = new InputStreamReader(is);
-                    br = new BufferedReader(isr);
-                    readData(br);
-                } catch (FileNotFoundException e) {
-                    e.printStackTrace();
-                } finally {
-                    close(br);
-                    close(isr);
-                    close(is);
-                }
             }
         }
     }
