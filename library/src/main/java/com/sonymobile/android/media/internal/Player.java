@@ -24,6 +24,8 @@ import java.util.UUID;
 import java.util.Vector;
 
 import android.content.Context;
+import android.media.MediaDrm;
+import android.media.MediaDrm.MediaDrmStateException;
 import android.media.MediaFormat;
 import android.media.UnsupportedSchemeException;
 import android.os.Handler;
@@ -101,6 +103,8 @@ public final class Player {
     private static final int MSG_SET_VIDEO_SCALING_MODE = 24;
 
     private static final int MSG_WAIT_FOR_VIDEO_READY_TO_RENDER = 25;
+
+    public static final int MSG_DRM_NOTIFY = 26;
 
     public static final int NOTIFY_PREPARED = 1;
 
@@ -580,13 +584,6 @@ public final class Player {
                         return;
                     }
 
-                    // If DRM setup failed in MSG_SETUP_DRM try again here
-                    // For example DASH does not have drm data available in
-                    // prepare state
-                    if (!thiz.doSetupDrm()) {
-                        return;
-                    }
-
                     if (thiz.mAudioThread == null) {
                         MediaFormat audioFormat = thiz.mSource.getFormat(TrackType.AUDIO);
 
@@ -1048,16 +1045,24 @@ public final class Player {
                     switch (msg.arg1) {
                         case MediaSource.SOURCE_PREPARED:
                             thiz.mDurationMs = (int) (thiz.mSource.getDurationUs() / 1000);
-                            boolean drmSetupOk = thiz.doSetupDrm();
+                            boolean setupDrmSessionOk = thiz.tryOpenDrmSession();
+
+                            if (setupDrmSessionOk) {
+                                if (!thiz.tryRestoreDrmKeys()) {
+                                    thiz.tryRequestDrmKeys();
+                                    break;
+                                }
+                            }
+
                             if (thiz.mPrepareHandler != null) {
                                 Message replyMsg = thiz.mPrepareHandler.obtainMessage();
-                                replyMsg.obj = drmSetupOk;
+                                replyMsg.obj = setupDrmSessionOk;
                                 replyMsg.sendToTarget();
                                 thiz.mPrepareHandler = null;
-                            } else if (drmSetupOk) {
+                            } else if (setupDrmSessionOk) {
                                 thiz.mCallbacks.obtainMessage(NOTIFY_PREPARED).sendToTarget();
                             }
-                            if (drmSetupOk) {
+                            if (setupDrmSessionOk) {
                                 thiz.notifyVideoSize(thiz.mSource.getMetaData());
                             }
                             break;
@@ -1107,6 +1112,27 @@ public final class Player {
                             break;
                     }
                     break;
+                case MSG_DRM_NOTIFY: {
+                    boolean drmSetupOk = (boolean)msg.obj;
+
+                    if (thiz.mPrepareHandler != null) {
+                        Message replyMsg = thiz.mPrepareHandler.obtainMessage();
+                        replyMsg.obj = drmSetupOk;
+                        replyMsg.sendToTarget();
+                        thiz.mPrepareHandler = null;
+                    } else if (drmSetupOk) {
+                        thiz.mCallbacks.obtainMessage(NOTIFY_PREPARED).sendToTarget();
+                    }
+
+                    if (drmSetupOk) {
+                        thiz.mDrmSession.initOutputController(thiz.mContext,
+                                new OutputControllerUpdateListener(thiz));
+                        thiz.notifyVideoSize(thiz.mSource.getMetaData());
+                    } else {
+                        thiz.onError(msg.arg1);
+                    }
+                    break;
+                }
                 default:
                     if (LOGS_ENABLED) Log.v(TAG, "Unknown message");
                     break;
@@ -1130,7 +1156,7 @@ public final class Player {
         }
     }
 
-    private boolean doSetupDrm() {
+    private boolean tryOpenDrmSession() {
         MetaData fileMeta = mSource.getMetaData();
         if (mDrmSession == null
                 && fileMeta.containsKey(MetaData.KEY_DRM_UUID)
@@ -1139,7 +1165,7 @@ public final class Player {
             if (mContext == null) {
                 if (LOGS_ENABLED)
                     Log.e(TAG, "No context provided. Unable to create DRM session.");
-                onError(MediaError.UNKNOWN);
+                onError(MediaError.DRM_UNKNOWN);
                 return false;
             } else {
                 try {
@@ -1153,8 +1179,8 @@ public final class Player {
                             psshInfo);
                     mDrmSession.open();
 
-                    mDrmSession.initOutputController(mContext,
-                            new OutputControllerUpdateListener(this));
+                    return true;
+
                 } catch (DrmLicenseException e) {
                     if (LOGS_ENABLED)
                         Log.e(TAG, "DrmLicenseException when creating DrmSession", e);
@@ -1162,21 +1188,59 @@ public final class Player {
                     return false;
                 } catch (IllegalArgumentException e) {
                     if (LOGS_ENABLED)
-                        Log.e(TAG, "IllegalArgumentException when creating DrmSession",
-                                e);
+                        Log.e(TAG, "IllegalArgumentException when creating DrmSession", e);
                     onError(MediaError.DRM_UNKNOWN);
                     return false;
                 } catch (UnsupportedSchemeException e) {
                     if (LOGS_ENABLED)
-                        Log.e(TAG,
-                                "UnsupportedSchemeException when creating DrmSession",
-                                e);
+                        Log.e(TAG, "UnsupportedSchemeException when creating DrmSession", e);
+                    onError(MediaError.DRM_UNKNOWN);
+                    return false;
+                } catch (RuntimeException e) { // MediaDrmStateException API Level 21
+                    if (LOGS_ENABLED)
+                        Log.e(TAG, "RuntimeException when creating DrmSession", e);
                     onError(MediaError.DRM_UNKNOWN);
                     return false;
                 }
             }
         }
         return true;
+    }
+
+    private boolean tryRestoreDrmKeys() {
+        if (mDrmSession != null) {
+            try {
+                mDrmSession.restoreKey();
+                return true;
+            } catch (DrmLicenseException e) {
+                if (LOGS_ENABLED) {
+                    Log.e(TAG, "DrmLicenseException when trying to restore keys", e);
+                }
+                return false;
+            } catch (IllegalArgumentException e) {
+                if (LOGS_ENABLED) {
+                    Log.e(TAG, "IllegalArgumentException when trying to restore keys", e);
+                }
+                return false;
+            } catch (RuntimeException e) { // MediaDrmStateException API Level 21
+                if (LOGS_ENABLED) {
+                    Log.e(TAG, "RuntimeException when when trying to restore keys", e);
+                }
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private void tryRequestDrmKeys() {
+        if (mDrmSession != null) {
+            MetaData fileMeta = mSource.getMetaData();
+            int keyType = mSource.isStreaming() ?
+                    MediaDrm.KEY_TYPE_STREAMING : MediaDrm.KEY_TYPE_OFFLINE;
+
+            mDrmSession.requestKey(fileMeta.getString(MetaData.KEY_MIME_TYPE),
+                    keyType, mEventHandler);
+        }
     }
 
     void onOutputControlEvent(int type, Object obj) {

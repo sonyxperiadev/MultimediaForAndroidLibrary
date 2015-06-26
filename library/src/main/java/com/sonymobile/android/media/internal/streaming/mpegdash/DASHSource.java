@@ -239,4 +239,9 @@ public class DASHSource extends MediaSource {
 
         return false;
     }
+
+    @Override
+    public boolean isStreaming() {
+        return true;
+    }
 }

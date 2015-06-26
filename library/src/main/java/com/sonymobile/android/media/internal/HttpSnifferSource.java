@@ -174,6 +174,11 @@ public class HttpSnifferSource extends MediaSource {
         return url.startsWith("http://") || url.startsWith("https://");
     }
 
+    @Override
+    public boolean isStreaming() {
+        return mSource.isStreaming();
+    }
+
     private static class CallbackHandler extends Handler {
 
         private WeakReference<HttpSnifferSource> mParent;

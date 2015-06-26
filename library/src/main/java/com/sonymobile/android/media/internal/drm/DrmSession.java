@@ -24,6 +24,7 @@ import android.content.Context;
 import android.media.MediaCrypto;
 import android.media.MediaCryptoException;
 import android.media.MediaDrm;
+import android.os.Handler;
 
 public abstract class DrmSession {
 
@@ -112,6 +113,28 @@ public abstract class DrmSession {
      * @throws IllegalStateException
      */
     public abstract void releaseMediaCrypto(String key) throws MediaCryptoException;
+
+    /**
+     * Requests a key for DRM protected content. The request need to be done prior to playback.
+     * The request will be done asynchronously and the result will be delivered to the Handler.
+     * It will not be possible to start playback till the request result is received.
+     *
+     * @param mime The mime type of the content
+     * @param keyType The keyType, {@link android.media.MediaDrm#KEY_TYPE_STREAMING} or {@link
+     * android.media.MediaDrm#KEY_TYPE_OFFLINE}
+     * @param callbackHandler The Handler that will receive the result when the request is done,
+     *                        message will be {@link com.sonymobile.android.media.internal
+     *                        .Player#MSG_DRM_NOTIFY}
+     */
+    public abstract void requestKey(String mime, int keyType, Handler callbackHandler);
+
+    /**
+     * Restore a previous requested key for a DRM protected content. Restore need to be done
+     * prior to playback.
+     *
+     * @throws DrmLicenseException If no key is available or if it is not valid.
+     */
+    public abstract void restoreKey() throws DrmLicenseException;
 
     /**
      * Get the MediaDrm used for the current DRM session.

@@ -25,6 +25,7 @@ import android.media.MediaDrm;
 import android.media.NotProvisionedException;
 import android.media.ResourceBusyException;
 import android.media.UnsupportedSchemeException;
+import android.os.Handler;
 
 import com.sonymobile.android.media.MediaError;
 import com.sonymobile.android.media.internal.Configuration;
@@ -124,5 +125,15 @@ public class MarlinDrmSession extends DrmSession {
         if (mOutputController != null) {
             mOutputController.release();
         }
+    }
+
+    @Override
+    public void requestKey(String mime, int keyType, Handler callbackHandler) {
+        throw new RuntimeException("Not supported");
+    }
+
+    @Override
+    public void restoreKey() throws DrmLicenseException {
+        throw new RuntimeException("Not supported");
     }
 }

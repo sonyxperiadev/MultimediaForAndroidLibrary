@@ -112,4 +112,6 @@ public abstract class MediaSource {
         return mSupportsPreview;
     }
 
+    public abstract boolean isStreaming();
+
 }

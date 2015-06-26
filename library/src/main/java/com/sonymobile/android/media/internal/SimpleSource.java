@@ -305,6 +305,11 @@ public final class SimpleSource extends MediaSource {
         }
     }
 
+    @Override
+    public boolean isStreaming() {
+        return mIsHttp;
+    }
+
     private static class EventHandler extends Handler {
 
         private final WeakReference<SimpleSource> mSource;
