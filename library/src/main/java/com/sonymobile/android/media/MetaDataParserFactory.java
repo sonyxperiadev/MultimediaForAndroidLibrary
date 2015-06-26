@@ -106,7 +106,7 @@ public class MetaDataParserFactory {
      */
     public static MetaDataParser create(String path) {
         try {
-            MetaDataParser parser = MediaParserFactory.createParser(path, 0l, Long.MAX_VALUE,
+            MetaDataParser parser = MediaParserFactory.createParser(path, 0L, Long.MAX_VALUE,
                     -1, null);
             releaseParser(parser);
             return parser;
@@ -125,7 +125,7 @@ public class MetaDataParserFactory {
      */
     public static MetaDataParser create(String path, int maxBufferSize) {
         try {
-            MetaDataParser parser = MediaParserFactory.createParser(path, 0l, Long.MAX_VALUE,
+            MetaDataParser parser = MediaParserFactory.createParser(path, 0L, Long.MAX_VALUE,
                     maxBufferSize, null);
             releaseParser(parser);
             return parser;

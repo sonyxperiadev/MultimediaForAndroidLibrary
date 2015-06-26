@@ -358,7 +358,7 @@ public final class Player {
         if (mSeekPositionMs < 0) {
             mSeekPositionMs = msec;
             if (mClockSource != null) {
-                mClockSource.setSeekTimeUs(msec * 1000l);
+                mClockSource.setSeekTimeUs(msec * 1000L);
             }
 
             if (mAudioThread != null) {
@@ -373,7 +373,7 @@ public final class Player {
                 mSubtitleThread.flush();
             }
 
-            mSource.seekTo(msec * 1000l);
+            mSource.seekTo(msec * 1000L);
 
             if (mVideoThread == null && mAudioThread == null) {
                 // Both Audio and Video are Null. Prepared state send callback
@@ -595,7 +595,7 @@ public final class Player {
                             }
 
                             thiz.mClockSource = thiz.mAudioThread;
-                            thiz.mClockSource.setSeekTimeUs(thiz.mCurrentPositionMs * 1000l);
+                            thiz.mClockSource.setSeekTimeUs(thiz.mCurrentPositionMs * 1000L);
                         }
                     }
 
@@ -606,7 +606,7 @@ public final class Player {
                         if (videoFormat != null) {
                             if (thiz.mAudioThread == null) {
                                 thiz.mClockSource = new ClockImpl(thiz.mEventHandler);
-                                thiz.mClockSource.setSeekTimeUs(thiz.mCurrentPositionMs * 1000l);
+                                thiz.mClockSource.setSeekTimeUs(thiz.mCurrentPositionMs * 1000L);
                             }
                             if (thiz.mSurface != null) {
                                 thiz.mVideoThread = new VideoThread(videoFormat, thiz.mSource,
