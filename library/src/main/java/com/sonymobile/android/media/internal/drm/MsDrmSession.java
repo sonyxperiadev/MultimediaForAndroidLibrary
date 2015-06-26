@@ -52,7 +52,7 @@ import com.sonymobile.android.media.internal.Player;
 
 public class MsDrmSession extends DrmSession {
 
-    private static final boolean DEBUG_ENABLED = Configuration.DEBUG || false;
+    private static final boolean LOGS_ENABLED = Configuration.DEBUG || false;
 
     private static final String TAG = "MsDrmSession";
 
@@ -149,7 +149,7 @@ public class MsDrmSession extends DrmSession {
     public synchronized void close() {
         mOpenCount--;
 
-        if (DEBUG_ENABLED) Log.d(TAG, "Close count = " + mOpenCount + " state = " + mState);
+        if (LOGS_ENABLED) Log.d(TAG, "Close count = " + mOpenCount + " state = " + mState);
 
         if (mOpenCount == 0) {
             if (!mMediaCryptoMap.isEmpty()) {
@@ -174,7 +174,7 @@ public class MsDrmSession extends DrmSession {
     }
 
     private synchronized void releaseAllMediaCryptos() {
-        if (DEBUG_ENABLED) Log.d(TAG, "Open MediaCryptos: " + mMediaCryptoMap.size());
+        if (LOGS_ENABLED) Log.d(TAG, "Open MediaCryptos: " + mMediaCryptoMap.size());
 
         for (Map.Entry<String, MediaCrypto> crypto : mMediaCryptoMap.entrySet()) {
             crypto.getValue().release();
@@ -231,7 +231,7 @@ public class MsDrmSession extends DrmSession {
             provideKeyResponse(response);
 
         } catch (NotProvisionedException e) {
-            if (DEBUG_ENABLED) Log.e(TAG, "Failed to get a key request!", e);
+            if (LOGS_ENABLED) Log.e(TAG, "Failed to get a key request!", e);
             mState = STATE_ERROR;
             sendRequestDoneCallback(MediaError.DRM_UNKNOWN, false);
 
@@ -260,7 +260,7 @@ public class MsDrmSession extends DrmSession {
             specialProvideKeyResponse(response);
 
         } else {
-            if (DEBUG_ENABLED) {
+            if (LOGS_ENABLED) {
                 Log.e(TAG, "No Key request!");
             }
             mState = STATE_ERROR;
@@ -277,21 +277,21 @@ public class MsDrmSession extends DrmSession {
                 mState = STATE_OPENED_WITH_KEYS;
 
             } catch (NotProvisionedException e) {
-                if (DEBUG_ENABLED) {
+                if (LOGS_ENABLED) {
                     Log.e(TAG, "NotProvisionedException when providing key response", e);
                 }
                 mState = STATE_ERROR;
                 errorCode = MediaError.DRM_UNKNOWN;
 
             } catch (DeniedByServerException e) {
-                if (DEBUG_ENABLED) {
+                if (LOGS_ENABLED) {
                     Log.e(TAG, "DeniedByServerException when providing key response", e);
                 }
                 mState = STATE_ERROR;
                 errorCode = MediaError.DRM_UNKNOWN;
 
             } catch (DrmLicenseException e) {
-                if (DEBUG_ENABLED) {
+                if (LOGS_ENABLED) {
                     Log.e(TAG, "DrmLicenseException when providing key response", e);
                 }
                 mState = STATE_ERROR;
@@ -321,21 +321,21 @@ public class MsDrmSession extends DrmSession {
                 mState = STATE_OPENED_WITH_KEYS;
 
             } catch (NotProvisionedException e) {
-                if (DEBUG_ENABLED) {
+                if (LOGS_ENABLED) {
                     Log.e(TAG, "NotProvisionedException while providing key response", e);
                 }
                 mState = STATE_ERROR;
                 errorCode = MediaError.DRM_UNKNOWN;
 
             } catch (DrmLicenseException e) {
-                if (DEBUG_ENABLED) {
+                if (LOGS_ENABLED) {
                     Log.e(TAG, "DrmLicenseException while providing key response", e);
                 }
                 mState = STATE_ERROR;
                 errorCode = e.getErrorCode();
 
             } catch (RuntimeException e) { // MediaDrmStateException API level 21
-                if (DEBUG_ENABLED) {
+                if (LOGS_ENABLED) {
                     Log.e(TAG, "RuntimeException while providing key response", e);
                 }
                 mState = STATE_ERROR;
@@ -372,11 +372,11 @@ public class MsDrmSession extends DrmSession {
                     mKeyType, mParams);
 
         } catch (NotProvisionedException e) {
-            if (DEBUG_ENABLED) Log.e(TAG, "Failed to get a key request!", e);
+            if (LOGS_ENABLED) Log.e(TAG, "Failed to get a key request!", e);
         } catch (IllegalStateException e) {
-            if (DEBUG_ENABLED) Log.e(TAG, "Failed to get a key request!", e);
+            if (LOGS_ENABLED) Log.e(TAG, "Failed to get a key request!", e);
         } catch (ResourceBusyException e) {
-            if (DEBUG_ENABLED) Log.e(TAG, "Failed to get a key request!", e);
+            if (LOGS_ENABLED) Log.e(TAG, "Failed to get a key request!", e);
         }
         return keyRequest;
     }
@@ -420,7 +420,7 @@ public class MsDrmSession extends DrmSession {
                         (int)recordOffset + DRM_PLAYREADY_RECORD_LENGTH_OFFSET);
 
                 if (recordValueSize < DRM_PLAYREADY_RECORD_MIN_LENGTH) {
-                    if (DEBUG_ENABLED) Log.e(TAG, "Playready record to small");
+                    if (LOGS_ENABLED) Log.e(TAG, "Playready record to small");
                     break;
                 }
 
@@ -440,7 +440,7 @@ public class MsDrmSession extends DrmSession {
                 } else {
                     // Step to next record
                     if (--numberOfRecords == 0) {
-                        if (DEBUG_ENABLED) Log.d(TAG, "No more playready records");
+                        if (LOGS_ENABLED) Log.d(TAG, "No more playready records");
                         break;
                     }
                     recordOffset = recordOffset + DRM_PLAYREADY_RECORD_VALUE_OFFSET
@@ -492,11 +492,11 @@ public class MsDrmSession extends DrmSession {
                 return bos.toByteArray();
             }
         } catch (MalformedURLException e) {
-            if (DEBUG_ENABLED) Log.e(TAG, "Exception during key server request", e);
+            if (LOGS_ENABLED) Log.e(TAG, "Exception during key server request", e);
         } catch (ProtocolException e) {
-            if (DEBUG_ENABLED) Log.e(TAG, "Exception during key server request", e);
+            if (LOGS_ENABLED) Log.e(TAG, "Exception during key server request", e);
         } catch (IOException e) {
-            if (DEBUG_ENABLED) Log.e(TAG, "Exception during key server request", e);
+            if (LOGS_ENABLED) Log.e(TAG, "Exception during key server request", e);
         } finally {
             closeSilently(bos);
             closeSilently(in);
