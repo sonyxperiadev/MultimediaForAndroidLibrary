@@ -437,7 +437,7 @@ public final class PlatformParser extends MediaParser {
     public boolean needMoreBuffer() {
         return !mEOS && (mPacketSources.get(TrackType.AUDIO).
                 getBufferDuration() < MIN_BUFFER_DURATION_US ||
-                mPacketSources.get(TrackType.VIDEO).getBufferSize() < MIN_BUFFER_DURATION_US);
+                mPacketSources.get(TrackType.VIDEO).getBufferDuration() < MIN_BUFFER_DURATION_US);
     }
 
     @Override
