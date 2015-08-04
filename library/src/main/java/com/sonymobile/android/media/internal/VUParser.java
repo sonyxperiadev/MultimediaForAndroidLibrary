@@ -164,8 +164,8 @@ public class VUParser extends ISOBMFFParser {
                 int metadataSampleCount = mDataSource.readInt();
                 mCurrentMtsmEntry.mMdstList = new ArrayList<>(metadataSampleCount);
                 for (int i = 0; i < metadataSampleCount; i++) {
+                    mDataSource.skipBytes(4); // metadataSampleDescriptionIndex
                     MdstEntry mdstEntry = new MdstEntry();
-                    mdstEntry.metadataSampleDescriptionIndex = mDataSource.readInt();
                     mdstEntry.metadataSampleOffset = mDataSource.readInt();
                     mdstEntry.metadataSampleSize = mDataSource.readInt();
                     mDataSource.skipBytes(8);
@@ -510,8 +510,6 @@ public class VUParser extends ISOBMFFParser {
     }
 
     private static class MdstEntry {
-        public int metadataSampleDescriptionIndex = -1;
-
         public int metadataSampleOffset = -1;
 
         public int metadataSampleSize = -1;
@@ -710,13 +708,11 @@ public class VUParser extends ISOBMFFParser {
             }
             int mdstCount = mtsmEntry.mMdstList.size();
             MdstEntry mdstEntry = null;
-            for (int j = 0; j < mdstCount; j++) {
-                MdstEntry tmpEntry = mtsmEntry.mMdstList.get(j);
-                if (tmpEntry.metadataSampleDescriptionIndex == iconInfo.mdstIndex) {
-                    mdstEntry = tmpEntry;
-                    break;
-                }
+
+            if (iconInfo.mdstIndex > 0 && iconInfo.mdstIndex <= mdstCount) {
+                mdstEntry = mtsmEntry.mMdstList.get(iconInfo.mdstIndex - 1);
             }
+
             if (mdstEntry == null) {
                 if (LOGS_ENABLED) Log.e(TAG, "mdstEntry is null");
                 continue;
