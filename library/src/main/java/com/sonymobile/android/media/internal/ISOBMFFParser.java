@@ -3743,7 +3743,7 @@ public class ISOBMFFParser extends MediaParser {
         return false;
     }
 
-    private IsoTrack createTrack() {
+    protected IsoTrack createTrack() {
         return new IsoTrack();
     }
 
