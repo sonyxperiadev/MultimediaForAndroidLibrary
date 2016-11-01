@@ -49,5 +49,5 @@ android.libraryVariants.all { variant ->
     def task = project.tasks.create "jar${variant.name.capitalize()}", Jar
     task.dependsOn variant.javaCompile
     task.from variant.javaCompile.destinationDir
-    task.archiveName = 'MAL-v'+getVersionName()+'.jar'
+    task.archiveName = 'MAL—vrviu-v'+getVersionName()+'.jar'
 }
