@@ -31,6 +31,7 @@ import com.sonymobile.android.media.internal.AccessUnit;
 import com.sonymobile.android.media.internal.Configuration;
 import com.sonymobile.android.media.internal.MediaSource;
 import com.sonymobile.android.media.internal.MimeType;
+import com.vrviu.dash.Orientation;
 
 import java.lang.ref.WeakReference;
 import java.net.HttpURLConnection;
@@ -215,6 +216,13 @@ public class DASHSource extends MediaSource {
     }
 
     @Override
+    public void setOrientation(Orientation orientation) {
+        if(mSession != null) {
+            mSession.setOrientation(orientation);
+        }
+    }
+
+    @Override
     public void selectRepresentations(int trackIndex, Vector<Integer> representations) {
         mSession.selectRepresentations(trackIndex, representations);
     }
@@ -229,7 +237,7 @@ public class DASHSource extends MediaSource {
     }
 
     public static boolean canHandle(String mime, String uri) {
-        if (mime.equalsIgnoreCase(MimeType.MPEG_DASH)) {
+        if ((mime!=null) && (mime.equalsIgnoreCase(MimeType.MPEG_DASH))) {
             return true;
         }
 

@@ -38,6 +38,7 @@ import com.sonymobile.android.media.RepresentationSelector;
 import com.sonymobile.android.media.TrackInfo;
 import com.sonymobile.android.media.internal.streaming.mpegdash.DASHSource;
 import com.sonymobile.android.media.internal.streaming.smoothstreaming.SmoothStreamingSource;
+import com.vrviu.dash.Orientation;
 
 public class HttpSnifferSource extends MediaSource {
 
@@ -158,6 +159,14 @@ public class HttpSnifferSource extends MediaSource {
             mSource.setRepresentationSelector(selector);
         } else {
             mRepresentationSelector = selector;
+        }
+    }
+
+
+    @Override
+    public void setOrientation(Orientation orientation) {
+        if(mSource != null) {
+            mSource.setOrientation(orientation);
         }
     }
 

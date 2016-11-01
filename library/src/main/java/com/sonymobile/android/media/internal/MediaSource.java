@@ -28,7 +28,9 @@ import com.sonymobile.android.media.RepresentationSelector;
 import com.sonymobile.android.media.TrackInfo;
 import com.sonymobile.android.media.TrackInfo.TrackType;
 
-public abstract class MediaSource {
+import com.vrviu.dash.Orientation;
+
+public abstract class MediaSource  {
 
     public static final int SOURCE_PREPARED = 1;
 
@@ -103,6 +105,9 @@ public abstract class MediaSource {
     public abstract void setBandwidthEstimator(BandwidthEstimator estimator);
 
     public abstract void setRepresentationSelector(RepresentationSelector selector);
+
+    public void setOrientation(Orientation orientation) {
+    };
 
     public abstract void selectRepresentations(int trackIndex, Vector<Integer> representations);
 
