@@ -1,15 +1,48 @@
-// Top-level build file where you can add configuration options common to all sub-projects/modules.
-buildscript {
-    repositories {
-        jcenter()
+apply plugin: 'com.android.library'
+apply plugin: 'findbugs'
+
+def getVersionName = { ->
+    return "1.2.0"
+}
+
+android {
+    compileSdkVersion 21
+    buildToolsVersion "21.1.2"
+
+    defaultConfig {
+        minSdkVersion 19
+        targetSdkVersion 21
+        testApplicationId "com.sonymobile.android.media.test"
+        testInstrumentationRunner "android.test.InstrumentationTestRunner"
+        testHandleProfiling true
+        testFunctionalTest true
     }
-    dependencies {
-        classpath 'com.android.tools.build:gradle:1.0.0-rc1'
+
+    buildTypes {
+        debug {
+            buildConfigField "String", "LIBRARY_VERSION", "\""+"DEBUG"+"\""
+            buildConfigField "boolean", "LOGS_ENABLED", "true"
+        }
+
+        release {
+            buildConfigField "String", "LIBRARY_VERSION", "\""+getVersionName()+"\""
+            buildConfigField "boolean", "LOGS_ENABLED", "true"
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
+        }
+
     }
 }
 
-allprojects {
-    repositories {
-        jcenter()
-    }
+
+
+android.libraryVariants.all { variant ->
+    def name = variant.buildType.name
+   // if (name.equals(com.android.builder.core.BuilderConstants.DEBUG)) {
+   //     return; // Skip debug builds.
+   // }
+    def task = project.tasks.create "jar${variant.name.capitalize()}", Jar
+    task.dependsOn variant.javaCompile
+    task.from variant.javaCompile.destinationDir
+    task.archiveName = 'MAL-v'+getVersionName()+'.jar'
 }
