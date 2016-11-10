@@ -50,6 +50,8 @@ import com.sonymobile.android.media.internal.streaming.mpegdash.MPDParser.Period
 import com.sonymobile.android.media.internal.streaming.mpegdash.MPDParser.Representation;
 import com.sonymobile.android.media.internal.streaming.common.DefaultBandwidthEstimator;
 import com.sonymobile.android.media.internal.streaming.common.PacketSource;
+import com.vrviu.dash.Orientation;
+import com.vrviu.dash.VRVIURepresentationSelector;
 
 public final class DASHSession {
 
@@ -160,6 +162,13 @@ public final class DASHSession {
 
     public void setRepresentationSelector(RepresentationSelector selector) {
         mRepresentationSelector = selector;
+    }
+
+    public void setOrientation(Orientation orientation) {
+        if(mRepresentationSelector != null) {
+            if(mRepresentationSelector instanceof VRVIURepresentationSelector)
+                ((VRVIURepresentationSelector) mRepresentationSelector).setOrientation(orientation);
+        }
     }
 
     public MediaFormat getFormat(TrackType type) {
@@ -418,7 +427,8 @@ public final class DASHSession {
                 if (mRepresentationSelector == null) {
                     // Fall back to default.
                     mRepresentationSelector =
-                            new DefaultDASHRepresentationSelector(mMPDParser, mMaxBufferSize);
+//                            new DefaultDASHRepresentationSelector(mMPDParser, mMaxBufferSize);
+                            new VRVIURepresentationSelector(mMPDParser, mMaxBufferSize);
                 }
 
                 success = mMPDParser.parse(urlConnection.getInputStream());
@@ -497,6 +507,7 @@ public final class DASHSession {
             return;
         }
 
+
         long minUpdatePeriodUs = mMPDParser.getMinUpdatePeriodUs();
         if (minUpdatePeriodUs > -1 &&
                 mLastMPDFetchTimeMs + (minUpdatePeriodUs / 1000) < System.currentTimeMillis()) {
@@ -505,6 +516,7 @@ public final class DASHSession {
         }
 
         RepresentationFetcher selectedFetcher = null;
+        TrackType selectedTrackType = null;
         for (Map.Entry<TrackType, RepresentationFetcher> item : mFetchers.entrySet()) {
             RepresentationFetcher fetcher = item.getValue();
             TrackType type = item.getKey();
@@ -513,16 +525,36 @@ public final class DASHSession {
             if (selectedFetcher == null) {
                 if (!fetcher.isBufferFull(MAX_BUFFER_DURATION_US, maxBufferSize)) {
                     selectedFetcher = fetcher;
+                    selectedTrackType = type;
                 }
             } else if (!fetcher.isBufferFull(MAX_BUFFER_DURATION_US, maxBufferSize) &&
                     (fetcher.getNextTimeUs() < selectedFetcher.getNextTimeUs() ||
                     (fetcher.getNextTimeUs() == selectedFetcher.getNextTimeUs() &&
                     fetcher.getState() < selectedFetcher.getState()))) {
                 selectedFetcher = fetcher;
+                selectedTrackType = type;
             }
         }
 
         if (selectedFetcher != null) {
+            if( selectedTrackType==TrackType.VIDEO ) {
+                Representation parserRepresentation = mMPDParser.getRepresentation(TrackType.VIDEO);
+                Representation fetcherRepresentation = selectedFetcher.getRepresentation();
+                if( parserRepresentation!=null && fetcherRepresentation!=null ) {
+                    if (parserRepresentation != fetcherRepresentation) {
+                        Log.w(TAG, "Discrepancy in representation. Fetcher representation:" + fetcherRepresentation.toString() + " parser representation " + parserRepresentation.toString());
+                        selectedFetcher.setRepresentation(parserRepresentation);
+                    }
+                }
+                else {
+                    if( parserRepresentation==null ) {
+                        Log.w( TAG, "Got null pointer for parserRepresentation" );
+                    }
+                    if( fetcherRepresentation==null ) {
+                        Log.w( TAG, "Got null pointer for fetcherRepresentation" );
+                    }
+                }
+            }
             selectedFetcher.downloadNext();
 
             Message msg = mEventHandler.obtainMessage(MSG_DOWNLOAD_NEXT);
