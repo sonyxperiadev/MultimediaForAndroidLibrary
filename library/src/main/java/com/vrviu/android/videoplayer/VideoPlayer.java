@@ -21,6 +21,8 @@ public class VideoPlayer implements VideoTexture.OnRenderVideoFrameListener {
     private final Object mListenerLock = new Object();
 
     private static int mSurfaceTextureId;
+    private int mErrorCode;
+    private int mErrorCodeExtra;
 
     public native int InitNDK(Object obj);
     public native int InitApplication();
@@ -125,6 +127,24 @@ public class VideoPlayer implements VideoTexture.OnRenderVideoFrameListener {
         if (mSprite!=null) {
             mSprite.draw();
         }
+    }
+
+    public int getDuration()
+    {
+        if (mMediaPlayer!=null) {
+            return mMediaPlayer.getDuration();
+        }
+        return -1;
+    }
+
+    public int getError()
+    {
+        return mErrorCode;
+    }
+
+    public int getErrorExtra()
+    {
+        return mErrorCodeExtra;
     }
 
     public int getOpenGLTextureID()
