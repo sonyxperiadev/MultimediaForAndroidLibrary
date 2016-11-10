@@ -3,6 +3,8 @@
 # Description
 Multimedia for Android Library contains an application level media player. It provides a familiar and easy to use way to playback MPEG-DASH streaming content, HTTP and local playback.
 
+Check out the [Confluence page](https://orbviu.atlassian.net/wiki/display/EN/Multimedia+Android+Library).
+
 # Contents supported
   * Containers: MPEG4, PIFF 1.1 and PIFF 1.3.
   * Codecs: H264, H265 (if supported by device) and AAC.

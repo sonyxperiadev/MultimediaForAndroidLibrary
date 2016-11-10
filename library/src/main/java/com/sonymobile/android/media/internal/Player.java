@@ -50,6 +50,9 @@ import com.sonymobile.android.media.internal.drm.DrmSessionFactory;
 import com.sonymobile.android.media.internal.drm.DrmUUID;
 import com.sonymobile.android.media.internal.streaming.mpegdash.DASHSource;
 
+import com.vrviu.dash.Orientation;
+import com.vrviu.dash.VRVIURepresentationSelector;
+
 public final class Player {
 
     private static final boolean LOGS_ENABLED = Configuration.DEBUG || false;
@@ -105,6 +108,8 @@ public final class Player {
     private static final int MSG_WAIT_FOR_VIDEO_READY_TO_RENDER = 25;
 
     public static final int MSG_DRM_NOTIFY = 26;
+
+    private static final int MSG_SET_ORIENTATION = 27;
 
     public static final int NOTIFY_PREPARED = 1;
 
@@ -272,6 +277,12 @@ public final class Player {
             mAudioThread.setVolume(mLeftVolume, mRightVolume);
         }
     }
+
+    public void setOrientation(Orientation orientation)
+    {
+        mEventHandler.obtainMessage(MSG_SET_ORIENTATION, orientation).sendToTarget();
+    }
+
 
     public boolean prepare() {
         Object reply = mHandlerHelper.sendMessageAndAwaitResponse(mEventHandler
@@ -1133,6 +1144,13 @@ public final class Player {
                     }
                     break;
                 }
+                case MSG_SET_ORIENTATION:
+                    if (thiz.mSource == null) {
+                        // Do nothing
+                    } else {
+                        thiz.mSource.setOrientation((Orientation)msg.obj);
+                    }
+                    break;
                 default:
                     if (LOGS_ENABLED) Log.v(TAG, "Unknown message");
                     break;

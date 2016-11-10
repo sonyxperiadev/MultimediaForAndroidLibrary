@@ -51,7 +51,7 @@ public class RepresentationFetcher {
 
     private State mState = State.INIT;
 
-    private final Representation mRepresentation;
+    private Representation mRepresentation;
 
     private final PacketSource mPacketSource;
 
@@ -436,6 +436,7 @@ public class RepresentationFetcher {
                                 && mSeekTimeUs < timelineTimeUs + segmentDurationUs) ||
                                 timelineTimeUs >= mNextTimeUs) {
                             try {
+                                Log.i( TAG, "Fetching URI "+getTemplatedUri(mRepresentation.segmentTemplate.media) );
                                 source = DataSource.create(getTemplatedUri(
                                         mRepresentation.segmentTemplate.media,
                                         segmentTimelineTemplateTicks), bandwidthEstimator, true);
@@ -472,6 +473,7 @@ public class RepresentationFetcher {
             } else {
                 mLastFragmentUri = getTemplatedUri(mRepresentation.segmentTemplate.media);
                 try {
+                    Log.i( TAG, "Fetch URI(1) "+getTemplatedUri(mRepresentation.segmentTemplate.media));
                     source = DataSource.create(getTemplatedUri(
                             mRepresentation.segmentTemplate.media), bandwidthEstimator, true);
                 } catch (IOException e) {
@@ -521,6 +523,7 @@ public class RepresentationFetcher {
                                             && mSeekTimeUs < timelineTime + segmentDurationUs) {
                                         found = true;
                                         try {
+                                            Log.i( TAG, "Fetch URI(2) "+getTemplatedUri(mRepresentation.segmentTemplate.media));
                                             source = DataSource.create(
                                                     getTemplatedUri(
                                                             mRepresentation.segmentTemplate.media,
@@ -539,6 +542,7 @@ public class RepresentationFetcher {
                                             mRepresentation.segmentTemplate.media,
                                             segmentTimelineTemplateTicks);
                                     try {
+                                        Log.i( TAG, "Fetch URI(3) "+getTemplatedUri(mRepresentation.segmentTemplate.media));
                                         source = DataSource.create(
                                                 getTemplatedUri(
                                                         mRepresentation.segmentTemplate.media,
@@ -564,6 +568,7 @@ public class RepresentationFetcher {
                         mLastFragmentUri =
                                 getTemplatedUri(mRepresentation.segmentTemplate.media);
                         try {
+                            Log.i( TAG, "Fetch URI(4) "+getTemplatedUri(mRepresentation.segmentTemplate.media));
                             source = DataSource.create(
                                     getTemplatedUri(mRepresentation.segmentTemplate.media),
                                     subsegment.offset, subsegment.size, bandwidthEstimator, true);
@@ -582,9 +587,11 @@ public class RepresentationFetcher {
 
                     mLastFragmentUri = mRepresentation.segmentBase.url;
                     try {
+                        Log.i( TAG, "Fetching URI "+mRepresentation.segmentBase.url );
                         source = DataSource.create(mRepresentation.segmentBase.url,
                                 subsegment.offset, subsegment.size, bandwidthEstimator, true);
                     } catch (IOException e) {
+                        Log.e( TAG, "Fetch URL - IOException "+e );
                         return null;
                     }
                     mNextTimeUs = subsegment.timeUs + subsegment.durationUs;
@@ -656,26 +663,34 @@ public class RepresentationFetcher {
                 }
 
                 try {
+                    Log.i( TAG, "Fetch URI(5) "+getTemplatedUri(mRepresentation.segmentTemplate.media));
                     return DataSource.create(
                             getTemplatedUri(mRepresentation.segmentTemplate.media,
                                     segmentTimelineTemplateTicks), 0, SIDX_HEADER_SNIFF_SIZE, true);
                 } catch (IOException e) {
+                    Log.e( TAG, "Fetch URL - IOException "+e );
                     return null;
                 }
             } else {
                 try {
-                    return DataSource.create(getTemplatedUri(mRepresentation.segmentTemplate.media),
+                    String finalUri = getTemplatedUri(mRepresentation.segmentTemplate.media);
+                    Log.i( TAG, "Fetching final URI "+finalUri );
+
+                    return DataSource.create(finalUri,
                             0, SIDX_HEADER_SNIFF_SIZE, true);
                 } catch (IOException e) {
+                    Log.e( TAG, "Fetch URL - IOException "+e );
                     return null;
                 }
             }
         } else if (mRepresentation.segmentBase != null) {
             try {
+                Log.i( TAG, "Fetch URI(6) "+mRepresentation.segmentBase.url );
                 return DataSource.create(mRepresentation.segmentBase.url,
                         mRepresentation.segmentBase.sidxOffset,
                         (int)mRepresentation.segmentBase.sidxSize, true);
             } catch (IOException e) {
+                Log.e( TAG, "Fetch URL - IOException "+e );
                 return null;
             }
         }
@@ -686,18 +701,23 @@ public class RepresentationFetcher {
     private DataSource createInitDataSource() {
         if (mRepresentation.segmentTemplate != null) {
             try {
+                Log.i( TAG, "Fetching initialization URI "+getTemplatedUri(mRepresentation.segmentTemplate.initialization) );
+
                 return DataSource
                         .create(getTemplatedUri(mRepresentation.segmentTemplate.initialization),
                                 true);
             } catch (IOException e) {
+                Log.e( TAG, "Fetch URL - IOException "+e );
                 return null;
             }
         } else if (mRepresentation.segmentBase != null) {
             try {
+                Log.i( TAG, "Fetching URI(7) "+mRepresentation.segmentBase.url );
                 return DataSource.create(mRepresentation.segmentBase.url,
                         mRepresentation.segmentBase.initOffset,
                         (int)mRepresentation.segmentBase.initSize, true);
             } catch (IOException e) {
+                Log.e( TAG, "Fetch URL - IOException "+e );
                 return null;
             }
         }
@@ -740,6 +760,11 @@ public class RepresentationFetcher {
 
     public Representation getRepresentation() {
         return mRepresentation;
+    }
+
+    public void setRepresentation( Representation representation )
+    {
+        mRepresentation = representation;
     }
 
     public void release() {

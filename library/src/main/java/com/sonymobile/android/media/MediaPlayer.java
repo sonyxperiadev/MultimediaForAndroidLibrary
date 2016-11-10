@@ -27,17 +27,22 @@ import static com.sonymobile.android.media.MediaInfo.BUFFERING_END;
 import static com.sonymobile.android.media.MediaInfo.BUFFERING_START;
 import static com.sonymobile.android.media.MediaInfo.VIDEO_RENDERING_START;
 
+import com.vrviu.dash.Orientation;
+
 import java.io.FileDescriptor;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.Vector;
+import java.nio.ByteBuffer;
 
 import android.annotation.SuppressLint;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.res.AssetFileDescriptor;
+import android.graphics.SurfaceTexture;
 import android.media.MediaCodec;
 import android.net.Uri;
+import android.opengl.GLES20;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
@@ -46,6 +51,7 @@ import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
 import android.os.Process;
 import android.util.Log;
+import android.view.Surface;
 import android.view.SurfaceHolder;
 
 import com.sonymobile.android.media.internal.Configuration;
@@ -355,6 +361,8 @@ public final class MediaPlayer {
     // a valid iso file needs to be at least 8 bytes (ftyp header size)
     private static final int MIN_FILE_LENGTH = 8;
 
+    public boolean 			m_bUpdate = false;
+
     /**
      * Interface definition of a callback to be invoked when video size has
      * changed.
@@ -363,8 +371,8 @@ public final class MediaPlayer {
         /**
          * Called when video size has changed.
          *
-         * @param mp the MediaPlayer this pertains to.
-         * @param width the width of the video in pixels.
+         * @param mp     the MediaPlayer this pertains to.
+         * @param width  the width of the video in pixels.
          * @param height the height of the video in pixels.
          */
         void onVideoSizeChanged(MediaPlayer mp, int width, int height);
@@ -379,11 +387,11 @@ public final class MediaPlayer {
         /**
          * Called to indicate an error.
          *
-         * @param mp the MediaPlayer the error pertains to.
-         * @param what the type of error that has occurred. See
-         *            {@link MediaError}.
+         * @param mp    the MediaPlayer the error pertains to.
+         * @param what  the type of error that has occurred. See
+         *              {@link MediaError}.
          * @param extra an extra code specific to the error. See
-         *            {@link MediaError}.
+         *              {@link MediaError}.
          * @return true if the method handled the error, false if it didn't.
          */
         boolean onError(MediaPlayer mp, int what, int extra);
@@ -425,9 +433,9 @@ public final class MediaPlayer {
          * Called to update the buffering level of a media played via HTTP
          * progressive download.
          *
-         * @param mp the MediaPlayer that is buffering.
+         * @param mp      the MediaPlayer that is buffering.
          * @param percent how much data that has been buffered or played, in
-         *            percent.
+         *                percent.
          */
         void onBufferingUpdate(MediaPlayer mp, int percent);
     }
@@ -441,12 +449,12 @@ public final class MediaPlayer {
         /**
          * Called to indicate an info or a warning.
          *
-         * @param mp the MediaPlayer the info pertains to.
-         * @param what the type of info or warning. See {@link MediaInfo}.
+         * @param mp    the MediaPlayer the info pertains to.
+         * @param what  the type of info or warning. See {@link MediaInfo}.
          * @param extra an extra code, specific to the info.
          * @return true if the method handled the info, false if it didn't.
-         *         Returning false, or not having an OnInfoListener at all, will
-         *         cause the info to be discarded.
+         * Returning false, or not having an OnInfoListener at all, will
+         * cause the info to be discarded.
          */
         boolean onInfo(MediaPlayer mp, int what, int extra);
     }
@@ -486,7 +494,7 @@ public final class MediaPlayer {
         /**
          * Called when the representation is changed for the streamed data.
          *
-         * @param mp the MediaPlayer playing the stream.
+         * @param mp         the MediaPlayer playing the stream.
          * @param statistics Information regarding the representation.
          */
         public void onRepresentationChanged(MediaPlayer mp, Statistics statistics);
@@ -501,7 +509,7 @@ public final class MediaPlayer {
          * Called to inform that the played media is not allowed to be rendered
          * on a connected output device.
          *
-         * @param mp the MediaPlayer this pertains to.
+         * @param mp   the MediaPlayer this pertains to.
          * @param info What type of info.
          */
         public void onOutputControlInfo(MediaPlayer mp, OutputControlInfo info);
@@ -510,7 +518,7 @@ public final class MediaPlayer {
          * Called to inform that the played media is not allowed to be rendered
          * on a connected output device and was blocked.
          *
-         * @param mp the MediaPlayer this pertains to.
+         * @param mp   the MediaPlayer this pertains to.
          * @param info What is blocked.
          */
         public void onOutputBlocked(MediaPlayer mp, OutputBlockedInfo info);
@@ -561,8 +569,8 @@ public final class MediaPlayer {
          * Create a new Statistics object.
          *
          * @param linkSpeed initvalue the link speed, in bits per second.
-         * @param serverIP initvalue for the server IP.
-         * @param videoURI initvalue for video Uri.
+         * @param serverIP  initvalue for the server IP.
+         * @param videoURI  initvalue for video Uri.
          */
         public Statistics(int linkSpeed, String serverIP, String videoURI) {
             this.linkSpeed = linkSpeed;
@@ -614,40 +622,50 @@ public final class MediaPlayer {
         /**
          * First state after creation.
          */
-        IDLE,
+        IDLE(0),
         /**
          * State after the data source has been set.
          */
-        INITIALIZED,
+        INITIALIZED(1),
         /**
          * State of the player during a prepare (i.e. after a prepareAsync()
          * call.
          */
-        PREPARING,
+        PREPARING(2),
         /**
          * State after the player has been prepared.
          */
-        PREPARED,
+        PREPARED(3),
         /**
          * State when playing media.
          */
-        PLAYING,
+        PLAYING(4),
         /**
          * State when in paused playback.
          */
-        PAUSED,
+        PAUSED(5),
         /**
          * State when something has gone wrong.
          */
-        ERROR,
+        ERROR(6),
         /**
          * State after release() has been called on the MediaPlayer.
          */
-        END,
+        END(7),
         /**
          * State when playback has been completed.
          */
-        COMPLETED
+        COMPLETED(8);
+
+        private final int value;
+
+        private State(int value) {
+            this.value = value;
+        }
+
+        public int getValue() {
+            return value;
+        }
     }
 
     /**
@@ -721,7 +739,10 @@ public final class MediaPlayer {
 
     private final Object mListenerLock = new Object();
 
-    private SurfaceHolder mSurfaceHolder;
+    public SurfaceHolder mSurfaceHolder;
+    public Surface mSurface;
+    public SurfaceTexture mSurfaceTexture;
+    private int mSurfaceTextureID = -1;
 
     private boolean mKeepScreenOn = false;
 
@@ -784,7 +805,7 @@ public final class MediaPlayer {
                         }
                         break;
                     case Player.NOTIFY_SUBTITLE_DATA:
-                        SubtitleData sub = (SubtitleData)msg.obj;
+                        SubtitleData sub = (SubtitleData) msg.obj;
                         if (thiz.mOnSubtitleDataListener != null) {
                             thiz.mOnSubtitleDataListener.onSubtitleData(thiz, sub);
                         } else {
@@ -800,7 +821,7 @@ public final class MediaPlayer {
                     case Player.NOTIFY_REPRESENTATION_CHANGED:
                         if (thiz.mOnRepresentationChangedListener != null) {
                             thiz.mOnRepresentationChangedListener.onRepresentationChanged(thiz,
-                                    (Statistics)msg.obj);
+                                    (Statistics) msg.obj);
                         }
                         break;
                     case Player.NOTIFY_ERROR:
@@ -818,13 +839,13 @@ public final class MediaPlayer {
                             case OutputControllerUpdateListener.OUTPUT_CONTROLINFO:
                                 if (thiz.mOnOutputControlEventListener != null) {
                                     thiz.mOnOutputControlEventListener.onOutputControlInfo(thiz,
-                                            (OutputControlInfo)msg.obj);
+                                            (OutputControlInfo) msg.obj);
                                 }
                                 break;
                             case OutputControllerUpdateListener.OUTPUT_BLOCKED:
                                 if (thiz.mOnOutputControlEventListener != null) {
                                     thiz.mOnOutputControlEventListener.onOutputBlocked(thiz,
-                                            (OutputBlockedInfo)msg.obj);
+                                            (OutputBlockedInfo) msg.obj);
                                 }
                                 break;
                             default:
@@ -907,7 +928,7 @@ public final class MediaPlayer {
                     synchronized (thiz.mStateLock) {
                         if (msg.arg1 == OutputControllerUpdateListener.OUTPUT_BLOCKED &&
                                 (thiz.mState == State.PREPARED ||
-                                 thiz.mState == State.PREPARING)) {
+                                        thiz.mState == State.PREPARING)) {
                             // Don't send callbacks for OnOutputBlocked when in preparing or
                             // prepared state.
                             return;
@@ -939,7 +960,7 @@ public final class MediaPlayer {
      */
     public MediaPlayer(Context context) {
         // Always print the library version for debug purpose.
-        Log.d(TAG,"Library version: "+BuildConfig.LIBRARY_VERSION);
+        Log.d(TAG, "Library version: " + BuildConfig.LIBRARY_VERSION);
 
         if (LOGS_ENABLED) Log.d(TAG, "MediaPlayer(Context)");
         if (context != null) {
@@ -992,13 +1013,25 @@ public final class MediaPlayer {
     }
 
     /**
+     * Get the current state value.
+     *
+     * @return current state value.
+     */
+    public int getStateValue() {
+        if (LOGS_ENABLED) Log.d(TAG, "getStateValue()");
+        synchronized (mStateLock) {
+            return mState.getValue();
+        }
+    }
+
+    /**
      * Sets the display for the MediaPlayer.
      *
      * @param surfaceHolder SurfaceHolder to use.
      * @throws IllegalStateException if it is called in an invalid state.
      */
     public void setDisplay(SurfaceHolder surfaceHolder) throws IllegalStateException {
-        if (LOGS_ENABLED) Log.d(TAG, "setDisplay()");
+        if (LOGS_ENABLED) Log.d(TAG, "setDisplay() with SurfaceHolder");
         synchronized (mStateLock) {
             if (mState == State.END) {
                 throw new IllegalStateException("Setting display not available from state END");
@@ -1012,13 +1045,70 @@ public final class MediaPlayer {
         }
 
         if (surfaceHolder == null) {
-            mPlayer.setSurface(null);
+            Log.i(TAG, " >>> setDisplay mSurfaceTexture = " + mSurfaceTexture);
+            Log.i(TAG, " >>> setDisplay mSurface = " + mSurface);
+            if (mSurfaceTexture != null) {
+                Log.i(TAG, " >>> mPlayer.setSurface = " + mSurface);
+                mPlayer.setSurface(mSurface);
+            }
+            else {
+                Log.i(TAG, " >>> mPlayer.setSurface = null!");
+                mPlayer.setSurface(mSurface);
+            }
         } else {
-            mPlayer.setSurface(surfaceHolder.getSurface());
+            mSurface = surfaceHolder.getSurface();
+            mPlayer.setSurface(mSurface);
+            Log.i(TAG, " >>> setDisplay surfaceHolder.getSurface() = " + surfaceHolder.getSurface());
         }
-        mSurfaceHolder = surfaceHolder;
+        mSurfaceHolder = null;//surfaceHolder;
 
         updateKeepDeviceAlive();
+    }
+
+    private static int GL_TEXTURE_EXTERNAL_OES = 0x8D65;
+    public static ByteBuffer pixelBuffer;
+
+    public static void javaCallTest() {
+        Log.i(TAG, " >>> javaCallTest");
+    }
+
+    /**
+     * Store the display texture id for the MediaPlayer.
+     *
+     * @throws IllegalStateException if it is called in an invalid state.
+     */
+    public void storeDisplayTexture(int textureID) throws IllegalStateException {
+        Log.d(TAG, "storeDisplayTexture() with textureID=" + textureID);
+        if (LOGS_ENABLED) Log.d(TAG, "storeDisplayTexture() with SurfaceTexture");
+        synchronized (mStateLock) {
+            if (mState == State.END) {
+                throw new IllegalStateException("Setting display not available from state END");
+            } else if (mState == State.ERROR) {
+                return;
+            }
+        }
+
+//        if (mSurfaceTextureID == -1)
+        {
+            mSurfaceTextureID = textureID;
+            Log.d(TAG, "storeDisplayTexture() mSurfaceTextureID=" + mSurfaceTextureID);
+            mSurfaceTexture = new SurfaceTexture(mSurfaceTextureID);
+            Log.i(TAG, " >>> mSurfaceTextureID mSurfaceTexture = " + mSurfaceTexture);
+            mSurface = new Surface(mSurfaceTexture);
+            Log.i(TAG, " >>> mSurfaceTextureID mSurface = " + mSurface);
+        }
+        mPlayer.setSurface(mSurface);
+
+        updateKeepDeviceAlive();
+    }
+
+    /**
+     * Gets the video surface texture ID that the video will render to.
+     *
+     * @return int Video texture surface ID.
+     */
+    public int getVideoTextureID() {
+        return mSurfaceTextureID;
     }
 
     /**
@@ -1214,6 +1304,22 @@ public final class MediaPlayer {
         }
     }
 
+    public void updateVideoTexture()
+    {
+
+//        if(m_bUpdate == false)
+//            return;
+
+            if(mState == State.PLAYING || mState == State.PAUSED)
+            {
+                boolean [] abValue = new boolean[1];
+                GLES20.glGetBooleanv(GLES20.GL_DEPTH_TEST, abValue,0);
+                GLES20.glDisable(GLES20.GL_DEPTH_TEST);
+                mSurfaceTexture.updateTexImage();
+            }
+    }
+
+
     /**
      * The content is scaled to the surface dimensions
      */
@@ -1276,6 +1382,26 @@ public final class MediaPlayer {
                 // Ignore
             } else {
                 mPlayer.setVolume(leftVolume, rightVolume);
+            }
+        }
+
+    }
+
+
+    /**
+     * Sets the orientation of the VR user's head
+     *
+     * @param orientation orientation of the VR user's head
+     * @throws IllegalStateException if it is called in an invalid state.
+     */
+    public void setOrientation(Orientation orientation)
+            throws IllegalStateException {
+        if (LOGS_ENABLED) Log.d(TAG, "setOrientation(" + orientation + ")");
+        synchronized (mStateLock) {
+            if (mState == State.ERROR || mState == State.END) {
+                // Ignore
+            } else {
+                mPlayer.setOrientation(orientation);
             }
         }
 
@@ -1568,6 +1694,11 @@ public final class MediaPlayer {
                 mState = State.IDLE;
                 if (mSurfaceHolder != null) {
                     mPlayer.setSurface(mSurfaceHolder.getSurface());
+                }
+                else {
+                    if (mSurface!=null) {
+                        mPlayer.setSurface(mSurface);
+                    }
                 }
 
                 updateKeepDeviceAlive();
@@ -2104,4 +2235,5 @@ public final class MediaPlayer {
                     MediaError.INVALID_STATE, 0));
         }
     }
+
 }

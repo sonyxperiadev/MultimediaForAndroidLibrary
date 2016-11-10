@@ -165,6 +165,8 @@ public class MPDParser {
                         handlePeriod(parser, update);
                     } else if (parser.getName().equals("AdaptationSet")) {
                         handleAdaptationSet(parser);
+                    } else if (parser.getName().equals("Viewpoint")) {
+                        handleViewpoint(parser);
                     } else if (parser.getName().equals("ContentComponent")) {
                         handleContentComponent(parser);
                     } else if (parser.getName().equals("ContentProtection")) {
@@ -746,6 +748,11 @@ public class MPDParser {
         }
     }
 
+    private void handleViewpoint(XmlPullParser parser) {
+        mCurrentAdaptationSet.viewpoint = parser.getAttributeValue(null, "value");
+    }
+
+
     private static long parseISO8601Duration(String value) {
         if (value == null) {
             return -1;
@@ -1221,9 +1228,9 @@ public class MPDParser {
 
         long startTimeUs;
 
-        final ArrayList<AdaptationSet> adaptationSets = new ArrayList<>();
+        public final ArrayList<AdaptationSet> adaptationSets = new ArrayList<>();
 
-        final int[] currentAdaptationSet = new int[TrackType.UNKNOWN.ordinal()];
+        public final int[] currentAdaptationSet = new int[TrackType.UNKNOWN.ordinal()];
     }
 
     public static class AdaptationSet {
@@ -1231,7 +1238,7 @@ public class MPDParser {
 
         public SegmentTemplate segmentTemplate;
 
-        TrackType type = TrackType.UNKNOWN;
+        public TrackType type = TrackType.UNKNOWN;
 
         String mime;
 
@@ -1239,9 +1246,11 @@ public class MPDParser {
 
         String accessibility;
 
-        String role;
+        public String role;
 
         String rating;
+        
+        public String viewpoint;
 
         int width;
 
@@ -1253,7 +1262,7 @@ public class MPDParser {
 
         String audioChannelConfiguration;
 
-        final ArrayList<Representation> representations = new ArrayList<>();
+        public final ArrayList<Representation> representations = new ArrayList<>();
     }
 
     public static class SegmentTemplate {
